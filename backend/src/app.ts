@@ -24,6 +24,7 @@ export const createApp = (): Application => {
       origin: ENV.FRONTEND_URL,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-praedico-security"],
     }),
   );
   app.use(hpp()); // Prevent Parameter Pollution

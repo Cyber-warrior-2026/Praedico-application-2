@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { loginAdmin, createFirstAdmin } from './admin.controller';
-import { AdminGhostGuard } from '../../common/middlewares/admin.guard';
+import { AdminGhostGuard } from '../../common/guards/admin.guard';
 
 const router = Router();
 

@@ -6,7 +6,7 @@ export const AdminGhostGuard = (
   res: Response,
   next: NextFunction,
 ) => {
-  const secretKey = req.headers["x-uplink-security"];
+  const secretKey = req.headers["x-praedico-security"];
 
   if (secretKey !== ENV.ADMIN_SECRET_KEY) {
     return res.status(404).json({

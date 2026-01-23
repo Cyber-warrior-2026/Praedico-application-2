@@ -23,7 +23,7 @@ export class AdminService {
 
     // Generate Token
     const token = jwt.sign(
-      { id: admin._id, role: admin.role },
+      { id: admin._id, role: admin.role, email: admin.email },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' } // Short lived access token
     );
