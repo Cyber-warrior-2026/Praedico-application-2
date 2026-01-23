@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import hpp from 'hpp';
-import rateLimit from 'express-rate-limit'; // Run: npm install express-rate-limit
+import rateLimit from 'express-rate-limit';
 import { securityHeaders } from './common/middlewares/security.middleware';
 import { requestLogger } from './common/middlewares/logging.middleware';
 import { globalErrorHandler } from './common/errors/errorHandler';
