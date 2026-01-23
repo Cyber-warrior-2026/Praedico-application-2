@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, HydratedDocument } from 'mongoose';
 import argon2 from 'argon2';
 
 export interface IUser extends Document {
@@ -39,15 +39,11 @@ const userSchema = new Schema<IUser>(
 );
 
 // Hash password with Argon2 before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password') || !this.password) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password') || !this.password) return;
   
-  try {
-    this.password = await argon2.hash(this.password);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
+  const plainPassword = this.password as string;
+  this.password = await argon2.hash(plainPassword);
 });
 
 // Compare password using Argon2

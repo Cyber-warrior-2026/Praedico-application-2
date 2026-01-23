@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 import { User } from './user.model';
 import { AppError } from '../../common/errors/errorHandler';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../notifications/email.service';
@@ -14,7 +14,7 @@ export class UserService {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     if (existingUser) {
       existingUser.verificationToken = token;
@@ -58,13 +58,17 @@ export class UserService {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) throw new AppError('Invalid credentials', 401);
 
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, ENV.JWT_SECRET, {
-      expiresIn: ENV.JWT_EXPIRES_IN
-    });
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email }, 
+      ENV.JWT_SECRET, 
+      { expiresIn: ENV.JWT_EXPIRES_IN }
+    );
 
-    const refreshToken = jwt.sign({ id: user.id }, ENV.JWT_REFRESH_SECRET, {
-      expiresIn: ENV.JWT_REFRESH_EXPIRES_IN
-    });
+    const refreshToken = jwt.sign(
+      { id: user.id }, 
+      ENV.JWT_REFRESH_SECRET, 
+      { expiresIn: ENV.JWT_REFRESH_EXPIRES_IN }
+    );
 
     return {
       accessToken,
@@ -100,5 +104,24 @@ export class UserService {
     await user.save();
 
     return { message: 'Password reset successful' };
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    try {
+      const decoded = jwt.verify(refreshToken, ENV.JWT_REFRESH_SECRET) as { id: string };
+
+      const user = await User.findById(decoded.id);
+      if (!user) throw new AppError('User not found', 404);
+
+      const accessToken = jwt.sign(
+        { id: user.id, email: user.email }, 
+        ENV.JWT_SECRET, 
+        { expiresIn: ENV.JWT_EXPIRES_IN }
+      );
+      
+      return { accessToken };
+    } catch (error) {
+      throw new AppError('Invalid refresh token', 401);
+    }
   }
 }
