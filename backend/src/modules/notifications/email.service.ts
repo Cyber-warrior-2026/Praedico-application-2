@@ -24,7 +24,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
   const resetLink = `${ENV.FRONTEND_URL}/reset-password?token=${token}`;
   
   await transporter.sendMail({
-    from: `"Team Uplink" <${ENV.EMAIL_USER}>`,
+    from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
     subject: 'Reset Your Password',
     html: `<p>Click <a href="${resetLink}">here</a> to reset password.</p>`
