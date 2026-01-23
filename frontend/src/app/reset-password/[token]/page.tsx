@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
 
     try {
       // Connect to Backend
-      await axios.post("http://localhost:4000/api/users/reset-password", {
+      await axios.post("http://localhost:5000/api/users/reset-password", {
         token: token, 
         newPassword: password
       });
