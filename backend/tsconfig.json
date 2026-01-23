@@ -10,13 +10,16 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    
     "moduleResolution": "node",
+    
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
+  "ignoreDeprecations": "6.0",
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
