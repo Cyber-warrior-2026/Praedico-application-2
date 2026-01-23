@@ -40,7 +40,7 @@ export default function Navbar() {
 
           {/* 2. CENTER: Navigation Links (Floating in Middle) */}
           <nav className="hidden md:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <NavLink href="/Home">Home</NavLink>
+            <NavLink href="/">Home</NavLink>
             <NavLink href="/features">Features</NavLink>
             <NavLink href="/solutions">Solutions</NavLink>
             <NavLink href="/enterprise">Enterprise</NavLink>
