@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IAdmin extends Document {
   email: string;
   passwordHash: string;
-  role: 'super_admin' | 'moderator'; // Scalable for future roles
+  role: 'super_admin' | 'moderator';
   createdAt: Date;
 }
 
