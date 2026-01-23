@@ -1,5 +1,5 @@
 // API Base URL
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // API Endpoints
 export const API_ENDPOINTS = {

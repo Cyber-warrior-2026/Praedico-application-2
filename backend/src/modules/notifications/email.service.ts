@@ -16,7 +16,7 @@ const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-
  * Send Verification Email with Beautiful Design
  */
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationLink = `${ENV.FRONTEND_URL}/verify?token=${token}`;
+  const verificationLink = `${ENV.FRONTEND_URL}/verify/${token}`;
 
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
@@ -42,7 +42,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
               <tr>
                 <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
                   <img src="${LOGO_URL}" alt="Praedico Global Research Logo" style="max-width: 220px; height: auto; margin-bottom: 20px; background-color: white; padding: 10px; border-radius: 8px;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Welcome to Uplink! 🎉</h1>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Welcome to Praedico! 🎉</h1>
                 </td>
               </tr>
               
@@ -52,7 +52,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
                   <h2 style="color: #333333; font-size: 22px; margin: 0 0 20px 0; font-weight: 600;">Verify Your Email Address</h2>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                    Thank you for registering with <strong>Uplink</strong>! We're excited to have you on board.
+                    Thank you for registering with <strong>Praedico</strong>! We're excited to have you on board.
                   </p>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
@@ -93,7 +93,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
                     <tr>
                       <td>
                         <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.5;">
-                          ⚠️ <strong>Security Note:</strong> This link will expire in <strong>1 hour</strong>. If you didn't create an account with Uplink, please ignore this email.
+                          ⚠️ <strong>Security Note:</strong> This link will expire in <strong>1 hour</strong>. If you didn't create an account with Praedico, please ignore this email.
                         </p>
                       </td>
                     </tr>
@@ -130,12 +130,12 @@ export const sendVerificationEmail = async (email: string, token: string) => {
  * Send Password Reset Email with Beautiful Design
  */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-  const resetLink = `${ENV.FRONTEND_URL}/reset-password?token=${token}`;
+  const resetLink = `${ENV.FRONTEND_URL}/reset-password/${token}`;
 
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
-    subject: '🔐 Reset Your Uplink Password',
+    subject: '🔐 Reset Your Praedico Password',
     html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -166,7 +166,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
                   <h2 style="color: #333333; font-size: 22px; margin: 0 0 20px 0; font-weight: 600;">Reset Your Password</h2>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                    We received a request to reset the password for your <strong>Uplink</strong> account.
+                    We received a request to reset the password for your <strong>Praedico</strong> account.
                   </p>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
@@ -220,7 +220,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
                     <tr>
                       <td>
                         <p style="color: #014361; font-size: 14px; margin: 0; line-height: 1.5;">
-                          💡 <strong>Security Tip:</strong> Never share your password with anyone. Uplink will never ask for your password via email.
+                          💡 <strong>Security Tip:</strong> Never share your password with anyone. Praedico will never ask for your password via email.
                         </p>
                       </td>
                     </tr>
