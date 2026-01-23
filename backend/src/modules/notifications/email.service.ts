@@ -9,13 +9,19 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Your company logo URL
+const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-application-2/main/backend/praedico_global_research_pvt_ltd_logo.jpg';
+
+/**
+ * Send Verification Email with Beautiful Design
+ */
 export const sendVerificationEmail = async (email: string, token: string) => {
   const verificationLink = `${ENV.FRONTEND_URL}/verify?token=${token}`;
-  
- await transporter.sendMail({
+
+  await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
-    subject: '✨ Welcome to team Praedico! Verify Your Email ✨',
+    subject: '✨ Welcome to praedico Verify Your Email',
     html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -35,9 +41,8 @@ export const sendVerificationEmail = async (email: string, token: string) => {
               <!-- Header with Logo -->
               <tr>
                 <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-                  <!-- Replace this with your actual logo URL -->
-                  <img src="https://via.placeholder.com/150x50/667eea/ffffff?text=PRACEDICO" alt="Praedico Logo" style="height: 50px; margin-bottom: 20px;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Welcome to Praedico! 🎉</h1>
+                  <img src="${LOGO_URL}" alt="Praedico Global Research Logo" style="max-width: 220px; height: auto; margin-bottom: 20px; background-color: white; padding: 10px; border-radius: 8px;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Welcome to Uplink! 🎉</h1>
                 </td>
               </tr>
               
@@ -47,7 +52,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
                   <h2 style="color: #333333; font-size: 22px; margin: 0 0 20px 0; font-weight: 600;">Verify Your Email Address</h2>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                    Thank you for registering with <strong>Praedico</strong>! We're excited to have you on board.
+                    Thank you for registering with <strong>Uplink</strong>! We're excited to have you on board.
                   </p>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
@@ -101,25 +106,12 @@ export const sendVerificationEmail = async (email: string, token: string) => {
               <tr>
                 <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
                   <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">
-                    Need help? Contact us at <a href="mailto:support@uplink.com" style="color: #667eea; text-decoration: none;">support@uplink.com</a>
+                    Need help? Contact us at <a href="mailto:support@praedico.com" style="color: #667eea; text-decoration: none;">support@praedico.com</a>
                   </p>
                   <p style="color: #adb5bd; font-size: 12px; margin: 0;">
-                    © 2026 Uplink. All rights reserved.<br>
+                    © 2026 Praedico Global Research Pvt Ltd. All rights reserved.<br>
                     Made with ❤️ by Team Sambhav & Arjun
                   </p>
-                  
-                  <!-- Social Links (Optional) -->
-                  <div style="margin-top: 20px;">
-                    <a href="#" style="display: inline-block; margin: 0 10px;">
-                      <img src="https://img.icons8.com/color/48/000000/twitter--v1.png" alt="Twitter" style="width: 24px; height: 24px;">
-                    </a>
-                    <a href="#" style="display: inline-block; margin: 0 10px;">
-                      <img src="https://img.icons8.com/color/48/000000/linkedin.png" alt="LinkedIn" style="width: 24px; height: 24px;">
-                    </a>
-                    <a href="#" style="display: inline-block; margin: 0 10px;">
-                      <img src="https://img.icons8.com/color/48/000000/github--v1.png" alt="GitHub" style="width: 24px; height: 24px;">
-                    </a>
-                  </div>
                 </td>
               </tr>
               
@@ -134,13 +126,16 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   });
 };
 
+/**
+ * Send Password Reset Email with Beautiful Design
+ */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
   const resetLink = `${ENV.FRONTEND_URL}/reset-password?token=${token}`;
-  
-   await transporter.sendMail({
-    from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
+
+  await transporter.sendMail({
+    from: `"Team Uplink" <${ENV.EMAIL_USER}>`,
     to: email,
-    subject: '🔐 Reset Your Praedico account password',
+    subject: '🔐 Reset Your Uplink Password',
     html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -160,7 +155,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
               <!-- Header -->
               <tr>
                 <td style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 40px 30px; text-align: center;">
-                  <img src="https://via.placeholder.com/150x50/f5576c/ffffff?text=PRACEDICO" alt="Praedico Logo" style="height: 50px; margin-bottom: 20px;">
+                  <img src="${LOGO_URL}" alt="Praedico Global Research Logo" style="max-width: 220px; height: auto; margin-bottom: 20px; background-color: white; padding: 10px; border-radius: 8px;">
                   <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Password Reset Request 🔐</h1>
                 </td>
               </tr>
@@ -171,7 +166,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
                   <h2 style="color: #333333; font-size: 22px; margin: 0 0 20px 0; font-weight: 600;">Reset Your Password</h2>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                    We received a request to reset the password for your <strong>Praedico</strong> account.
+                    We received a request to reset the password for your <strong>Uplink</strong> account.
                   </p>
                   
                   <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
@@ -238,10 +233,10 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
               <tr>
                 <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
                   <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">
-                    Need help? Contact us at <a href="mailto:support@uplink.com" style="color: #f5576c; text-decoration: none;">support@uplink.com</a>
+                    Need help? Contact us at <a href="mailto:support@praedico.com" style="color: #f5576c; text-decoration: none;">support@praedico.com</a>
                   </p>
                   <p style="color: #adb5bd; font-size: 12px; margin: 0;">
-                    © 2026 Uplink. All rights reserved.<br>
+                    © 2026 Praedico Global Research Pvt Ltd. All rights reserved.<br>
                     Made with ❤️ by Team Sambhav & Arjun
                   </p>
                 </td>
