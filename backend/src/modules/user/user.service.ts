@@ -1,104 +1,121 @@
-import crypto from 'crypto';
+import { UserModel } from './user.model';
+import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
-import { User } from './user.model';
-import { AppError } from '../../common/errors/errorHandler';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../notifications/email.service';
-import { ENV } from '../../config/env';
+import crypto from 'crypto'; // Built-in Node module for random tokens
+import { sendVerificationEmail, sendPasswordResetEmail } from '../notifications/email.service'; // You need to create this import
 
 export class UserService {
-  async registerUser(email: string) {
-    const existingUser = await User.findOne({ email });
+
+  // 1. Step One: User enters email -> System sends magic link
+  static async initiateRegistration(email: string) {
+    const existingUser = await UserModel.findOne({ email });
     
-    if (existingUser?.isVerified) {
-      throw new AppError('User already exists', 400);
+    if (existingUser && existingUser.isVerified) {
+      throw new Error('Email already registered');
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate a random 32-byte hex token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    if (existingUser) {
-      existingUser.verificationToken = token;
-      existingUser.verificationTokenExpires = expiresAt;
+    if (existingUser && !existingUser.isVerified) {
+      // If user tried to register before but didn't finish, update the token
+      existingUser.verificationToken = verificationToken;
       await existingUser.save();
     } else {
-      await User.create({
+      // Create new unverified user
+      await UserModel.create({
         email,
-        verificationToken: token,
-        verificationTokenExpires: expiresAt
+        isVerified: false,
+        verificationToken
       });
     }
 
-    await sendVerificationEmail(email, token);
-    return { message: 'Verification email sent' };
+    // Send Email (This calls the Notification Module)
+    await sendVerificationEmail(email, verificationToken);
+    
+    return { message: "Verification email sent. Please check your inbox." };
   }
 
-  async verifyEmailAndSetPassword(token: string, password: string) {
-    const user = await User.findOne({
-      verificationToken: token,
-      verificationTokenExpires: { $gt: Date.now() }
-    });
+  // 2. Step Two: User clicks link & sets password
+  static async completeRegistration(token: string, plainPassword: string) {
+    // Find user by the secret token
+    // We explicitly select verificationToken because it's hidden by default in Schema
+    const user = await UserModel.findOne({ verificationToken: token }).select('+verificationToken');
 
-    if (!user) throw new AppError('Invalid or expired token', 400);
+    if (!user) throw new Error('Invalid or expired token');
 
-    user.password = password;
+    // Security: Hash the password
+    const passwordHash = await argon2.hash(plainPassword);
+
+    // Update User
+    user.passwordHash = passwordHash;
     user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpires = undefined;
+    user.verificationToken = undefined; // Clear the token so it can't be used again
     await user.save();
 
-    return { message: 'Email verified successfully' };
+    // Auto-login: Generate JWT immediately
+    const jwtToken = jwt.sign(
+      { id: user._id, role: 'user' },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '7d' }
+    );
+
+    return { token: jwtToken, user };
   }
 
-  async loginUser(email: string, password: string) {
-    const user = await User.findOne({ email }).select('+password');
+  // 3. Login
+  static async login(email: string, plainPass: string) {
+    const user = await UserModel.findOne({ email }).select('+passwordHash');
 
-    if (!user || !user.password) throw new AppError('Invalid credentials', 401);
-    if (!user.isVerified) throw new AppError('Please verify your email', 401);
+    if (!user) throw new Error('Invalid credentials');
+    if (!user.isVerified) throw new Error('Please verify your email first');
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) throw new AppError('Invalid credentials', 401);
+    // Verify Password
+    const isValid = await argon2.verify(user.passwordHash!, plainPass);
+    if (!isValid) throw new Error('Invalid credentials');
 
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, ENV.JWT_SECRET, {
-      expiresIn: ENV.JWT_EXPIRES_IN
-    });
+    // Generate Token
+    const token = jwt.sign(
+      { id: user._id, role: 'user' },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '7d' }
+    );
 
-    const refreshToken = jwt.sign({ id: user.id }, ENV.JWT_REFRESH_SECRET, {
-      expiresIn: ENV.JWT_REFRESH_EXPIRES_IN
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-      user: { id: user.id, email: user.email, isVerified: user.isVerified }
-    };
+    return token;
   }
 
-  async forgotPassword(email: string) {
-    const user = await User.findOne({ email });
-    if (!user) return { message: 'If account exists, reset link sent' };
+  // 4. Forgot Password
+  static async forgotPassword(email: string) {
+    const user = await UserModel.findOne({ email });
+    if (!user) throw new Error('If email exists, a reset link has been sent'); // Privacy: Don't reveal if user exists
 
-    const token = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = token;
-    user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000);
+    // Generate Reset Token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = Date.now() + 3600000; // 1 Hour from now
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(resetExpires);
     await user.save();
 
-    await sendPasswordResetEmail(email, token);
-    return { message: 'If account exists, reset link sent' };
+    await sendPasswordResetEmail(email, resetToken);
+
+    return { message: "If email exists, a reset link has been sent" };
   }
 
-  async resetPassword(token: string, newPassword: string) {
-    const user = await User.findOne({
+  // 5. Reset Password
+  static async resetPassword(token: string, newPassword: string) {
+    const user = await UserModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() }
     });
 
-    if (!user) throw new AppError('Invalid or expired token', 400);
+    if (!user) throw new Error('Token is invalid or has expired');
 
-    user.password = newPassword;
+    user.passwordHash = await argon2.hash(newPassword);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    return { message: 'Password reset successful' };
+    return { message: "Password reset successful. Please login." };
   }
 }
