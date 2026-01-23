@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Run: npx shadcn@latest add alert
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import axios from 'axios';
 
 export default function RegisterPage() {
+  // 1. ADD STATE FOR EMAIL
+  const [email, setEmail] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -16,14 +19,16 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Connect to your actual Backend API here
-    // await axios.post('http://localhost:5000/api/users/register', { email })
-
-    // Simulating API success for now
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // 2. NOW 'email' HAS A VALUE
+      await axios.post('http://localhost:4000/api/users/register', { email });
       setIsSuccess(true);
-    }, 1500);
+    } catch (error) {
+      console.error("Registration failed", error);
+      // You might want to set an error state here to show a message to the user
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,7 +53,15 @@ export default function RegisterPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" required />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="name@example.com" 
+                    required 
+                    // 3. BIND THE INPUT TO THE STATE
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <Button className="w-full bg-slate-900" disabled={isLoading}>
                   {isLoading ? "Sending Link..." : "Sign Up with Email"}
