@@ -16,7 +16,7 @@ const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-
  * Send Verification Email with Beautiful Design
  */
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationLink = `${ENV.FRONTEND_URL}/verify?token=${token}`;
+  const verificationLink = `${ENV.FRONTEND_URL}/verify/${token}`;
 
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
