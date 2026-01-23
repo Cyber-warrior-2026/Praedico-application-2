@@ -7,24 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Run: npx shadcn@latest add alert
+import { authApi } from "@/lib/api";
+// import axios from "@/lib/axios";
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");  // ← ADD THIS
+const [email, setEmail] = useState("");  // ← ADD THIS
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    // TODO: Connect to your actual Backend API here
-    // await axios.post('http://localhost:5000/api/users/register', { email })
+  try {
+    const response = await authApi.register({ email });
+    setIsSuccess(true);
+  } catch (err: any) {
+    setError(
+      err.response?.data?.message || "Registration failed. Please try again."
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-    // Simulating API success for now
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSuccess(true);
-    }, 1500);
-  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
@@ -46,9 +54,22 @@ export default function RegisterPage() {
           ) : (
             <form onSubmit={handleRegister}>
               <div className="space-y-4">
+                 {error && (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" required />
+                  <Input
+  id="email"
+  type="email"
+  placeholder="you@example.com"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  required
+/>
+
                 </div>
                 <Button className="w-full bg-slate-900" disabled={isLoading}>
                   {isLoading ? "Sending Link..." : "Sign Up with Email"}

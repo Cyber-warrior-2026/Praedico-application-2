@@ -12,20 +12,43 @@ import {
   Plus,
   MoreVertical
 } from "lucide-react";
+import { adminApi } from "@/lib/api";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+const [stats, setStats] = useState({
+  totalUsers: 0,
+  activeUsers: 0,
+  pendingVerifications: 0,
+});
+const [isLoading, setIsLoading] = useState(true);
+
+// Fetch dashboard data from API
+const fetchDashboardData = async () => {
+  try {
+    const data = await adminApi.getDashboardStats();
+    setStats(data.stats);
+  } catch (error) {
+    console.error("Failed to fetch dashboard stats:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // --- SECURITY CHECK ---
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/staff-access-portal");
-    } else {
-      setIsAuthorized(true);
-    }
-  }, [router]);
+useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+  
+  if (!token) {
+    router.push("/staff-access-portal");
+    return;
+  }
+
+  setIsAuthorized(true);
+  fetchDashboardData();
+}, [router]);
+
 
   // Prevent flash of content
   if (!isAuthorized) return null;
