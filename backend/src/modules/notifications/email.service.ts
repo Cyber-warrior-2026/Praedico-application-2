@@ -12,9 +12,9 @@ const transporter = nodemailer.createTransport({
 // Your company logo URL
 const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-application-2/main/backend/praedico_global_research_pvt_ltd_logo.jpg';
 
-/**
- * Send Verification Email with Beautiful Design
- */
+
+
+
 export const sendVerificationEmail = async (email: string, token: string) => {
   const verificationLink = `${ENV.FRONTEND_URL}/verify/${token}`;
 

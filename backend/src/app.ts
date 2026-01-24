@@ -17,8 +17,8 @@ export const createApp = (): Application => {
   const app = express();
 
   // --- 1. Security Middleware Layer ---
-  app.use(helmet()); // Secure HTTP Headers
-  app.use(securityHeaders); // Your Custom Headers
+  app.use(helmet()); 
+  app.use(securityHeaders); 
   app.use(
     cors({
       origin: ENV.FRONTEND_URL,
@@ -27,20 +27,20 @@ export const createApp = (): Application => {
       allowedHeaders: ["Content-Type", "Authorization", "x-praedico-security"],
     }),
   );
-  app.use(hpp()); // Prevent Parameter Pollution
+  app.use(hpp());
 
   // Global Rate Limiting (Basic DDoS Protection)
   const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    windowMs: 15 * 60 * 1000, 
+    max: 100,
     message: "Too many requests from this IP, please try again later.",
   });
-  app.use("/api", limiter); // Apply to all API routes
+  app.use("/api", limiter);
 
   // --- 2. Parser Middleware Layer ---
-  app.use(express.json({ limit: "10kb" })); // Limit body size to prevent crashes
+  app.use(express.json({ limit: "10kb" }));
   app.use(cookieParser());
-  app.use(requestLogger); // Your Logger
+  app.use(requestLogger); 
 
   // --- 3. Health Check (Keep this fast) ---
   app.get("/health", (req: Request, res: Response) => {
@@ -53,7 +53,7 @@ export const createApp = (): Application => {
 
   // --- 4. Routes ---
   app.use("/api/users", userRoutes);
-  app.use("/api/admin", adminRoutes); // Fixed: Added leading slash '/'
+  app.use("/api/admin", adminRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes
@@ -63,7 +63,7 @@ export const createApp = (): Application => {
       .json({ success: false, message: `Route ${req.originalUrl} not found` });
   });
 
-  // Global Error Handler (Must be last)
+
   app.use(globalErrorHandler);
 
   return app;

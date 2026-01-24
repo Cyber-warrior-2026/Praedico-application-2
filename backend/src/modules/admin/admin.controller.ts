@@ -10,13 +10,13 @@ const loginSchema = z.object({
 
 export const loginAdmin = async (req: Request, res: Response) => {
   try {
-    // 1. Validate Input
+
     const { email, password } = loginSchema.parse(req.body);
 
-    // 2. Call Service
+
     const token = await AdminService.login(email, password);
 
-    // 3. Send Token (In production, send as HttpOnly Cookie)
+
     res.status(200).json({ success: true, token });
 
   } catch (error: any) {
