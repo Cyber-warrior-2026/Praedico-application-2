@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN: {
     LOGIN: '/api/admin/login',
-    DASHBOARD: '/api/admin/dashboard',
+    DASHBOARD: '/api/admin',
     USERS: '/api/admin/users',
   },
   

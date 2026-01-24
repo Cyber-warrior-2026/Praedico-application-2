@@ -19,9 +19,15 @@ export const adminApi = {
   },
 
   getDashboardStats: async () => {
+  try {
     const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.DASHBOARD);
     return response.data;
-  },
+  } catch (error) {
+    // Return a default structure so the frontend doesn't crash on undefined
+    console.error("Dashboard API Error:", error);
+    return { stats: { totalUsers: 0, activeUsers: 0, pendingVerifications: 0 } };
+  }
+},
 
   getAllUsers: async () => {
     const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.USERS);
