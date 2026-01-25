@@ -5,10 +5,12 @@ import jwt from 'jsonwebtoken';
 export class AdminService {
   
 
-  static async createAdmin(email: string, plainPass: string) {
-    const hash = await argon2.hash(plainPass);
-    return await AdminModel.create({ email, passwordHash: hash });
-  }
+  // Added 'name' parameter with a default string
+static async createAdmin(email: string, plainPass: string, name: string = "Admin") {
+  const hash = await argon2.hash(plainPass);
+  // Pass 'name' to the database
+  return await AdminModel.create({ email, passwordHash: hash, name });
+}
 
 
   static async login(email: string, plainPass: string) {
@@ -23,10 +25,15 @@ export class AdminService {
 
 
     const token = jwt.sign(
-      { id: admin._id, role: admin.role, email: admin.email },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' }
-    );
+  { 
+    id: admin._id, 
+    role: admin.role, 
+    email: admin.email, 
+    name: admin.name || "Admin"
+  },
+  process.env.JWT_SECRET as string,
+  { expiresIn: '1h' }
+);
 
     return token;
   }
