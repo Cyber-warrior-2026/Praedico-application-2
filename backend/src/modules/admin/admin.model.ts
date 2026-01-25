@@ -26,7 +26,7 @@ const AdminSchema: Schema = new Schema({
     default: 'super_admin' 
   }
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt
+  timestamps: true
 });
 
 export const AdminModel = mongoose.model<IAdmin>('Admin', AdminSchema);
