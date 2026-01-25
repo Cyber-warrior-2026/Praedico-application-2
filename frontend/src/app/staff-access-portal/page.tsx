@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldAlert } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Github, Linkedin, Facebook, Chrome } from "lucide-react"; // Icons
 import axios, { AxiosError } from "axios"; 
 
 export default function HiddenAdminLogin() {
@@ -14,6 +10,7 @@ export default function HiddenAdminLogin() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -24,79 +21,142 @@ export default function HiddenAdminLogin() {
       const response = await axios.post("http://localhost:4000/api/admin/login", {
         email,
         password
-      },
-      {
-        headers: {
+      }, {
+        headers: { "x-praedico-security": "u8a9s8d7f6g5h4j3k2l1" }
+      });
 
-          "x-praedico-security": "u8a9s8d7f6g5h4j3k2l1",
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-      // FIX 3: Your backend only returns 'token'. 
-      // We don't need to check 'user.role' here because the Backend ALREADY checked it.
-      // If the backend sent a 200 OK, it means they ARE an admin.
       const { token } = response.data;
-
-      // 4. Success! Redirect to the Hidden Dashboard
       localStorage.setItem("accessToken", token); 
-      
       router.push("/admin");
 
     } catch (err) { 
       const error = err as AxiosError<{ message: string }>;
-      console.error(error);
-      
-      alert(error.response?.data?.message || "Access Denied: Invalid Credentials");
-      
+      alert(error.response?.data?.message || "Invalid Credentials");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950">
-      <Card className="w-[400px] shadow-2xl border-red-900 bg-slate-900 text-slate-100">
-        <CardHeader className="space-y-1 items-center">
-          <ShieldAlert className="h-12 w-12 text-red-600 mb-2" />
-          <CardTitle className="text-2xl font-bold text-center text-white">Restricted Access</CardTitle>
-          <CardDescription className="text-center text-red-400">
-            Authorized Personnel Only. <br/> All attempts are logged.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAdminLogin}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-200">Admin Email</Label>
-                <Input 
-                  id="email" 
-                  type="email"
-                  placeholder="admin@praedico.com" 
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-red-600" 
-                  required 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-200">Secure Key</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  className="bg-slate-800 border-slate-700 text-white focus-visible:ring-red-600"
-                  required 
+    // 1. THE DEEP AURORA BACKGROUND
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#050511] relative overflow-hidden">
+      {/* Ambient Glows */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px]" />
+      
+      {/* 2. THE GLASS CARD CONTAINER */}
+      <div className="relative w-full max-w-[420px] mx-4">
+        
+        {/* Neon Top Border Gradient */}
+        <div className="absolute -top-[2px] left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-t-2xl z-10" />
+
+        <div className="backdrop-blur-2xl bg-[#0a0a16]/80 border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50">
+          
+          {/* HEADER */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Get Started Now</h1>
+            <p className="text-slate-400 text-sm">Enter your credentials to login your account</p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-5">
+            
+            {/* EMAIL INPUT */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-400 ml-1">Email</label>
+              <input 
+                type="email" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                className="w-full bg-[#13132b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+              />
+            </div>
+
+            {/* PASSWORD INPUT */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-400 ml-1">Password</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-[#13132b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all pr-10"
                 />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-              <Button className="w-full bg-red-700 hover:bg-red-800 text-white font-bold" disabled={isLoading}>
-                {isLoading ? "Authenticating..." : "Access Mainframe"}
-              </Button>
             </div>
+
+            {/* OPTIONS ROW */}
+            <div className="flex items-center justify-between text-xs">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative flex items-center">
+                  <input type="checkbox" className="peer sr-only" />
+                  <div className="h-4 w-4 rounded border border-slate-600 bg-[#13132b] peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all"></div>
+                  {/* Custom Checkmark (Simulated) */}
+                </div>
+                <span className="text-slate-400 group-hover:text-slate-300 transition-colors">Remember Me</span>
+              </label>
+              <a href="#" className="text-blue-500 hover:text-blue-400 transition-colors font-medium">Forgot Password?</a>
+            </div>
+
+            {/* SUBMIT BUTTON */}
+            <button 
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-[0.98] transition-all duration-200"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 
+                  Authenticating...
+                </span>
+              ) : (
+                "Login"
+              )}
+            </button>
+
+            <div className="text-center">
+              <span className="text-slate-500 text-xs">Don't have an account yet? </span>
+              <a href="#" className="text-blue-500 hover:text-blue-400 text-xs font-medium transition-colors">Sign up here</a>
+            </div>
+
+            {/* SOCIAL LOGIN DIVIDER */}
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/10"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-[#0a0a16] px-2 text-slate-500 font-medium tracking-wider">Or sign in with</span>
+              </div>
+            </div>
+
+            {/* SOCIAL BUTTONS */}
+            <div className="flex justify-center gap-4">
+              <SocialButton icon={Chrome} color="bg-red-500" />
+              <SocialButton icon={Facebook} color="bg-blue-600" />
+              <SocialButton icon={Linkedin} color="bg-blue-500" />
+              <SocialButton icon={Github} color="bg-slate-800" />
+            </div>
+
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
+  );
+}
+
+// Helper for Social Buttons
+function SocialButton({ icon: Icon, color }: { icon: any, color: string }) {
+  return (
+    <button className={`h-10 w-10 rounded-full flex items-center justify-center text-white shadow-lg hover:-translate-y-1 transition-all duration-300 ${color}`}>
+      <Icon size={18} fill="white" className="stroke-none" /> {/* Using fill for solid logos */}
+    </button>
   );
 }
