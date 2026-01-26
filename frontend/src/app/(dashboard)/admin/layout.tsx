@@ -1,34 +1,46 @@
-import { Sidebar } from "@/components/shared/Sidebar";
-import DashboardNavbar from "@/components/shared/DashboardNavbar"; 
+"use client";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { useState, ReactNode } from "react";
+import { Sidebar } from "../../../components/shared/Sidebar";
+import { PanelLeft, PanelLeftClose } from "lucide-react";
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
-    // 1. MASTER CONTAINER: Dark Background, Full Screen, No Window Scrollbar
-    <div className="flex h-screen w-full bg-[#0b1120] overflow-hidden">
-      
-      {/* 2. SIDEBAR CONTAINER: Static width, full height */}
-      <div className="w-64 shrink-0 h-full border-r border-slate-800 bg-[#0f172a]">
-        <Sidebar role="admin" />
+    <div className="flex h-screen bg-[#0a0b14]">
+      {/* Sidebar with dynamic width */}
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
+        <Sidebar 
+          role="admin" 
+          isOpen={isSidebarOpen} 
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+        />
       </div>
 
-      {/* 3. MAIN CONTENT AREA: Flex Column */}
-      <div className="flex flex-col flex-1 h-full w-full overflow-hidden">
-        
-        {/* A. HEADER: Sits at the top of the content area */}
-        <DashboardNavbar />
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navbar with Toggle Button */}
+        <header className="h-16 bg-[#0f172a] border-b border-slate-800 flex items-center px-6 gap-4">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2.5 rounded-lg hover:bg-slate-800/50 transition-all duration-300 group"
+          >
+            {isSidebarOpen ? (
+              <PanelLeftClose className="w-5 h-5 text-slate-400 group-hover:text-blue-400" />
+            ) : (
+              <PanelLeft className="w-5 h-5 text-slate-400 group-hover:text-blue-400" />
+            )}
+          </button>
 
-        {/* B. SCROLLABLE PAGE: The rest of the space scrolls independently */}
-        <main className="flex-1 overflow-y-auto p-8 scroll-smooth">
-           <div className="max-w-[1600px] mx-auto">
-             {children}
-           </div>
+          {/* Your existing navbar content */}
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          {children}
         </main>
       </div>
-
     </div>
   );
 }
