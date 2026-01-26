@@ -9,10 +9,17 @@ import {
   ArrowRight, CheckCircle2, Play, Menu, X, 
   Shield, Zap, Globe, BarChart3, Lock, Smartphone, Check
 } from "lucide-react";
+import LoginModal from "@/components/shared/LoginModal";
+import RegisterModal from "@/components/shared/RegisterModal";
+
 
 export default function UserPortal() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+
   
   // PRICING STATE
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -25,8 +32,10 @@ export default function UserPortal() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSignIn = () => router.push("/login");
-  const handleGetStarted = () => router.push("/register");
+const handleSignIn = () => setIsLoginModalOpen(true);
+
+const handleGetStarted = () => setIsRegisterModalOpen(true);
+
 
   return (
     <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans pb-20">
@@ -295,6 +304,22 @@ export default function UserPortal() {
           </div>
         </div>
       </section>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
+
+    <RegisterModal 
+  isOpen={isRegisterModalOpen} 
+  onClose={() => setIsRegisterModalOpen(false)}
+  onSwitchToLogin={() => {
+    setIsRegisterModalOpen(false);
+    setIsLoginModalOpen(true);
+  }}
+/>
+
 
       {/* FOOTER REMOVED FROM HERE */}
     </div>
