@@ -75,7 +75,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
               <Zap className="w-6 h-6 text-white fill-white" />
             </div>
             <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-              Nexus<span className="font-light text-slate-500">Portal</span>
+              Praedico<span className="font-light text-slate-500">Portal</span>
             </span>
           </div>
 
