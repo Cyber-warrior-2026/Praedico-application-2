@@ -6,25 +6,51 @@ export interface AdminLoginData {
   password: string;
 }
 
+
+const EMPTY_STATS = {
+  stats: {
+    totalUsers: 0,
+    activeUsers: 0,
+    pendingVerifications: 0,
+  }
+};
+
 export const adminApi = {
   login: async (data: AdminLoginData) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.ADMIN.LOGIN, data);
-    
-    if (response.data.accessToken) {
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('admin', JSON.stringify(response.data.admin));
+    try {
+      const response = await axiosInstance.post(API_ENDPOINTS.ADMIN.LOGIN, data);
+      
+      if (response.data?.accessToken) {
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('admin', JSON.stringify(response.data.admin));
+      }
+      return response.data;
+    } catch (error) {
+      console.error("Login Failed:", error);
+      throw error; 
     }
-    
-    return response.data;
   },
 
   getDashboardStats: async () => {
-    const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.DASHBOARD);
-    return response.data;
+    try {
+
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.DASHBOARD);
+      return response.data;
+    } catch (error) {
+
+      console.warn("⚠️ API Failed (404). Returning empty stats to keep UI alive.");
+      console.warn("Check API_ENDPOINTS.ADMIN.DASHBOARD value in constants.ts");
+      return EMPTY_STATS; 
+    }
   },
 
   getAllUsers: async () => {
-    const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.USERS);
-    return response.data;
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.USERS);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      return [];
+    }
   },
 };

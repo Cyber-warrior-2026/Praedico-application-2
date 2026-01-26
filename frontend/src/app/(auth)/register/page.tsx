@@ -2,23 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, AlertCircle, CheckCircle2, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Image from "next/image"; 
+import { Loader2, Facebook, Github, Chrome, CheckCircle2, User, Mail } from "lucide-react"; // Removed Eye, EyeOff since password is gone
 import { authApi } from "@/lib/api";
 
 export default function RegisterPage() {
+  const [name, setName] = useState(""); 
   const [email, setEmail] = useState(""); 
+  // REMOVED: const [password, setPassword] = useState(""); 
+  // REMOVED: const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +21,8 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      await authApi.register({ email });
+      // Register with Name and Email ONLY
+      await authApi.register({ name, email }); 
       setIsSuccess(true);
     } catch (err: any) {
       setError(
@@ -41,104 +34,164 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-zinc-50 text-zinc-900 p-4">
+    <div className="relative min-h-screen w-full bg-[#FFDAB9] flex items-center justify-center font-sans overflow-hidden">
       
-      {/* Background Pattern (Subtle) */}
-      <div className="fixed inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      {/* =========================================
+          BACKGROUND: FLOATING LEAVES & PETALS
+      ========================================= */}
+      
+      <style jsx global>{`
+        @keyframes float-leaf {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(10px, 20px) rotate(10deg); }
+        }
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-leaf { animation: float-leaf 6s ease-in-out infinite; }
+        .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+      `}</style>
 
-      <Card className="w-full max-w-[400px] shadow-xl border-zinc-200 bg-white/80 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-500">
+      {/* Background Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#FFC3A0] to-[#FFAFBD] opacity-80" />
+
+      {/* Floating Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+         <div className="absolute top-10 left-10 w-8 h-8 bg-[#C1D855] rounded-full opacity-60 animate-leaf" style={{ animationDelay: '0s' }} />
+         <div className="absolute top-20 left-40 w-4 h-6 bg-[#FF6B6B] rounded-full opacity-50 animate-leaf" style={{ animationDelay: '1s' }} />
+         <div className="absolute bottom-20 right-20 w-6 h-6 bg-[#C1D855] rounded-full opacity-60 animate-leaf" style={{ animationDelay: '2s' }} />
+         <div className="absolute bottom-40 right-10 w-5 h-8 bg-[#FFD700] rounded-full opacity-50 animate-leaf" style={{ animationDelay: '3s' }} />
+         <div className="absolute top-1/2 left-1/4 w-3 h-3 bg-[#FF6B6B] rounded-full opacity-40 animate-leaf" style={{ animationDelay: '4s' }} />
+      </div>
+
+      {/* =========================================
+          MAIN CONTAINER CARD
+      ========================================= */}
+      <div className="relative z-10 w-full max-w-5xl h-auto md:h-[650px] bg-white/30 backdrop-blur-xl border border-white/40 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex overflow-hidden p-4 md:p-6">
         
-        {/* --- STATE 1: SUCCESS MESSAGE --- */}
-        {isSuccess ? (
-          <div className="p-8 text-center space-y-6">
-            <div className="h-16 w-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-100">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold tracking-tight text-zinc-900">Check your email</h2>
-              <p className="text-zinc-500 text-sm leading-relaxed">
-                We have sent a verification link to <br/>
-                <span className="font-medium text-zinc-900">{email}</span>.
-              </p>
-            </div>
-            <div className="pt-2">
-               <Alert className="bg-emerald-50/50 border-emerald-100 text-emerald-800 text-left text-xs">
-                 <AlertDescription>
-                   Click the link in the email to activate your account.
-                 </AlertDescription>
-               </Alert>
-            </div>
-          </div>
-        ) : (
-
-          /* --- STATE 2: REGISTRATION FORM --- */
-          <>
-            <CardHeader className="space-y-1 text-center pb-2">
-              <div className="mx-auto mb-4 h-12 w-12 bg-zinc-100 text-zinc-900 rounded-xl flex items-center justify-center border border-zinc-200 shadow-sm">
-                <UserPlus className="h-6 w-6" />
+        {/* LEFT SIDE: FORM */}
+        <div className="w-full md:w-[450px] bg-white/40 rounded-[30px] p-8 flex flex-col justify-center relative shadow-inner">
+          
+          {isSuccess ? (
+             <div className="text-center space-y-6 animate-in fade-in zoom-in">
+               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600 shadow-sm">
+                 <CheckCircle2 size={40} />
+               </div>
+               <div>
+                 <h2 className="text-2xl font-bold text-[#4A3B32]">Account Created!</h2>
+                 <p className="text-[#8B7E74] text-sm mt-2">Welcome aboard, {name}.<br/>Please check your email to verify.</p>
+               </div>
+               <Link href="/login" className="block text-[#E95C26] font-bold hover:underline text-sm">Proceed to Login</Link>
+             </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <p className="text-sm font-medium text-[#8B7E74] mb-1">Start your journey</p>
+                <h1 className="text-4xl font-extrabold text-[#2D241E] tracking-tight">Create Account</h1>
               </div>
-              <CardTitle className="text-2xl font-bold tracking-tight text-zinc-900">
-                Create an account
-              </CardTitle>
-              <CardDescription className="text-zinc-500">
-                Enter your email below to get started
-              </CardDescription>
-            </CardHeader>
 
-            <CardContent className="pt-6">
+              {error && <p className="text-red-500 text-xs mb-4 text-center bg-red-100 py-2 rounded-lg">{error}</p>}
+
               <form onSubmit={handleRegister} className="space-y-4">
                 
-                {error && (
-                  <Alert variant="destructive" className="py-2 bg-red-50 border-red-200 text-red-600">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </div>
-                  </Alert>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-zinc-700 font-medium">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    className="h-11 bg-zinc-50 border-zinc-200 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 transition-all"
-                    required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                {/* Full Name Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#5C4D44] ml-1">Full Name</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Priyank Gupta"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="w-full bg-white rounded-xl px-4 py-3 text-sm text-[#4A3B32] placeholder:text-[#B0A69D] focus:outline-none focus:ring-2 focus:ring-[#E95C26]/50 transition-all shadow-sm border border-transparent focus:border-[#E95C26]/30 pl-10"
+                    />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B0A69D]" />
+                  </div>
                 </div>
 
-                <Button 
-                  className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/10 mt-2 transition-all active:scale-[0.98]" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Sending Link...
-                    </span>
-                  ) : (
-                    "Sign Up with Email"
-                  )}
-                </Button>
-              </form>
-            </CardContent>
+                {/* Email Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#5C4D44] ml-1">Email</label>
+                  <div className="relative">
+                    <input 
+                      type="email" 
+                      placeholder="arjun123@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full bg-white rounded-xl px-4 py-3 text-sm text-[#4A3B32] placeholder:text-[#B0A69D] focus:outline-none focus:ring-2 focus:ring-[#E95C26]/50 transition-all shadow-sm border border-transparent focus:border-[#E95C26]/30 pl-10"
+                    />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B0A69D]" />
+                  </div>
+                </div>
 
-            <CardFooter className="flex justify-center border-t border-zinc-100 pt-6 pb-6 bg-zinc-50/50 rounded-b-xl">
-              <div className="text-sm text-zinc-500">
-                Already have an account?{" "}
-                <Link 
-                  href="/login" 
-                  className="font-medium text-zinc-900 hover:text-zinc-700 underline underline-offset-4 transition-colors"
+                {/* REMOVED PASSWORD INPUT BLOCK HERE */}
+
+                {/* Sign Up Button */}
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full bg-[#E95C26] hover:bg-[#D14918] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#E95C26]/30 active:scale-[0.98] transition-all duration-200 mt-2 flex items-center justify-center gap-2"
                 >
-                  Sign in
-                </Link>
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign Up"}
+                </button>
+
+              </form>
+
+              {/* Social Divider */}
+              <div className="mt-6 text-center">
+                <p className="text-xs font-medium text-[#8B7E74] mb-4">Or Sign Up With</p>
+                <div className="flex justify-center gap-3">
+                  <SocialButton icon={Chrome} color="text-[#EA4335]" />
+                  <SocialButton icon={Github} color="text-[#333]" />
+                  <SocialButton icon={Facebook} color="text-[#1877F2]" />
+                </div>
               </div>
-            </CardFooter>
-          </>
-        )}
-      </Card>
+
+              {/* Switch to Login */}
+              <p className="text-center text-xs text-[#8B7E74] mt-6">
+                Already have an account? <Link href="/login" className="font-bold text-[#E95C26] hover:underline">Log In</Link>
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* RIGHT SIDE: ILLUSTRATION AREA */}
+        <div className="hidden md:flex flex-1 items-center justify-center relative">
+           <div className="relative w-full h-full flex items-center justify-center">
+              
+              {/* IMAGE: Monk Bird */}
+              <div className="relative w-[500px] h-[500px] animate-float-slow z-10"> 
+                 <Image 
+                   src="/bird-monk.png" 
+                   alt="3D Bird" 
+                   fill 
+                   className="object-contain drop-shadow-2xl" 
+                   priority 
+                 />
+              </div>
+              
+              {/* Floating particles behind the bird */}
+              <div className="absolute top-1/4 right-1/4 w-4 h-4 bg-[#90EE90] rounded-full blur-sm animate-bounce duration-[3000ms]"></div>
+              <div className="absolute bottom-1/4 left-1/4 w-6 h-6 bg-[#FFD700] rounded-full blur-sm animate-bounce duration-[4000ms]"></div>
+           </div>
+        </div>
+
+      </div>
     </div>
+  );
+}
+
+// Helper Component for Social Buttons
+function SocialButton({ icon: Icon, color }: { icon: any, color: string }) {
+  return (
+    <button 
+      type="button"
+      className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 hover:shadow-lg transition-all duration-300 border border-transparent hover:border-[#E95C26]/20"
+    >
+      <Icon size={20} className={color} />
+    </button>
   );
 }
