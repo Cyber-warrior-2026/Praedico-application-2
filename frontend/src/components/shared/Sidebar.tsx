@@ -15,24 +15,25 @@ import {
   Mail,
   HelpCircle,
   Zap,
-  LayoutTemplate, // For UI Elements
-  ShoppingBag, // For eCommerce
-  Table, // For Tables
-  KeyRound, // For Authentication
-  UserCircle2, // For User Profile
-  Briefcase, // For Pages
-  Layers, // For Components
-  Palette, // For Icons
-  ListChecks, // For Forms
-  ChevronDown // For dropdown arrow
+  LayoutTemplate,
+  ShoppingBag,
+  Table,
+  KeyRound,
+  UserCircle2,
+  Briefcase,
+  Layers,
+  Palette,
+  ListChecks,
+  ChevronDown
 } from "lucide-react";
-import { cn } from "@/lib/utils"; // Assuming you have a utility for classnames, if not you can combine strings manually
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   role: "admin" | "user";
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
-// Define the structure for a menu item
 type MenuItem = {
   href?: string;
   label: string;
@@ -41,20 +42,16 @@ type MenuItem = {
   subItems?: { href: string; label: string }[];
 };
 
-// Define the structure for a menu group
 type MenuGroup = {
   title: string;
   items: MenuItem[];
 };
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname();
   
-  // State for Dynamic Data
   const [adminName, setAdminName] = useState("Admin");
   const [adminEmail, setAdminEmail] = useState("loading...");
-
-  // State to track expanded submenus
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const toggleSubmenu = (label: string) => {
@@ -63,7 +60,6 @@ export function Sidebar({ role }: SidebarProps) {
     );
   };
 
-  // Expanded Menu Groups to match the desired structure
   const menuGroups: MenuGroup[] = [
     {
       title: "Overview",
@@ -165,7 +161,6 @@ export function Sidebar({ role }: SidebarProps) {
     }
   ];
 
-  // Fetch Admin Name/Email from Token
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -181,22 +176,26 @@ export function Sidebar({ role }: SidebarProps) {
   }, []);
 
   return (
-    <aside className="h-full w-full flex flex-col bg-[#0f172a] text-slate-300">
+    <aside className={`h-full flex flex-col bg-[#0f172a] text-slate-300 transition-all duration-300 ease-in-out overflow-hidden ${
+      isOpen ? 'w-full' : 'w-20'
+    }`}>
       
       {/* 1. HEADER LOGO */}
       <div className="h-20 flex items-center px-6 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-900/40 ring-1 ring-white/10">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-900/40 ring-1 ring-white/10 flex-shrink-0">
             <ShieldCheck className="text-white h-6 w-6" />
           </div>
-          <div>
-             <span className="font-bold text-lg text-white tracking-tight block leading-none">
-               Praedico
-             </span>
-             <span className="text-[10px] uppercase font-bold text-blue-500 tracking-wider">
-               Admin Portal
-             </span>
-          </div>
+          {isOpen && (
+            <div>
+              <span className="font-bold text-lg text-white tracking-tight block leading-none">
+                Praedico
+              </span>
+              <span className="text-[10px] uppercase font-bold text-blue-500 tracking-wider">
+                Admin Portal
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -205,9 +204,11 @@ export function Sidebar({ role }: SidebarProps) {
         
         {menuGroups.map((group, groupIndex) => (
           <div key={groupIndex}>
-            <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-              {group.title}
-            </p>
+            {isOpen && (
+              <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                {group.title}
+              </p>
+            )}
             <div className="space-y-1">
               {group.items.map((link) => {
                 const Icon = link.icon;
@@ -220,46 +221,52 @@ export function Sidebar({ role }: SidebarProps) {
                     {hasSubItems ? (
                       // Expandable Menu Item
                       <button
-                        onClick={() => toggleSubmenu(link.label)}
-                        className={`w-full group relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                        onClick={() => isOpen && toggleSubmenu(link.label)}
+                        className={`w-full group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
                           isExpanded
                             ? "bg-slate-800/50 text-white"
                             : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={`h-5 w-5 transition-colors ${isExpanded ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
-                          {link.label}
+                          <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isExpanded ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                          {isOpen && link.label}
                         </div>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        {isOpen && (
+                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        )}
                       </button>
                     ) : (
                       // Standard Link Item
                       <Link
                         href={link.href!}
-                        className={`group relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                        className={`group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
                           isActive
                             ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30"
                             : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
-                          {link.label}
+                          <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                          {isOpen && link.label}
                         </div>
                         
-                        {link.badge && (
+                        {isOpen && link.badge && (
                           <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                             {link.badge}
                           </span>
+                        )}
+
+                        {!isOpen && link.badge && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                         )}
                         
                         {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-white/20" />}
                       </Link>
                     )}
 
-                    {/* Submenu Items */}
-                    {hasSubItems && isExpanded && (
+                    {/* Submenu Items - Only show when sidebar is open */}
+                    {hasSubItems && isExpanded && isOpen && (
                       <div className="pl-10 pr-2 py-2 space-y-1">
                         {link.subItems!.map((subItem) => {
                           const isSubActive = pathname === subItem.href;
@@ -286,42 +293,46 @@ export function Sidebar({ role }: SidebarProps) {
           </div>
         ))}
 
-        {/* 3. PROMO CARD */}
-        <div className="mt-6 mx-2">
-          <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 p-5 shadow-xl relative overflow-hidden group cursor-pointer">
-            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Zap size={80} />
-            </div>
-            
-            <div className="relative z-10">
-              <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center mb-3 backdrop-blur-sm">
-                <Zap className="text-white h-4 w-4 fill-white" />
+        {/* 3. PROMO CARD - Only show when open */}
+        {isOpen && (
+          <div className="mt-6 mx-2">
+            <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 p-5 shadow-xl relative overflow-hidden group cursor-pointer">
+              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Zap size={80} />
               </div>
-              <h4 className="text-white font-bold text-sm">Upgrade Plan</h4>
-              <p className="text-indigo-100 text-xs mt-1 mb-3 leading-relaxed">
-                Unlock advanced analytics and reporting features.
-              </p>
-              <button className="text-[10px] font-bold bg-white text-indigo-600 px-3 py-1.5 rounded-full shadow-sm hover:shadow-md hover:scale-105 transition-all">
-                View Plans
-              </button>
+              
+              <div className="relative z-10">
+                <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center mb-3 backdrop-blur-sm">
+                  <Zap className="text-white h-4 w-4 fill-white" />
+                </div>
+                <h4 className="text-white font-bold text-sm">Upgrade Plan</h4>
+                <p className="text-indigo-100 text-xs mt-1 mb-3 leading-relaxed">
+                  Unlock advanced analytics and reporting features.
+                </p>
+                <button className="text-[10px] font-bold bg-white text-indigo-600 px-3 py-1.5 rounded-full shadow-sm hover:shadow-md hover:scale-105 transition-all">
+                  View Plans
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
       </nav>
 
       {/* 4. FOOTER PROFILE SECTION */}
       <div className="p-4 border-t border-slate-800 shrink-0 bg-[#0b1120]/50">
-        <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 p-[2px]">
+        <div className={`flex items-center gap-3 mb-4 px-2 ${!isOpen && 'justify-center'}`}>
+          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 p-[2px] flex-shrink-0">
             <div className="h-full w-full rounded-full bg-[#0f172a] flex items-center justify-center">
               <span className="font-bold text-white text-xs">{adminName.charAt(0)}</span>
             </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white truncate">{adminName}</p>
-            <p className="text-xs text-slate-500 truncate">{adminEmail}</p>
-          </div>
+          {isOpen && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white truncate">{adminName}</p>
+              <p className="text-xs text-slate-500 truncate">{adminEmail}</p>
+            </div>
+          )}
         </div>
 
         <button 
@@ -329,10 +340,10 @@ export function Sidebar({ role }: SidebarProps) {
             localStorage.removeItem("accessToken"); 
             window.location.href = "/staff-access-portal"; 
           }}
-          className="flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/10"
+          className={`flex w-full items-center ${isOpen ? 'justify-center' : 'justify-center'} gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/10`}
         >
           <LogOut className="h-4 w-4" />
-          Sign Out
+          {isOpen && "Sign Out"}
         </button>
       </div>
 

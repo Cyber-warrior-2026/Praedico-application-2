@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Users, Activity, Clock, MoreVertical, 
-  DollarSign, ArrowUpRight, ArrowDownRight, 
-  Mail, MousePointer2, Eye, Calendar, 
-  MessageSquare, Paperclip, Search, Star, Filter, ChevronRight
-} from "lucide-react";
+import { Users, Activity, Clock, MoreVertical, DollarSign, ArrowUpRight, ArrowDownRight, Mail, MousePointer2, Eye, Calendar, MessageSquare, Paperclip, Search, Star, Filter, ChevronRight, PanelLeftClose, PanelLeft, LayoutDashboard, BarChart2, ShoppingCart, FileText, Inbox, Layers, Archive } from "lucide-react";
 
 export default function AdminDashboard() {
   // 1. STATIC DATA
@@ -18,6 +13,8 @@ export default function AdminDashboard() {
   
   // 2. DYNAMIC NAME STATE
   const [adminName, setAdminName] = useState("Admin");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
 
   // 3. DECODE TOKEN FOR NAME
   useEffect(() => {
