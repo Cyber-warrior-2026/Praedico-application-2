@@ -21,7 +21,7 @@ export default function ForgotPassword() {
 
     try {
       // Connecting to your Router: router.post('/forgot-password')
-      await axios.post("http://localhost:4000/api/users/forgot-password", { email });
+      await axios.post("http://localhost:5000/api/users/forgot-password", { email });
       setIsSubmitted(true);
     } catch (err: any) {
       setError(err.response?.data?.message || "We couldn't find that email. Please try again.");
