@@ -217,9 +217,18 @@ export default function UserDashboard() {
             </button>
 
             {/* Logout Button */}
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-red-500">
-              <LogOut className="w-5 h-5" />
-            </button>
+         {/* Logout Button */}
+<button 
+  onClick={() => {
+    localStorage.removeItem("accessToken");
+    window.location.href = "/";
+  }}
+  className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-red-500 hover:bg-red-50"
+  title="Logout"
+>
+  <LogOut className="w-5 h-5" />
+</button>
+
           </div>
         </header>
 
