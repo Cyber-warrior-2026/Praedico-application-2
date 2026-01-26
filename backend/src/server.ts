@@ -1,6 +1,6 @@
 import { createApp } from "./app";
-import connectDB from "./config/database"; // Ensure this path matches your folder
-import { ENV } from "./config/env"; // Use the safe ENV loader we built
+import connectDB from "./config/database"; 
+import { ENV } from "./config/env"; 
 import http from "http";
 import mongoose from "mongoose";
 
@@ -15,7 +15,8 @@ const startServer = async () => {
   // 3. Start Listener
   server.listen(ENV.PORT, () => {
     console.log(`\n🚀 Ferrari Engine Started on Port: ${ENV.PORT}`);
-    console.log(`🔒 Admin Security Mode: ACTIVE`);
+    // Updated Log: We are using Role Based Access Control now
+    console.log(`🛡️  RBAC Security System: ACTIVE`); 
     console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}\n`);
   });
 

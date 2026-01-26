@@ -10,7 +10,6 @@ import { globalErrorHandler } from "./common/errors/errorHandler";
 
 // Import Routes
 import userRoutes from "./modules/user/user.routes";
-import adminRoutes from "./modules/admin/admin.routes";
 import { ENV } from "./config/env";
 
 export const createApp = (): Application => {
@@ -24,7 +23,6 @@ export const createApp = (): Application => {
       origin: ENV.FRONTEND_URL,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization", "x-praedico-security"],
     }),
   );
   app.use(hpp());
@@ -53,7 +51,7 @@ export const createApp = (): Application => {
 
   // --- 4. Routes ---
   app.use("/api/users", userRoutes);
-  app.use("/api/admin", adminRoutes);
+
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes

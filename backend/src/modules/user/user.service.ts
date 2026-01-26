@@ -49,6 +49,7 @@ export class UserService {
     // Generate Tokens
     const { accessToken, refreshToken } = this.generateTokens(
       user._id.toString(),
+      user.role || "user"
     );
 
     return { user, accessToken, refreshToken };
@@ -67,6 +68,7 @@ export class UserService {
     // Generate Tokens
     const { accessToken, refreshToken } = this.generateTokens(
       user._id.toString(),
+      user.role || "user"
     );
 
     return { user, accessToken, refreshToken };
@@ -107,8 +109,8 @@ export class UserService {
   }
 
   // --- Helper: Centralized Token Generation ---
-  private generateTokens(userId: string) {
-    const accessToken = jwt.sign({ id: userId, role: "user" }, ENV.JWT_SECRET, {
+  private generateTokens(userId: string, role: string) {
+    const accessToken = jwt.sign({ id: userId, role: role }, ENV.JWT_SECRET, {
       expiresIn: ENV.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
 
