@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; 
+// 1. Import your component
+import IntegrationsMarquee from "@/components/user/IntegrationsMarquee"; 
 import { 
   ArrowRight, CheckCircle2, Play, Menu, X, 
   Shield, Zap, Globe, BarChart3, Lock, Smartphone, Check
@@ -29,17 +31,12 @@ export default function UserPortal() {
   return (
     <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans pb-20">
       
-      {/* GLOBAL STYLES (Animations) */}
+      {/* GLOBAL STYLES (Only for Hero/General animations, Marquee styles are inside the component now) */}
       <style jsx global>{`
         @keyframes float {
           0% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
           100% { transform: translateY(0px); }
-        }
-        @keyframes aurora {
-          0% { background-position: 50% 50%, 50% 50%; }
-          50% { background-position: 100% 0%, 0% 100%; }
-          100% { background-position: 50% 50%, 50% 50%; }
         }
         @keyframes reveal {
           from { opacity: 0; transform: translateY(30px); }
@@ -156,8 +153,16 @@ export default function UserPortal() {
         </div>
       </section>
 
+      {/* ==============================================================
+          2. INTEGRATIONS MARQUEE (IMPORTED COMPONENT)
+      ============================================================== */}
+      
+      <IntegrationsMarquee />
+
+      {/* ============================================================== */}
+
       {/* LOGO STRIP */}
-      <section className="py-10 border-y border-white/5 bg-white/[0.02]">
+      <section className="py-10 border-b border-white/5 bg-white/[0.02]">
         <div className="container mx-auto px-6 text-center">
           <p className="text-sm font-medium text-slate-500 mb-8 uppercase tracking-widest">Trusted by industry leaders</p>
           <div className="flex flex-wrap justify-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">

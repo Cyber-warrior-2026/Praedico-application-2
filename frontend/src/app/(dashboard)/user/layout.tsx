@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // --- ⏳ PREMIUM LOADING STATE ---
   if (!isAuthorized) {
     return (
+      
       <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
         <div className="relative">
           {/* Glowing Ring */}
