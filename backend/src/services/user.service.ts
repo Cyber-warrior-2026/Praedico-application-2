@@ -1,29 +1,43 @@
-import { UserModel } from "./user.model";
+import { UserModel } from "../models/user.model";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-} from "../notifications/email.service"; // Ensure this path is correct
-import { ENV } from "../../config/env";
+} from "./email.service";
+import { ENV } from "../config/env";
 
 export class UserService {
-  // 1. Register (Step One: Send Email)
-  async register(email: string) {
+  // 1. Register (Updated to accept Name)
+  async register(email: string, name?: string) {
     const existingUser = await UserModel.findOne({ email });
 
     if (existingUser && existingUser.isVerified) {
       throw new Error("Email already registered");
     }
 
+    // SMART NAME LOGIC:
+    // If 'name' is provided, use it.
+    // If not, assume the first part of the email (e.g. "arjun" from "arjun@gmail.com")
+    // This prevents the hardcoded "User" from ever entering your database.
+    const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
+
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     if (existingUser && !existingUser.isVerified) {
+      // Update existing unverified user
       existingUser.verificationToken = verificationToken;
+      existingUser.name = nameToSave; // Update the name
       await existingUser.save();
     } else {
-      await UserModel.create({ email, isVerified: false, verificationToken });
+      // Create new user with Name
+      await UserModel.create({
+        email,
+        name: nameToSave, // <--- CRITICAL FIX
+        isVerified: false,
+        verificationToken,
+      });
     }
 
     await sendVerificationEmail(email, verificationToken);
@@ -31,7 +45,7 @@ export class UserService {
     return { message: "Verification email sent. Check your inbox." };
   }
 
-  // 2. Verify (Step Two: Set Password & Auto-Login)
+  // 2. Verify
   async verify(token: string, plainPassword: string) {
     const user = await UserModel.findOne({ verificationToken: token }).select(
       "+verificationToken",
@@ -47,10 +61,7 @@ export class UserService {
     await user.save();
 
     // Generate Tokens
-    const { accessToken, refreshToken } = this.generateTokens(
-      user._id.toString(),
-      user.role || "user"
-    );
+    const { accessToken, refreshToken } = this.generateTokens(user);
 
     return { user, accessToken, refreshToken };
   }
@@ -66,10 +77,7 @@ export class UserService {
     if (!isValid) throw new Error("Invalid credentials");
 
     // Generate Tokens
-    const { accessToken, refreshToken } = this.generateTokens(
-      user._id.toString(),
-      user.role || "user"
-    );
+    const { accessToken, refreshToken } = this.generateTokens(user);
 
     return { user, accessToken, refreshToken };
   }
@@ -109,14 +117,21 @@ export class UserService {
   }
 
   // --- Helper: Centralized Token Generation ---
-  private generateTokens(userId: string, role: string) {
-    const accessToken = jwt.sign({ id: userId, role: role }, ENV.JWT_SECRET, {
+  private generateTokens(user: any) {
+    const payload = {
+      id: user._id.toString(),
+      role: user.role || "user",
+      email: user.email,
+      name: user.name, // Now this will definitely have a value!
+    };
+
+    const accessToken = jwt.sign(payload, ENV.JWT_SECRET, {
       expiresIn: ENV.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(
-      { id: userId },
-      ENV.JWT_REFRESH_SECRET, // Make sure this is in your env.ts
+      { id: user._id.toString() },
+      ENV.JWT_REFRESH_SECRET,
       { expiresIn: ENV.JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions,
     );
 
