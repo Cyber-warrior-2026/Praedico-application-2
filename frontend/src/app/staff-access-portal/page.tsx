@@ -23,7 +23,7 @@ export default function HiddenAdminLogin() {
         email,
         password
       }, {
-        withCredentials: true // <--- CRITICAL: Allows the browser to save the HttpOnly Cookie
+        withCredentials: true
       });
 
       const { user } = response.data;

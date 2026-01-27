@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import PriceRangeSlider from "@/user/components/PriceRangeSlider"; 
+import PriceRangeSlider from "@/app/user/components/PriceRangeSlider"; 
 import {
   Briefcase,
   BarChart2,
