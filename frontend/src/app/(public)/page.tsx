@@ -308,17 +308,21 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
       {/* Login Modal */}
       <LoginModal 
         isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onSwitchToRegister={() => {
+          setIsLoginModalOpen(false)
+          setIsRegisterModalOpen(true)
+        }}
       />
 
     <RegisterModal 
-  isOpen={isRegisterModalOpen} 
-  onClose={() => setIsRegisterModalOpen(false)}
-  onSwitchToLogin={() => {
-    setIsRegisterModalOpen(false);
-    setIsLoginModalOpen(true);
-  }}
-/>
+      isOpen={isRegisterModalOpen} 
+      onClose={() => setIsRegisterModalOpen(false)}
+      onSwitchToLogin={() => {
+        setIsRegisterModalOpen(false);
+        setIsLoginModalOpen(true);
+      }}
+    />
 
 
       {/* FOOTER REMOVED FROM HERE */}
