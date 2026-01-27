@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import axios from 'axios';
 import Link from "next/link";
 import { 
   LogOut, User, Settings, Bell, Menu, Search, Sparkles, Command
@@ -15,9 +16,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+} from "@/shared-components/ui/dropdown-menu"; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared-components/ui/avatar";
+import { Button } from "@/shared-components/ui/button";
 
 export default function DashboardNavbar() {
   const router = useRouter();
@@ -28,32 +29,33 @@ export default function DashboardNavbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // 2. Updated Token Logic
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    const fetchProfile = async () => {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // Fetch Email
-        setAdminEmail(payload.email || "admin@praedico.com");
-        
-        // Fetch Name (This is what you asked for)
-        if (payload.name) {
-          setAdminName(payload.name); 
+        const { data } = await axios.get("http://localhost:4000/api/users/me", {
+          withCredentials: true
+        });
+
+        if (data.success && data.user) {
+          setAdminName(data.user.name || "Admin"); 
+          setAdminEmail(data.user.email || "admin@praedico.com");
         }
       } catch (e) {
-        setAdminEmail("Unknown User");
+        setAdminEmail("Guest Mode");
       }
-    }
+    };
+
+    fetchProfile();
 
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+      router.push("/login");
+    } catch(e) { console.error(e); }
   };
 
   return (

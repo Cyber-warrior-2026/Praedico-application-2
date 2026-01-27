@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; 
 // 1. Import your component
-import IntegrationsMarquee from "@/components/user/IntegrationsMarquee"; 
+import IntegrationsMarquee from "@/user/components/IntegrationsMarquee"; 
 import { 
   ArrowRight, CheckCircle2, Play, Menu, X, 
   Shield, Zap, Globe, BarChart3, Lock, Smartphone, Check
 } from "lucide-react";
-import LoginModal from "@/components/shared/LoginModal";
-import RegisterModal from "@/components/shared/RegisterModal";
+import LoginModal from "@/user/components/LoginModal";
+import RegisterModal from "@/user/components/RegisterModal";
 
 
 export default function UserPortal() {

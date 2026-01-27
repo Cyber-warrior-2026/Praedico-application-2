@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Eye, EyeOff, Mail, Lock, User, Sparkles, ArrowRight, CheckCircle } from "lucide-react";
+import { X, Mail, User, CheckCircle, ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
 import { authApi } from "@/lib/api";
 
@@ -17,9 +17,11 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  
+  // 1. Updated State: Added name, removed acceptTerms
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
-    acceptTerms: false,
   });
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -27,15 +29,13 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     setIsLoading(true);
     setError("");
 
-    if (!formData.acceptTerms) {
-      setError("Please accept the Terms and Conditions");
-      setIsLoading(false);
-      return;
-    }
+    // Terms validation removed
 
     try {
+      // 2. Sending name to API
       await authApi.register({
         email: formData.email,
+        name: formData.name, 
       });
 
       setSuccess(true);
@@ -44,7 +44,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       setTimeout(() => {
         onClose();
         setSuccess(false);
-        setFormData({ email: "", acceptTerms: false });
+        setFormData({ name: "", email: "" });
       }, 3000);
     } catch (err: any) {
       setError(
@@ -61,7 +61,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Enhanced Backdrop */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md"
+        className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
@@ -146,7 +146,30 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
 
                 {/* Register Form */}
                 <form onSubmit={handleRegister} className="space-y-5">
-                  {/* Email Field */}
+                  
+                  {/* 1. Name Field (Added) */}
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-purple-600 transition-colors">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">
+                        <User className="h-5 w-5" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Arjun Singh"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white transition-all duration-300 hover:border-gray-300"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. Email Field */}
                   <div className="group">
                     <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-purple-600 transition-colors">
                       Email Address
@@ -169,55 +192,11 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                     </div>
                   </div>
 
-                  {/* Benefits List */}
-               {/* Welcome Message */}
-<div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100">
-  <p className="text-sm text-gray-700 leading-relaxed text-center">
-    Welcome to <span className="font-bold text-purple-600">Team Praedico</span>! 🎉
-    <br />
-    <span className="mt-2 block">
-      To get started, create an account and join our team of innovators building the future together.
-    </span>
-  </p>
-</div>
-
-
-                  {/* Terms & Conditions */}
-                  <div className="flex items-start gap-3 pt-2">
-                    <input
-                      type="checkbox"
-                      id="terms"
-                      checked={formData.acceptTerms}
-                      onChange={(e) =>
-                        setFormData({ ...formData, acceptTerms: e.target.checked })
-                      }
-                      className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
-                    />
-                    <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer">
-                      I agree to the{" "}
-                      <Link
-                        href="/terms"
-                        className="text-purple-600 hover:text-purple-700 font-medium"
-                        onClick={onClose}
-                      >
-                        Terms and Conditions
-                      </Link>{" "}
-                      and{" "}
-                      <Link
-                        href="/privacy"
-                        className="text-purple-600 hover:text-purple-700 font-medium"
-                        onClick={onClose}
-                      >
-                        Privacy Policy
-                      </Link>
-                    </label>
-                  </div>
-
                   {/* Register Button */}
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="relative w-full group overflow-hidden"
+                    className="relative w-full group overflow-hidden mt-2"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl" />
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -252,10 +231,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 {/* Social Sign Up */}
                 <div className="grid grid-cols-3 gap-3">
                   {/* Google */}
-                  <button
-                    type="button"
-                    className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  >
+                  <button className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="relative flex items-center justify-center">
                       <svg className="h-6 w-6" viewBox="0 0 24 24">
@@ -268,10 +244,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   </button>
 
                   {/* Facebook */}
-                  <button
-                    type="button"
-                    className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  >
+                  <button className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="relative flex items-center justify-center">
                       <svg className="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -281,10 +254,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   </button>
 
                   {/* GitHub */}
-                  <button
-                    type="button"
-                    className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  >
+                  <button className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="relative flex items-center justify-center">
                       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -295,22 +265,20 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 </div>
 
                 {/* Sign In Link */}
-                {/* Sign In Link */}
-<p className="mt-8 text-center text-sm text-gray-600">
-  Already have an account?{" "}
-  <button
-    type="button"
-    onClick={() => {
-      onClose();
-      onSwitchToLogin();
-    }}
-    className="font-semibold text-purple-600 hover:text-purple-700 transition-colors relative group"
-  >
-    Sign in
-    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
-  </button>
-</p>
-
+                <p className="mt-8 text-center text-sm text-gray-600">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onSwitchToLogin();
+                    }}
+                    className="font-semibold text-purple-600 hover:text-purple-700 transition-colors relative group"
+                  >
+                    Sign in
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
+                  </button>
+                </p>
               </>
             )}
           </div>

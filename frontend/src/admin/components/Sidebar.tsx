@@ -24,9 +24,11 @@ import {
   Layers,
   Palette,
   ListChecks,
-  ChevronDown
+  ChevronDown,
+  ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import axios from 'axios';
 
 interface SidebarProps {
   role: "admin" | "user";
@@ -51,8 +53,8 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname();
   
   const [adminName, setAdminName] = useState("Admin");
-  const [adminEmail, setAdminEmail] = useState("loading...");
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [adminEmail, setAdminEmail] = useState("Loading...");
+  const [expandedItems, setExpandedItems] = useState<string[]>([]); 
 
   const toggleSubmenu = (label: string) => {
     setExpandedItems((prev) => 
@@ -162,32 +164,44 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    const fetchProfile = async () => {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.name) setAdminName(payload.name);
-        if (payload.email) setAdminEmail(payload.email);
-        else setAdminEmail("admin@praedico.com");
-      } catch (e) {
-        console.error("Token error", e);
+        // Fetch from API (Cookie is sent automatically)
+        const { data } = await axios.get("http://localhost:4000/api/users/me", {
+          withCredentials: true
+        });
+
+        if (data.success && data.user) {
+          setAdminName(data.user.name || "Admin");
+          setAdminEmail(data.user.email || "admin@praedico.com");
+        }
+      } catch (error) {
+        console.error("Failed to load sidebar profile");
+        setAdminEmail("Guest");
       }
-    }
+    };
+
+    fetchProfile();
   }, []);
 
   return (
-    <aside className={`h-full flex flex-col bg-[#0f172a] text-slate-300 transition-all duration-300 ease-in-out overflow-hidden ${
-      isOpen ? 'w-full' : 'w-20'
-    }`}>
+    <aside className={`h-full flex flex-col bg-[#0f172a] text-slate-300 overflow-hidden`}>
       
-      {/* 1. HEADER LOGO */}
-      <div className="h-20 flex items-center px-6 shrink-0">
-        <div className="flex items-center gap-3">
+      {/* 1. HEADER LOGO - UPDATED */}
+      <div className={`h-20 flex items-center shrink-0 transition-all ${isOpen ? 'justify-between px-6' : 'justify-center px-2'}`}>
+        
+        {/* Logo Container - Click to Open when collapsed */}
+        <div 
+          onClick={() => !isOpen && onToggle()} 
+          className={`flex items-center gap-3 ${!isOpen && 'cursor-pointer hover:opacity-80 transition-opacity'}`}
+        >
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-900/40 ring-1 ring-white/10 flex-shrink-0">
             <ShieldCheck className="text-white h-6 w-6" />
           </div>
+          
+          {/* Title - Only visible when Open */}
           {isOpen && (
-            <div>
+            <div className="animate-in fade-in slide-in-from-left-2 duration-300">
               <span className="font-bold text-lg text-white tracking-tight block leading-none">
                 Praedico
               </span>
@@ -197,6 +211,16 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
             </div>
           )}
         </div>
+
+        {/* Toggle Button - Only visible when Open */}
+        {isOpen && (
+          <button 
+            onClick={onToggle}
+            className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
       </div>
 
       {/* 2. SCROLLABLE NAVIGATION */}
@@ -324,7 +348,8 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
         <div className={`flex items-center gap-3 mb-4 px-2 ${!isOpen && 'justify-center'}`}>
           <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 p-[2px] flex-shrink-0">
             <div className="h-full w-full rounded-full bg-[#0f172a] flex items-center justify-center">
-              <span className="font-bold text-white text-xs">{adminName.charAt(0)}</span>
+              {/* Ensure charAt works even if name is loading */}
+              <span className="font-bold text-white text-xs">{(adminName || "A").charAt(0)}</span>
             </div>
           </div>
           {isOpen && (
@@ -336,9 +361,11 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
         </div>
 
         <button 
-          onClick={() => { 
-            localStorage.removeItem("accessToken"); 
-            window.location.href = "/staff-access-portal"; 
+          onClick={async () => { 
+             try {
+               await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+               window.location.href = "/login"; 
+             } catch(e) { console.error(e); }
           }}
           className={`flex w-full items-center ${isOpen ? 'justify-center' : 'justify-center'} gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/10`}
         >
