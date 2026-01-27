@@ -9,9 +9,10 @@ import { authApi } from "@/lib/api";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSwitchToRegister: () => void; 
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -293,14 +294,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             {/* Sign Up Link */}
             <p className="mt-8 text-center text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link
-                href="/register"
+              <button
+                type="button"
+                onClick={() => {
+                   onClose();
+                   onSwitchToRegister(); 
+                }}
                 className="font-semibold text-green-600 hover:text-green-700 transition-colors relative group"
-                onClick={onClose}
               >
                 Create one
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300" />
-              </Link>
+              </button>
             </p>
           </div>
         </div>

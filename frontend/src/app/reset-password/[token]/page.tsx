@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation"; // 1. Import useParams
 import axios from "axios";
 import { Lock, CheckCircle2, Eye, EyeOff, KeyRound, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared-components/ui/button";
+import { Input } from "@/shared-components/ui/input";
+import { Label } from "@/shared-components/ui/label";
 import { 
   Card, 
   CardContent, 
@@ -14,8 +14,8 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+} from "@/shared-components/ui/card";
+import { Alert, AlertDescription } from "@/shared-components/ui/alert";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
 
     try {
       // Connect to Backend
-      await axios.post("http://localhost:5000/api/users/reset-password", {
+      await axios.post("http://localhost:4000/api/users/reset-password", {
         token: token, 
         newPassword: password
       });

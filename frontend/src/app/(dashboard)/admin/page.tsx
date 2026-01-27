@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, Activity, Clock, MoreVertical, DollarSign, ArrowUpRight, ArrowDownRight, Mail, MousePointer2, Eye, Calendar, MessageSquare, Paperclip, Search, Star, Filter, ChevronRight, PanelLeftClose, PanelLeft, LayoutDashboard, BarChart2, ShoppingCart, FileText, Inbox, Layers, Archive } from "lucide-react";
+import axios from 'axios';
 
 export default function AdminDashboard() {
   // 1. STATIC DATA
@@ -13,18 +14,27 @@ export default function AdminDashboard() {
   
   // 2. DYNAMIC NAME STATE
   const [adminName, setAdminName] = useState("Admin");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
 
 
   // 3. DECODE TOKEN FOR NAME
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
+    const fetchAdminProfile = async () => {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.name) setAdminName(payload.name);
-      } catch (e) { console.error(e); }
-    }
+        const { data } = await axios.get("http://localhost:4000/api/users/me", {
+          withCredentials: true
+        });
+
+        if (data.success && data.user) {
+          setAdminName(data.user.name || "Admin");
+        }
+      } catch (e) {
+        console.error("Failed to fetch admin profile", e);
+        // Optional: Redirect to login if needed, or rely on Middleware
+      }
+    };
+
+    fetchAdminProfile();
   }, []);
 
   return (

@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { ArrowRight, CheckCircle2, ChevronLeft, Fingerprint } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared-components/ui/button";
+import { Input } from "@/shared-components/ui/input";
+import { Label } from "@/shared-components/ui/label";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -21,7 +21,7 @@ export default function ForgotPassword() {
 
     try {
       // Connecting to your Router: router.post('/forgot-password')
-      await axios.post("http://localhost:5000/api/users/forgot-password", { email });
+      await axios.post("http://localhost:4000/api/users/forgot-password", { email });
       setIsSubmitted(true);
     } catch (err: any) {
       setError(err.response?.data?.message || "We couldn't find that email. Please try again.");

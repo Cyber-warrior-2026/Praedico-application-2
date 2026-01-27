@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import Footer from "@/components/shared/Footer";
+import Footer from "@/shared-components/Footer";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const [scrollProgress, setScrollProgress] = useState(0);

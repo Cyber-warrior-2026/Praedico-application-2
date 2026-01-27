@@ -9,29 +9,27 @@ import { requestLogger } from "./common/middlewares/logging.middleware";
 import { globalErrorHandler } from "./common/errors/errorHandler";
 
 // Import Routes
-import userRoutes from "./modules/user/user.routes";
-import adminRoutes from "./modules/admin/admin.routes";
+import userRoutes from "./routes/user.routes";
 import { ENV } from "./config/env";
 
 export const createApp = (): Application => {
   const app = express();
 
   // --- 1. Security Middleware Layer ---
-  app.use(helmet()); 
-  app.use(securityHeaders); 
+  app.use(helmet());
+  app.use(securityHeaders);
   app.use(
     cors({
       origin: ENV.FRONTEND_URL,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization", "x-praedico-security"],
     }),
   );
   app.use(hpp());
 
   // Global Rate Limiting (Basic DDoS Protection)
   const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
+    windowMs: 15 * 60 * 1000,
     max: 100,
     message: "Too many requests from this IP, please try again later.",
   });
@@ -40,7 +38,7 @@ export const createApp = (): Application => {
   // --- 2. Parser Middleware Layer ---
   app.use(express.json({ limit: "10kb" }));
   app.use(cookieParser());
-  app.use(requestLogger); 
+  app.use(requestLogger);
 
   // --- 3. Health Check (Keep this fast) ---
   app.get("/health", (req: Request, res: Response) => {
@@ -53,7 +51,6 @@ export const createApp = (): Application => {
 
   // --- 4. Routes ---
   app.use("/api/users", userRoutes);
-  app.use("/api/admin", adminRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes
@@ -62,7 +59,6 @@ export const createApp = (): Application => {
       .status(404)
       .json({ success: false, message: `Route ${req.originalUrl} not found` });
   });
-
 
   app.use(globalErrorHandler);
 

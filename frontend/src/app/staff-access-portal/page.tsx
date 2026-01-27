@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
-import { Eye, EyeOff, ShieldCheck, Github, Linkedin, Facebook, Chrome } from "lucide-react"; // Icons
+import { Eye, EyeOff, ShieldCheck, Github, Linkedin, Facebook, Chrome } from "lucide-react"; 
 import axios, { AxiosError } from "axios"; 
 
 export default function HiddenAdminLogin() {
@@ -18,15 +18,24 @@ export default function HiddenAdminLogin() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/admin/login", {
+      // 1. Send Login Request (Cookie will be set by backend automatically)
+      const response = await axios.post("http://localhost:4000/api/users/login", {
         email,
         password
       }, {
-        headers: { "x-praedico-security": "u8a9s8d7f6g5h4j3k2l1" }
+        withCredentials: true // <--- CRITICAL: Allows the browser to save the HttpOnly Cookie
       });
 
-      const { token } = response.data;
-      localStorage.setItem("accessToken", token); 
+      const { user } = response.data;
+
+      // 2. Role Check (Frontend Guard)
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        alert("Access Denied: You are not an Admin.");
+        setIsLoading(false);
+        return;
+      }
+      
+      // 3. Redirect (No need to save token manually)
       router.push("/admin");
 
     } catch (err) { 
@@ -37,7 +46,7 @@ export default function HiddenAdminLogin() {
   };
 
   return (
-    // 1. THE DEEP AURORA BACKGROUND
+    // ... (The rest of your UI remains exactly the same)
     <div className="min-h-screen w-full flex items-center justify-center bg-[#050511] relative overflow-hidden">
       {/* Ambient Glows */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]" />
