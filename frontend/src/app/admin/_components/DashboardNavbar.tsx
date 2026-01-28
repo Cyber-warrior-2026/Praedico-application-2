@@ -54,7 +54,7 @@ export default function DashboardNavbar() {
   const handleLogout = async () => {
     try {
       await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
-      router.push("/staff-access-portal");
+      router.push("/");
     } catch(e) { console.error(e); }
   };
 

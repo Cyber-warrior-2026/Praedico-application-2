@@ -29,7 +29,7 @@ export default function VerifyAccountPage({ params }: { params: Promise<{ token:
 
       setIsSuccess(true);
       setTimeout(() => {
-        router.push("/login");
+        router.push("/?openLogin=true");
       }, 2500);
 
     } catch (err: any) {

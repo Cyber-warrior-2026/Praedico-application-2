@@ -9,7 +9,7 @@ import { requestLogger } from "./common/middlewares/logging.middleware";
 import { globalErrorHandler } from "./common/errors/errorHandler";
 
 // Import Routes
-import userRoutes from "./routes/user.routes";
+import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
 
 export const createApp = (): Application => {

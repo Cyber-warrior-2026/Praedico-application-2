@@ -1,11 +1,11 @@
-import { UserModel } from "../models/user.model";
+import { UserModel } from "../models/user";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-} from "./email.service";
+} from "./email";
 import { ENV } from "../config/env";
 
 export class UserService {

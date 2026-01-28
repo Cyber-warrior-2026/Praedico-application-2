@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UserService } from "../services/user.service";
+import { UserService } from "../services/user";
 import { asyncHandler } from "../common/errors/errorHandler";
 import { z } from "zod";
 import { ENV } from "../config/env";
