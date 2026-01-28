@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; 
+import { useRouter, useSearchParams } from "next/navigation"; 
 // 1. Import your component
-import IntegrationsMarquee from "@/app/user/components/IntegrationsMarquee"; 
+import IntegrationsMarquee from "@/app/user/_components/IntegrationsMarquee"; 
 import { 
   ArrowRight, CheckCircle2, Play, Menu, X, 
   Shield, Zap, Globe, BarChart3, Lock, Smartphone, Check
 } from "lucide-react";
-import LoginModal from "@/app/user/components/LoginModal";
-import RegisterModal from "@/app/user/components/RegisterModal";
+import LoginModal from "@/app/user/_components/LoginModal";
+import RegisterModal from "@/app/user/_components/RegisterModal";
 
 
 export default function UserPortal() {
@@ -25,12 +25,24 @@ export default function UserPortal() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const router = useRouter(); 
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("openLogin") === "true") {
+      setIsLoginModalOpen(true);
+
+      // Optional: Remove the query param from URL so it looks clean
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
+
 
 const handleSignIn = () => setIsLoginModalOpen(true);
 
@@ -75,7 +87,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
               <Zap className="w-6 h-6 text-white fill-white" />
             </div>
             <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-              Praedico<span className="font-light text-slate-500">Portal</span>
+              Praedico<span className="font-light text-slate-500">GlobalResearch</span>
             </span>
           </div>
 
@@ -186,7 +198,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
       <section className="py-24 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Why Choose Nexus?</h2>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">Why Choose Praedico?</h2>
             <p className="text-slate-400 max-w-2xl mx-auto">Our platform provides comprehensive solutions for modern development teams, ensuring security and speed.</p>
           </div>
 
@@ -295,7 +307,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto rounded-[2.5rem] bg-gradient-to-b from-white/10 to-white/5 border border-white/10 p-12 text-center backdrop-blur-xl">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to transform your workflow?</h2>
-            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">Join thousands of developers building the future with Nexus Portal today.</p>
+            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">Join thousands of developers building the future with Praedico Global Research today.</p>
             <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input type="email" placeholder="Enter your work email" className="flex-1 px-6 py-4 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"/>
               <button className="px-8 py-4 rounded-full bg-white text-black font-bold hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.4)]">Get Access</button>

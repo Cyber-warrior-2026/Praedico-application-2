@@ -35,7 +35,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       });
 
       onClose();
-      router.push("/user");
+      router.push("/user/dashboard");
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
@@ -185,7 +185,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                   </span>
                 </label>
                 <Link
-                  href="/forgot-password"
+                  href="/user/forgot-password"
                   className="text-sm font-semibold text-green-600 hover:text-green-700 transition-colors relative group"
                   onClick={onClose}
                 >

@@ -1,6 +1,6 @@
 "use client";   
 
-import { UserNavbar } from "@/app/user/components/UserNavbar"; 
+import { UserNavbar } from "@/app/user/_components/UserNavbar"; 
 import Footer from "@/shared-components/Footer";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

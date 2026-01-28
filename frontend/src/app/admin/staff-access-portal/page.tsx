@@ -36,7 +36,7 @@ export default function HiddenAdminLogin() {
       }
       
       // 3. Redirect (No need to save token manually)
-      router.push("/admin");
+      router.push("/admin/dashboard");
 
     } catch (err) { 
       const error = err as AxiosError<{ message: string }>;
