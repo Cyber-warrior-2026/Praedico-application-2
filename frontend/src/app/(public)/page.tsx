@@ -91,14 +91,40 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 bg-white/5 px-6 py-2 rounded-full border border-white/10 backdrop-blur-md">
-            {['Product', 'Solutions', 'Pricing', 'Docs'].map((item) => (
-              <Link key={item} href="#" className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group">
-                {item}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-            ))}
-          </div>
+        <div className="hidden md:flex items-center gap-8 bg-white/5 px-6 py-2 rounded-full border border-white/10">
+  <Link 
+    href="/product" 
+    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+  >
+    Product
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
+  </Link>
+  
+  <Link 
+    href="/solutions" 
+    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+  >
+    Solutions
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
+  </Link>
+  
+  <Link 
+    href="/contacts" 
+    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+  >
+    Contacts
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
+  </Link>
+  
+  <Link 
+    href="/docs" 
+    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
+  >
+    Docs
+    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
+  </Link>
+</div>
+
 
           <div className="hidden md:flex items-center gap-4">
             <button onClick={handleSignIn} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Sign in</button>
@@ -115,9 +141,38 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
 
         {mobileMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#020617] border-b border-slate-800 p-6 md:hidden flex flex-col gap-4 animate-in slide-in-from-top-5">
-            {['Product', 'Solutions', 'Pricing', 'Docs'].map((item) => (
-              <Link key={item} href="#" className="text-lg font-medium text-slate-300">{item}</Link>
-            ))}
+          <Link 
+  href="/product" 
+  onClick={() => setMobileMenuOpen(false)}
+  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
+>
+  Product
+</Link>
+
+<Link 
+  href="/solutions" 
+  onClick={() => setMobileMenuOpen(false)}
+  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
+>
+  Solutions
+</Link>
+
+<Link 
+  href="/contacts" 
+  onClick={() => setMobileMenuOpen(false)}
+  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
+>
+  Contacts
+</Link>
+
+<Link 
+  href="/docs" 
+  onClick={() => setMobileMenuOpen(false)}
+  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
+>
+  Docs
+</Link>
+
             <div className="h-px bg-slate-800 my-2" />
             <button onClick={handleSignIn} className="w-full py-3 rounded-xl bg-slate-800 text-white font-medium">Sign In</button>
             <button onClick={handleGetStarted} className="w-full py-3 rounded-xl bg-indigo-600 text-white font-medium">Get Started</button>
