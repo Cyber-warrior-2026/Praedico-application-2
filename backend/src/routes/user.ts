@@ -13,5 +13,42 @@ router.post("/reset-password", userController.resetPassword);
 router.post("/logout", userController.logout);
 
 router.get("/me", authorize(["user", "admin", "super_admin"]), userController.getMe);
+// Admin-only routes for user management
+router.get(
+  "/all", 
+  authorize(["admin", "super_admin"]), 
+  userController.getAllUsers
+);
+
+router.get(
+  "/stats", 
+  authorize(["admin", "super_admin"]), 
+  userController.getUserStats
+);
+router.patch(
+  "/:id/toggle-active", 
+  authorize(["admin", "super_admin"]), 
+  userController.toggleUserActive
+);
+
+router.get(
+  "/:id", 
+  authorize(["admin", "super_admin"]), 
+  userController.getUserById
+);
+
+router.put(
+  "/:id", 
+  authorize(["admin", "super_admin"]), 
+  userController.updateUser
+);
+
+router.delete(
+  "/:id", 
+  authorize(["admin", "super_admin"]), 
+  userController.deleteUser
+);
+
+
 
 export default router;

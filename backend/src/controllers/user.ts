@@ -117,4 +117,61 @@ export class UserController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
+  // Get all users with pagination, search, and filter
+getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const search = req.query.search as string || '';
+  const role = req.query.role as string || '';
+  const status = req.query.status as string || '';
+
+  const result = await userService.getAllUsers({ 
+    page, 
+    limit, 
+    search, 
+    role, 
+    status 
+  });
+  
+  res.status(200).json({ success: true, ...result });
+});
+
+// Get user statistics
+getUserStats = asyncHandler(async (req: Request, res: Response) => {
+  const stats = await userService.getUserStats();
+  res.status(200).json({ success: true, stats });
+});
+
+// Get single user by ID
+getUserById = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  const user = await userService.getUserById(userId);
+  res.status(200).json({ success: true, user });
+});
+
+// Update user
+updateUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  const updateData = req.body;
+  const user = await userService.updateUser(userId, updateData);
+  res.status(200).json({ success: true, user, message: "User updated successfully" });
+});
+
+// Delete user
+deleteUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  await userService.deleteUser(userId);
+  res.status(200).json({ success: true, message: "User deleted successfully" });
+});
+
+// Toggle user active status
+toggleUserActive = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  const user = await userService.toggleUserActive(userId);
+  res.status(200).json({ 
+    success: true, 
+    user, 
+    message: `User ${user.isActive ? 'activated' : 'blocked'} successfully` 
+  });
+});
 }

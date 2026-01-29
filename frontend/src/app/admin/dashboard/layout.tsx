@@ -1,8 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import { Sidebar } from "../_components/Sidebar";
-import DashboardNavbar from "@/app/admin/_components/DashboardNavbar"; 
+import DashboardNavbar from "@/app/admin/_components/DashboardNavbar";
+import UserManagementModal from "@/app/admin/_components/UserManagementModal";
 
 export default function AdminLayout({
   children,
@@ -11,33 +11,34 @@ export default function AdminLayout({
 }) {
   // State to manage sidebar visibility
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-full bg-[#0b1120] overflow-hidden">
-      
-      {/* 2. SIDEBAR CONTAINER: Dynamic Width with Transition */}
-      <div 
-        className={`shrink-0 h-full border-r border-slate-800 bg-[#0f172a] transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? "w-64" : "w-20"
-        }`}
-      >
-        <Sidebar 
-          role="admin" 
-          isOpen={isSidebarOpen} 
-          onToggle={() => setSidebarOpen(!isSidebarOpen)} 
-        />
-      </div>
+    <div className="flex h-screen bg-slate-950 overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar
+        role="admin"
+        isOpen={isSidebarOpen}
+        onToggle={() => setSidebarOpen(!isSidebarOpen)}
+        onUserManagementClick={() => setIsUserManagementOpen(true)}
+      />
 
-      {/* 3. MAIN CONTENT AREA */}
-      <div className="flex flex-col flex-1 h-full w-full overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Navbar */}
         <DashboardNavbar />
-        <main className="flex-1 overflow-y-auto p-8 scroll-smooth">
-           <div className="max-w-[1600px] mx-auto">
-             {children}
-           </div>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
         </main>
       </div>
 
+      {/* User Management Modal */}
+      <UserManagementModal
+        isOpen={isUserManagementOpen}
+        onClose={() => setIsUserManagementOpen(false)}
+      />
     </div>
   );
 }
