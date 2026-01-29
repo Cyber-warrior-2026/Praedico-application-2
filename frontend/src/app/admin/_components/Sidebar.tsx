@@ -34,6 +34,7 @@ interface SidebarProps {
   role: "admin" | "user";
   isOpen: boolean;
   onToggle: () => void;
+  onUserManagementClick?: () => void;
 }
 
 type MenuItem = {
@@ -41,6 +42,7 @@ type MenuItem = {
   label: string;
   icon: any;
   badge?: number;
+  onClick?: () => void;
   subItems?: { href: string; label: string }[];
 };
 
@@ -49,7 +51,8 @@ type MenuGroup = {
   items: MenuItem[];
 };
 
-export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
+export function Sidebar({ role, isOpen, onToggle, onUserManagementClick }: SidebarProps) {
+
   const pathname = usePathname();
   
   const [adminName, setAdminName] = useState("Admin");
@@ -79,14 +82,19 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
         },
       ]
     },
-    {
-      title: "Workspace",
-      items: [
-        { href: "/admin/users", label: "User Management", icon: Users },
-        { href: "/admin/reports", label: "System Reports", icon: FileText },
-        { href: "/admin/inbox", label: "Inbox", icon: Mail, badge: 3 },
-      ]
+ {
+  title: "Workspace",
+  items: [
+    { 
+      label: "User Management", 
+      icon: Users,
+      onClick: onUserManagementClick // Add onClick handler
     },
+    { href: "/admin/reports", label: "System Reports", icon: FileText },
+    { href: "/admin/inbox", label: "Inbox", icon: Mail, badge: 3 },
+  ],
+},
+
     {
       title: "UI Elements",
       items: [
@@ -167,7 +175,7 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
     const fetchProfile = async () => {
       try {
         // Fetch from API (Cookie is sent automatically)
-        const { data } = await axios.get("http://localhost:4000/api/users/me", {
+        const { data } = await axios.get("http://localhost:5000/api/users/me", {
           withCredentials: true
         });
 
@@ -226,68 +234,89 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
       {/* 2. SCROLLABLE NAVIGATION */}
       <nav className="flex-1 px-4 space-y-8 mt-4 overflow-y-auto custom-scrollbar">
         
-        {menuGroups.map((group, groupIndex) => (
-          <div key={groupIndex}>
-            {isOpen && (
-              <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-                {group.title}
-              </p>
-            )}
-            <div className="space-y-1">
-              {group.items.map((link) => {
-                const Icon = link.icon;
-                const isActive = link.href ? pathname === link.href : false;
-                const isExpanded = expandedItems.includes(link.label);
-                const hasSubItems = link.subItems && link.subItems.length > 0;
+  {menuGroups.map((group, groupIndex) => (
+  <div key={groupIndex}>
+    {isOpen && (
+      <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+        {group.title}
+      </p>
+    )}
+    <div className="space-y-1">
+      {group.items.map((link) => {
+        const Icon = link.icon;
+        const isActive = link.href ? pathname === link.href : false;
+        const isExpanded = expandedItems.includes(link.label);
+        const hasSubItems = link.subItems && link.subItems.length > 0;
+        
+        return (
+          <div key={link.label}>
+            {hasSubItems ? (
+              // Expandable Menu Item
+              <button
+                onClick={() => isOpen && toggleSubmenu(link.label)}
+                className={`w-full group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  isExpanded
+                    ? "bg-slate-800/50 text-white"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isExpanded ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                  {isOpen && link.label}
+                </div>
+                {isOpen && (
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                )}
+              </button>
+            ) : link.onClick ? (
+              // onClick Handler Item (User Management)
+              <button
+                onClick={link.onClick}
+                className={`w-full group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 text-slate-400 hover:bg-slate-800/50 hover:text-white`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-colors text-slate-500 group-hover:text-white`} />
+                  {isOpen && link.label}
+                </div>
                 
-                return (
-                  <div key={link.label}>
-                    {hasSubItems ? (
-                      // Expandable Menu Item
-                      <button
-                        onClick={() => isOpen && toggleSubmenu(link.label)}
-                        className={`w-full group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                          isExpanded
-                            ? "bg-slate-800/50 text-white"
-                            : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isExpanded ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
-                          {isOpen && link.label}
-                        </div>
-                        {isOpen && (
-                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
-                    ) : (
-                      // Standard Link Item
-                      <Link
-                        href={link.href!}
-                        className={`group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                          isActive
-                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30"
-                            : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
-                          {isOpen && link.label}
-                        </div>
-                        
-                        {isOpen && link.badge && (
-                          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                            {link.badge}
-                          </span>
-                        )}
+                {isOpen && link.badge && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {link.badge}
+                  </span>
+                )}
 
-                        {!isOpen && link.badge && (
-                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        )}
-                        
-                        {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-white/20" />}
-                      </Link>
-                    )}
+                {!isOpen && link.badge && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </button>
+            ) : (
+              // Standard Link Item
+              <Link
+                href={link.href!}
+                className={`group relative flex items-center ${isOpen ? 'justify-between' : 'justify-center'} px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  isActive
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/30"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+                  {isOpen && link.label}
+                </div>
+                
+                {isOpen && link.badge && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {link.badge}
+                  </span>
+                )}
+
+                {!isOpen && link.badge && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+                
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-white/20" />}
+              </Link>
+            )}
 
                     {/* Submenu Items - Only show when sidebar is open */}
                     {hasSubItems && isExpanded && isOpen && (
@@ -363,7 +392,7 @@ export function Sidebar({ role, isOpen, onToggle }: SidebarProps) {
         <button 
           onClick={async () => { 
              try {
-               await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+               await axios.post("http://localhost:5000/api/users/logout", {}, { withCredentials: true });
                window.location.href = "/login"; 
              } catch(e) { console.error(e); }
           }}

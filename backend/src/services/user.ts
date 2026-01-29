@@ -137,4 +137,150 @@ export class UserService {
 
     return { accessToken, refreshToken };
   }
+  // Get all users with filters
+async getAllUsers(filters: {
+  page: number;
+  limit: number;
+  search: string;
+  role: string;
+  status: string;
+}) {
+  const { page, limit, search, role, status } = filters;
+  const skip = (page - 1) * limit;
+
+  // Build query
+  const query: any = {};
+
+  // Search by name or email
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  // Filter by role
+  if (role && role !== 'all') {
+    query.role = role;
+  }
+
+  // Filter by status
+  if (status === 'active') {
+    query.isActive = true;
+    query.isVerified = true;
+  } else if (status === 'inactive') {
+    query.isActive = false;
+  } else if (status === 'unverified') {
+    query.isVerified = false;
+  }
+
+  // Execute query
+  const users = await UserModel.find(query)
+    .select('-passwordHash -verificationToken -resetPasswordToken')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await UserModel.countDocuments(query);
+
+  return {
+    users,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
+}
+
+// Get user statistics
+async getUserStats() {
+  const total = await UserModel.countDocuments();
+  const active = await UserModel.countDocuments({ isActive: true, isVerified: true });
+  const inactive = await UserModel.countDocuments({ isActive: false });
+  const blocked = await UserModel.countDocuments({ isActive: false, isVerified: true });
+  const registered = await UserModel.countDocuments({ isVerified: true });
+  
+  // Get users by role
+  const adminCount = await UserModel.countDocuments({ role: 'admin' });
+  const superAdminCount = await UserModel.countDocuments({ role: 'super_admin' });
+  const userCount = await UserModel.countDocuments({ role: 'user' });
+
+  return {
+    totalUsers: total,
+    activeUsers: active,
+    inactiveUsers: inactive,
+    blockedUsers: blocked,
+    registeredUsers: registered,
+    byRole: {
+      admin: adminCount,
+      super_admin: superAdminCount,
+      user: userCount
+    }
+  };
+}
+
+// Get single user by ID
+async getUserById(userId: string) {
+  const user = await UserModel.findById(userId)
+    .select('-passwordHash -verificationToken -resetPasswordToken');
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+}
+
+// Update user
+async updateUser(userId: string, updateData: any) {
+  const allowedUpdates = ['name', 'email', 'role', 'isActive'];
+  const updates: any = {};
+
+  // Only allow specific fields to be updated
+  Object.keys(updateData).forEach(key => {
+    if (allowedUpdates.includes(key)) {
+      updates[key] = updateData[key];
+    }
+  });
+
+  const user = await UserModel.findByIdAndUpdate(
+    userId,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).select('-passwordHash -verificationToken -resetPasswordToken');
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+}
+
+// Delete user
+async deleteUser(userId: string) {
+  const user = await UserModel.findByIdAndDelete(userId);
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return { message: 'User deleted successfully' };
+}
+
+// Toggle user active status
+async toggleUserActive(userId: string) {
+  const user = await UserModel.findById(userId);
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  user.isActive = !user.isActive;
+  await user.save();
+
+  return user;
+}
+
 }

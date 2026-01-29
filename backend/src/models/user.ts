@@ -4,13 +4,16 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash?: string;
-  role: 'user' | 'admin' | 'super_admin'; 
+  role: 'user' | 'admin' | 'super_admin';
   isVerified: boolean;
-  verificationToken?: string; 
+  isActive: boolean; // NEW: Track if user is active/blocked
+  verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   lastLogin?: Date;
+  lastActive?: Date; // NEW: Track last activity
 }
+
 
 const UserSchema: Schema = new Schema({
   name: {
@@ -42,9 +45,15 @@ const UserSchema: Schema = new Schema({
   verificationToken: { type: String, select: false },
   resetPasswordToken: { type: String, select: false },
   resetPasswordExpires: { type: Date, select: false },
-  lastLogin: { type: Date }
+lastLogin: { type: Date },
+isActive: {
+  type: Boolean,
+  default: true
+},
+lastActive: { type: Date, default: Date.now }
 }, {
   timestamps: true
 });
+
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);
