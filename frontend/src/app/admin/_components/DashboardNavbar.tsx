@@ -53,7 +53,7 @@ export default function DashboardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+      await axios.post("http://localhost:5000/api/users/logout", {}, { withCredentials: true });
       router.push("/");
     } catch(e) { console.error(e); }
   };

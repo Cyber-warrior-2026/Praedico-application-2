@@ -24,7 +24,7 @@ export function UserNavbar() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:4000/api/users/me", {
+        const { data } = await axios.get("http://localhost:5000/api/users/me", {
           withCredentials: true
         });
         
@@ -178,7 +178,7 @@ export function UserNavbar() {
                   className="text-red-600 focus:text-red-700 focus:bg-red-50 rounded-xl py-2.5 font-bold cursor-pointer transition-colors"
                   onClick={async () => {
                     try {
-                      await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+                      await axios.post("http://localhost:5000/api/users/logout", {}, { withCredentials: true });
                       window.location.href = "/";
                     } catch(e) {}
                   }}
