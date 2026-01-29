@@ -48,7 +48,7 @@ const handleSwitchToRegister = () => {
       skills: ["Leadership", "Strategy", "Innovation", "Product Design"],
       social: {
         email: "priyank@praedico.com",
-        linkedin: "https://linkedin.com/in/priyankgupta",
+        linkedin: "https://www.linkedin.com/in/priyank-gupta-25795b244/",
         twitter: "https://twitter.com/priyankgupta",
         github: "https://github.com/priyankgupta",
         website: "https://priyankgupta.dev",
@@ -68,9 +68,9 @@ const handleSwitchToRegister = () => {
       skills: ["Full-Stack Dev", "System Design", "Database", "DevOps"],
       social: {
         email: "arjun@praedico.com",
-        linkedin: "https://linkedin.com/in/arjunbhadoriya",
+        linkedin: "https://www.linkedin.com/in/arjun-singh-bhadauriya/",
         twitter: "https://twitter.com/arjunbhadoriya",
-        github: "https://github.com/arjunbhadoriya",
+        github: "https://github.com/22Arjun",
         website: "https://arjunbhadoriya.dev",
       },
       gradient: "from-blue-500 via-cyan-500 to-teal-500",
@@ -88,9 +88,9 @@ const handleSwitchToRegister = () => {
       skills: ["Frontend", "UI/UX", "React/Next.js", "Animations"],
       social: {
         email: "sambhav@praedico.com",
-        linkedin: "https://linkedin.com/in/sambhavjain",
+        linkedin: "https://www.linkedin.com/in/sambhav-jain-9a1aa5164/",
         twitter: "https://twitter.com/sambhavjain",
-        github: "https://github.com/sambhavjain",
+        github: "https://github.com/Cyber-warrior-2026",
         website: "https://sambhavjain.dev",
       },
       gradient: "from-green-500 via-emerald-500 to-teal-500",
