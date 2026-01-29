@@ -3,6 +3,7 @@ import { API_ENDPOINTS } from '../constants';
 
 export interface RegisterData {
   email: string;
+  name: string;
 }
 
 export interface VerifyData {

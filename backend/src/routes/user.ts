@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user";
-import { authorize } from "../common/guards/role.guard";
+import { authorize } from "../common/guards/role";
 
 const router = Router();
 const userController = new UserController();

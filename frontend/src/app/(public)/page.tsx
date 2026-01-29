@@ -52,8 +52,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
   return (
     <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans pb-20">
       
-      {/* GLOBAL STYLES (Only for Hero/General animations, Marquee styles are inside the component now) */}
-      <style jsx global>{`
+      {/* <style jsx global>{`
         @keyframes float {
           0% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
@@ -66,7 +65,7 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delayed { animation: float 8s ease-in-out infinite 2s; }
         .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-      `}</style>
+      `}</style> */}
 
       {/* BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -154,6 +153,8 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
               <Play className="w-4 h-4 fill-white" /> Watch Demo
             </button>
           </div>
+
+          
 
           <div className="mt-20 relative mx-auto max-w-5xl animate-reveal" style={{ animationDelay: '0.5s' }}>
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-indigo-500 rounded-2xl blur opacity-30 animate-pulse"></div>

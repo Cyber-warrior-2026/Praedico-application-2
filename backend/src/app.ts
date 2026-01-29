@@ -4,8 +4,8 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
-import { securityHeaders } from "./common/middlewares/security.middleware";
-import { requestLogger } from "./common/middlewares/logging.middleware";
+import { securityHeaders } from "./common/middlewares/security";
+import { requestLogger } from "./common/middlewares/logging";
 import { globalErrorHandler } from "./common/errors/errorHandler";
 
 // Import Routes

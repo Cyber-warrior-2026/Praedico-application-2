@@ -34,35 +34,6 @@ const integrations = [
 export default function IntegrationsMarquee() {
   return (
     <section className="relative w-full py-32 overflow-hidden bg-[#020617] font-sans text-white border-y border-white/5">
-      
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scroll-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-        .animate-scroll-left { animation: scroll-left 80s linear infinite; }
-        .animate-scroll-right { animation: scroll-right 90s linear infinite; }
-        
-        .marquee-perspective {
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-        .marquee-track {
-          transform: rotateX(10deg) rotateZ(-5deg); 
-          width: 150%; 
-          margin-left: -25%; 
-        }
-        
-        /* The CSS Mask for smooth fade effects */
-        .fade-mask {
-          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-        }
-      `}</style>
 
       {/* --- BACKGROUND GLOWS --- */}
       <div className="absolute inset-0 pointer-events-none">

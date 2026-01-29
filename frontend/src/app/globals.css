@@ -123,3 +123,58 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* pages.tsx Animations */
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 8s ease-in-out infinite 2s;
+}
+
+.animate-reveal {
+  animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Integrations Marquee Animations */
+
+ @keyframes scroll-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes scroll-right {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        .animate-scroll-left { animation: scroll-left 80s linear infinite; }
+        .animate-scroll-right { animation: scroll-right 90s linear infinite; }
+        
+        .marquee-perspective {
+          perspective: 1000px;
+          transform-style: preserve-3d;
+        }
+        .marquee-track {
+          transform: rotateX(10deg) rotateZ(-5deg); 
+          width: 150%; 
+          margin-left: -25%; 
+        }
+        
+        /* The CSS Mask for smooth fade effects */
+        .fade-mask {
+          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
