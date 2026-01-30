@@ -147,7 +147,7 @@ export function Sidebar({
 
   const fetchUserProfile = async () => {
     try {
-      const { data } = await axios.get("http://localhost:4000/api/users/me", { withCredentials: true });
+      const { data } = await axios.get("http://localhost:5001/api/users/me", { withCredentials: true });
       if (data.success && data.user) {
         setUserData({
           name: data.user.name,

@@ -22,31 +22,37 @@ export function middleware(request: NextRequest) {
     if (isAdminPage) {
       return NextResponse.redirect(new URL('/admin/staff-access-portal', request.url));
     }
-    return NextResponse.redirect(new URL('/', request.url)); // Redirect to Landing Page Login
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // 4. If token exists, check Role AND Status
   if (token) {
     try {
-      // Decode the JWT payload manually (Edge compatible)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const role = payload.role;
-      const isActive = payload.isActive; // <--- Extract status
+      // -------------------------------------------------------------------
+      // FIX: Robust Base64URL decoding (prevents 'atob' crashes)
+      // -------------------------------------------------------------------
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      const { role, isActive } = payload;
 
-      // 🛑 BLOCK CHECK: Kick them out if isActive is false
-      // We check explicit false to be safe
+      // 🛑 BLOCK CHECK: Kick them out if isActive is explicitly false
       if (isActive === false) {
-        // Create response to redirect them
         const response = NextResponse.redirect(new URL('/', request.url));
         
-        // DESTROY the cookie so they are actually logged out
+        // DESTROY ALL COOKIES to prevent infinite loops or silent refreshes
         response.cookies.delete('accessToken'); 
-        response.cookies.delete('user'); // If you store user data in cookies
+        response.cookies.delete('refreshToken'); // <--- Critical Fix
+        response.cookies.delete('user');
         
         return response;
       }
 
-      // Role Checks (Your existing logic)
+      // Role Checks
       if (isAdminPage) {
         if (role !== 'admin' && role !== 'super_admin') {
            return NextResponse.redirect(new URL('/user/dashboard', request.url));
@@ -60,9 +66,10 @@ export function middleware(request: NextRequest) {
       }
 
     } catch (e) {
-      // If token is corrupt, force logout
+      // If token is corrupt or decoding fails -> Force Logout
       const response = NextResponse.redirect(new URL('/', request.url));
       response.cookies.delete('accessToken');
+      response.cookies.delete('refreshToken');
       return response;
     }
   }

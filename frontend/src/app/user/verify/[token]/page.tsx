@@ -22,7 +22,7 @@ export default function VerifyAccountPage({ params }: { params: Promise<{ token:
     setError("");
 
     try {
-      await axios.post("http://localhost:4000/api/users/verify", {
+      await axios.post("http://localhost:5001/api/users/verify", {
         token: token,
         password: password 
       });

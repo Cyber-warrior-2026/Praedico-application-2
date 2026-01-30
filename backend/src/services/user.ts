@@ -9,7 +9,10 @@ import {
 import { ENV } from "../config/env";
 
 export class UserService {
-  // 1. Register (Updated to accept Name)
+  
+  // =================================================================
+  // 1. REGISTER
+  // =================================================================
   async register(email: string, name?: string) {
     const existingUser = await UserModel.findOne({ email });
 
@@ -17,26 +20,24 @@ export class UserService {
       throw new Error("Email already registered");
     }
 
-    // SMART NAME LOGIC:
-    // If 'name' is provided, use it.
-    // If not, assume the first part of the email (e.g. "arjun" from "arjun@gmail.com")
-    // This prevents the hardcoded "User" from ever entering your database.
+    // Smart Name Logic: Use provided name or fallback to email prefix
     const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
-
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     if (existingUser && !existingUser.isVerified) {
-      // Update existing unverified user
+      // Scenario: User tried to register before but never verified. 
+      // Resend token and update details.
       existingUser.verificationToken = verificationToken;
-      existingUser.name = nameToSave; // Update the name
+      existingUser.name = nameToSave;
       await existingUser.save();
     } else {
-      // Create new user with Name
+      // Scenario: New User
       await UserModel.create({
         email,
-        name: nameToSave, // <--- CRITICAL FIX
+        name: nameToSave,
         isVerified: false,
         verificationToken,
+        isActive: true, // <--- Explicitly set to TRUE for new users
       });
     }
 
@@ -45,7 +46,9 @@ export class UserService {
     return { message: "Verification email sent. Check your inbox." };
   }
 
-  // 2. Verify
+  // =================================================================
+  // 2. VERIFY EMAIL
+  // =================================================================
   async verify(token: string, plainPassword: string) {
     const user = await UserModel.findOne({ verificationToken: token }).select(
       "+verificationToken",
@@ -58,6 +61,10 @@ export class UserService {
     user.passwordHash = passwordHash;
     user.isVerified = true;
     user.verificationToken = undefined;
+    
+    // Ensure user is active upon verification (optional, depending on your flow)
+    user.isActive = true; 
+    
     await user.save();
 
     // Generate Tokens
@@ -66,25 +73,38 @@ export class UserService {
     return { user, accessToken, refreshToken };
   }
 
-  // 3. Login
+  // =================================================================
+  // 3. LOGIN (The "Gatekeeper")
+  // =================================================================
   async login(email: string, plainPass: string) {
+    // Select passwordHash to verify password
+    // Mongoose selects 'isActive' by default (unless schema has select: false)
     const user = await UserModel.findOne({ email }).select("+passwordHash");
 
     if (!user) throw new Error("Invalid credentials");
     if (!user.isVerified) throw new Error("Please verify your email first");
 
+    // 🛑 SECURITY GATE 1: Check Database Status
+    // If the Admin set this to false, we block the login immediately.
+    if (user.isActive === false) {
+      throw new Error("Your account has been deactivated. Please contact support.");
+    }
+
     const isValid = await argon2.verify(user.passwordHash!, plainPass);
     if (!isValid) throw new Error("Invalid credentials");
 
-    // Generate Tokens
+    // Generate Tokens (Embeds the status)
     const { accessToken, refreshToken } = this.generateTokens(user);
 
     return { user, accessToken, refreshToken };
   }
 
-  // 4. Forgot Password
+  // =================================================================
+  // 4. FORGOT PASSWORD
+  // =================================================================
   async forgotPassword(email: string) {
     const user = await UserModel.findOne({ email });
+    // Security Best Practice: Don't reveal if user exists or not
     if (!user) throw new Error("If email exists, a reset link has been sent");
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -99,7 +119,9 @@ export class UserService {
     return { message: "If email exists, a reset link has been sent" };
   }
 
-  // 5. Reset Password
+  // =================================================================
+  // 5. RESET PASSWORD
+  // =================================================================
   async resetPassword(token: string, newPassword: string) {
     const user = await UserModel.findOne({
       resetPasswordToken: token,
@@ -116,13 +138,19 @@ export class UserService {
     return { message: "Password reset successful. Please login." };
   }
 
-  // --- Helper: Centralized Token Generation ---
+  // =================================================================
+  // HELPER: Centralized Token Generation
+  // =================================================================
   private generateTokens(user: any) {
+    // We embed 'isActive' into the token payload.
+    // This allows the Middleware (Gate 2) to kick users out 
+    // without hitting the database on every request.
     const payload = {
       id: user._id.toString(),
       role: user.role || "user",
       email: user.email,
-      name: user.name, // Now this will definitely have a value!
+      name: user.name,
+      isActive: user.isActive, // <--- CRITICAL
     };
 
     const accessToken = jwt.sign(payload, ENV.JWT_SECRET, {
@@ -137,150 +165,129 @@ export class UserService {
 
     return { accessToken, refreshToken };
   }
+
+  // =================================================================
+  // ADMIN / DASHBOARD FEATURES
+  // =================================================================
+
   // Get all users with filters
-async getAllUsers(filters: {
-  page: number;
-  limit: number;
-  search: string;
-  role: string;
-  status: string;
-}) {
-  const { page, limit, search, role, status } = filters;
-  const skip = (page - 1) * limit;
+  async getAllUsers(filters: {
+    page: number;
+    limit: number;
+    search: string;
+    role: string;
+    status: string;
+  }) {
+    const { page, limit, search, role, status } = filters;
+    const skip = (page - 1) * limit;
 
-  // Build query
-  const query: any = {};
+    const query: any = {};
 
-  // Search by name or email
-  if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
-    ];
-  }
-
-  // Filter by role
-  if (role && role !== 'all') {
-    query.role = role;
-  }
-
-  // Filter by status
-  if (status === 'active') {
-    query.isActive = true;
-    query.isVerified = true;
-  } else if (status === 'inactive') {
-    query.isActive = false;
-  } else if (status === 'unverified') {
-    query.isVerified = false;
-  }
-
-  // Execute query
-  const users = await UserModel.find(query)
-    .select('-passwordHash -verificationToken -resetPasswordToken')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const total = await UserModel.countDocuments(query);
-
-  return {
-    users,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
     }
-  };
-}
 
-// Get user statistics
-async getUserStats() {
-  const total = await UserModel.countDocuments();
-  const active = await UserModel.countDocuments({ isActive: true, isVerified: true });
-  const inactive = await UserModel.countDocuments({ isActive: false });
-  const blocked = await UserModel.countDocuments({ isActive: false, isVerified: true });
-  const registered = await UserModel.countDocuments({ isVerified: true });
-  
-  // Get users by role
-  const adminCount = await UserModel.countDocuments({ role: 'admin' });
-  const superAdminCount = await UserModel.countDocuments({ role: 'super_admin' });
-  const userCount = await UserModel.countDocuments({ role: 'user' });
-
-  return {
-    totalUsers: total,
-    activeUsers: active,
-    inactiveUsers: inactive,
-    blockedUsers: blocked,
-    registeredUsers: registered,
-    byRole: {
-      admin: adminCount,
-      super_admin: superAdminCount,
-      user: userCount
+    if (role && role !== 'all') {
+      query.role = role;
     }
-  };
-}
 
-// Get single user by ID
-async getUserById(userId: string) {
-  const user = await UserModel.findById(userId)
-    .select('-passwordHash -verificationToken -resetPasswordToken');
-  
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  return user;
-}
-
-// Update user
-async updateUser(userId: string, updateData: any) {
-  const allowedUpdates = ['name', 'email', 'role', 'isActive'];
-  const updates: any = {};
-
-  // Only allow specific fields to be updated
-  Object.keys(updateData).forEach(key => {
-    if (allowedUpdates.includes(key)) {
-      updates[key] = updateData[key];
+    if (status === 'active') {
+      query.isActive = true;
+      query.isVerified = true;
+    } else if (status === 'inactive') {
+      query.isActive = false;
+    } else if (status === 'unverified') {
+      query.isVerified = false;
     }
-  });
 
-  const user = await UserModel.findByIdAndUpdate(
-    userId,
-    { $set: updates },
-    { new: true, runValidators: true }
-  ).select('-passwordHash -verificationToken -resetPasswordToken');
+    const users = await UserModel.find(query)
+      .select('-passwordHash -verificationToken -resetPasswordToken')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-  if (!user) {
-    throw new Error('User not found');
+    const total = await UserModel.countDocuments(query);
+
+    return {
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 
-  return user;
-}
+  async getUserStats() {
+    const total = await UserModel.countDocuments();
+    const active = await UserModel.countDocuments({ isActive: true, isVerified: true });
+    const inactive = await UserModel.countDocuments({ isActive: false });
+    const blocked = await UserModel.countDocuments({ isActive: false, isVerified: true });
+    const registered = await UserModel.countDocuments({ isVerified: true });
+    
+    const adminCount = await UserModel.countDocuments({ role: 'admin' });
+    const superAdminCount = await UserModel.countDocuments({ role: 'super_admin' });
+    const userCount = await UserModel.countDocuments({ role: 'user' });
 
-// Delete user
-async deleteUser(userId: string) {
-  const user = await UserModel.findByIdAndDelete(userId);
-  
-  if (!user) {
-    throw new Error('User not found');
+    return {
+      totalUsers: total,
+      activeUsers: active,
+      inactiveUsers: inactive,
+      blockedUsers: blocked,
+      registeredUsers: registered,
+      byRole: {
+        admin: adminCount,
+        super_admin: superAdminCount,
+        user: userCount
+      }
+    };
   }
 
-  return { message: 'User deleted successfully' };
-}
-
-// Toggle user active status
-async toggleUserActive(userId: string) {
-  const user = await UserModel.findById(userId);
-  
-  if (!user) {
-    throw new Error('User not found');
+  async getUserById(userId: string) {
+    const user = await UserModel.findById(userId)
+      .select('-passwordHash -verificationToken -resetPasswordToken');
+    
+    if (!user) throw new Error('User not found');
+    return user;
   }
 
-  user.isActive = !user.isActive;
-  await user.save();
+  async updateUser(userId: string, updateData: any) {
+    const allowedUpdates = ['name', 'email', 'role', 'isActive'];
+    const updates: any = {};
 
-  return user;
-}
+    Object.keys(updateData).forEach(key => {
+      if (allowedUpdates.includes(key)) {
+        updates[key] = updateData[key];
+      }
+    });
 
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-passwordHash -verificationToken -resetPasswordToken');
+
+    if (!user) throw new Error('User not found');
+    return user;
+  }
+
+  async deleteUser(userId: string) {
+    const user = await UserModel.findByIdAndDelete(userId);
+    if (!user) throw new Error('User not found');
+    return { message: 'User deleted successfully' };
+  }
+
+  async toggleUserActive(userId: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    return user;
+  }
 }
