@@ -24,7 +24,7 @@ export function UserNavbar() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/users/me", {
+        const { data } = await axios.get("http://localhost:4000/api/users/me", {
           withCredentials: true
         });
         

@@ -19,7 +19,7 @@ export default function HiddenAdminLogin() {
 
     try {
       // 1. Send Login Request (Cookie will be set by backend automatically)
-      const response = await axios.post("http://localhost:5000/api/users/login", {
+      const response = await axios.post("http://localhost:4000/api/users/login", {
         email,
         password
       }, {
