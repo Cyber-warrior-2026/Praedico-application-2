@@ -22,7 +22,7 @@ export const createApp = (): Application => {
     cors({
       origin: ENV.FRONTEND_URL,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE"],
+      methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
     }),
   );
   app.use(hpp());
