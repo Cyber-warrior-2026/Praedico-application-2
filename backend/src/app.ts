@@ -7,7 +7,8 @@ import rateLimit from "express-rate-limit";
 import { securityHeaders } from "./common/middlewares/security.middleware";
 import { requestLogger } from "./common/middlewares/logging.middleware";
 import { globalErrorHandler } from "./common/errors/errorHandler";
-
+import stockDataRoutes from './routes/stockData';
+import cronService from './services/cronService';
 // Import Routes
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
@@ -51,6 +52,7 @@ export const createApp = (): Application => {
 
   // --- 4. Routes ---
   app.use("/api/users", userRoutes);
+  app.use('/api', stockDataRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes
