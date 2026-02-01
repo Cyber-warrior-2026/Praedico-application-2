@@ -41,7 +41,6 @@ type MenuItem = {
   icon: any;
   badge?: number | string;
   variant?: "default" | "new" | "notification";
-  onClick?: () => void;
   subItems?: SubMenuItem[];
 };
 
@@ -54,18 +53,18 @@ interface SidebarProps {
   role: "admin" | "user";
   isOpen: boolean;
   onToggle: () => void;
-  onUserManagementClick?: () => void;
 }
 
 // ==========================================
-// MENU CONFIGURATION
+// MENU CONFIGURATION (FIXED PATHS)
 // ==========================================
 
 const MENU_GROUPS: MenuGroup[] = [
   {
     title: "Overview",
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      // FIXED: Added specific path for dashboard
+      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/analytics", label: "Analytics", icon: BarChart3, badge: "New", variant: "new" },
       {
         label: "eCommerce",
@@ -81,10 +80,11 @@ const MENU_GROUPS: MenuGroup[] = [
   {
     title: "Workspace",
     items: [
-      {
-        label: "User Management",
-        icon: Users,
-        // onClick handled via prop injection in component
+      // FIXED: Added leading slash '/' to make path absolute (Prevents appending)
+      { 
+        href: "/admin/dashboard/user-management", 
+        label: "User Management", 
+        icon: Users 
       },
       { href: "/admin/reports", label: "System Reports", icon: FileText },
       { href: "/admin/inbox", label: "Inbox", icon: Mail, badge: 3, variant: "notification" },
@@ -131,7 +131,6 @@ export function Sidebar({
   role,
   isOpen,
   onToggle,
-  onUserManagementClick,
 }: SidebarProps) {
   const [isClient, setIsClient] = useState(false);
   const [userData, setUserData] = useState({ 
@@ -197,7 +196,7 @@ export function Sidebar({
       <aside
         className={cn(
           "relative h-screen flex flex-col border-r border-white/5 bg-[#0B0C15] text-slate-400 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.4)]",
-          "transition-all duration-500 cubic-bezier(0.2, 0.8, 0.2, 1)", // Smooth, premium easing
+          "transition-all duration-500 cubic-bezier(0.2, 0.8, 0.2, 1)", 
           isOpen ? "w-[280px]" : "w-[88px]"
         )}
       >
@@ -214,12 +213,11 @@ export function Sidebar({
               key={group.title}
               group={group}
               isOpen={isOpen}
-              onUserManagementClick={onUserManagementClick}
               onToggleSidebar={handleToggle}
             />
           ))}
           
-          {/* Promo Card - Clean Transition */}
+          {/* Promo Card */}
           <div 
             className={cn(
               "px-5 transition-all duration-500 ease-in-out transform", 
@@ -238,7 +236,7 @@ export function Sidebar({
 }
 
 // ==========================================
-// SUB-COMPONENTS (Memoized for Performance)
+// SUB-COMPONENTS
 // ==========================================
 
 const SidebarHeader = memo(({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) => {
@@ -267,7 +265,6 @@ const SidebarHeader = memo(({ isOpen, onToggle }: { isOpen: boolean; onToggle: (
         </div>
       </div>
 
-      {/* Redesigned Toggle Button */}
       {isOpen && (
         <button
           onClick={(e) => { e.stopPropagation(); onToggle(); }}
@@ -284,12 +281,10 @@ SidebarHeader.displayName = "SidebarHeader";
 const NavGroup = memo(({ 
   group, 
   isOpen, 
-  onUserManagementClick,
   onToggleSidebar 
 }: { 
   group: MenuGroup; 
   isOpen: boolean; 
-  onUserManagementClick?: () => void;
   onToggleSidebar: () => void; 
 }) => {
   return (
@@ -307,7 +302,6 @@ const NavGroup = memo(({
             key={item.label} 
             item={item} 
             isOpen={isOpen} 
-            onUserManagementClick={onUserManagementClick}
             onToggleSidebar={onToggleSidebar}
           />
         ))}
@@ -320,33 +314,36 @@ NavGroup.displayName = "NavGroup";
 const NavItem = memo(({ 
   item, 
   isOpen, 
-  onUserManagementClick, 
   onToggleSidebar 
 }: { 
   item: MenuItem; 
   isOpen: boolean; 
-  onUserManagementClick?: () => void;
   onToggleSidebar: () => void; 
 }) => {
   const pathname = usePathname();
   const Icon = item.icon;
-  const isUserMgmt = item.label === "User Management";
   
+  // ============================================
+  // PATH MATCHING LOGIC (Ensures Glow Works)
+  // ============================================
+  
+  // Exact match for the main link
   const isActive = item.href ? pathname === item.href : false;
+  
+  // Child match for dropdowns
   const isSubActive = item.subItems?.some(sub => pathname === sub.href);
+  
   const [isExpanded, setIsExpanded] = useState(isSubActive);
 
+  useEffect(() => {
+    if (isSubActive) setIsExpanded(true);
+  }, [isSubActive]);
+
   const handleClick = (e: React.MouseEvent) => {
-    if (isUserMgmt && onUserManagementClick) {
-      e.preventDefault();
-      onUserManagementClick();
-      return;
-    }
     if (item.subItems) {
       e.preventDefault();
       if (!isOpen) {
         onToggleSidebar();
-        // Small delay to allow sidebar expansion animation to start before expanding menu
         setTimeout(() => setIsExpanded(true), 150);
       } else {
         setIsExpanded(!isExpanded);
@@ -355,32 +352,47 @@ const NavItem = memo(({
   };
 
   const Wrapper = ({ children, className }: any) => {
-    if (item.subItems || isUserMgmt) return <button onClick={handleClick} className={className} type="button">{children}</button>;
+    if (item.subItems) return <button onClick={handleClick} className={className} type="button">{children}</button>;
+    // IMPORTANT: Link href must be absolute to avoid appending
     return <Link href={item.href!} className={className}>{children}</Link>;
   };
 
-  // Active Gradient Logic (Matches Dashboard Header)
-  const activeClass = "bg-gradient-to-r from-purple-500/20 via-pink-500/10 to-transparent text-white border-l-2 border-pink-500";
+  // ============================================
+  // GLOW & ACTIVE STATE STYLES
+  // ============================================
+  const activeClass = cn(
+    "bg-gradient-to-r from-indigo-600/20 via-purple-500/10 to-transparent", // Gradient
+    "text-white", // Text Color
+    "border-l-2 border-indigo-500", // Left Border
+    "shadow-[0_0_20px_rgba(99,102,241,0.15)]", // Neon Glow
+    "backdrop-blur-sm"
+  );
+
   const inactiveClass = "text-slate-400 hover:bg-white/5 hover:text-slate-200 border-l-2 border-transparent";
 
   return (
     <div className="relative group/nav">
       <Wrapper
         className={cn(
-          "relative flex items-center w-full p-3 text-sm font-medium transition-all duration-200 group rounded-r-xl",
+          "relative flex items-center w-full p-3 text-sm font-medium transition-all duration-300 group rounded-r-xl",
           (isActive || isSubActive) ? activeClass : inactiveClass,
           !isOpen && "justify-center px-0 py-3 rounded-xl border-l-0"
         )}
       >
+        {/* Glowing Background for Icon when Active */}
+        {(isActive || isSubActive) && (
+          <div className="absolute left-0 w-full h-full bg-indigo-500/5 opacity-50 blur-xl pointer-events-none" />
+        )}
+
         <div className={cn(
-          "relative z-10 transition-colors duration-200", 
-          (isActive || isSubActive) ? "text-pink-400" : "text-slate-500 group-hover:text-slate-300"
+          "relative z-10 transition-all duration-300", 
+          (isActive || isSubActive) ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)] scale-105" : "text-slate-500 group-hover:text-slate-300"
         )}>
           <Icon size={20} strokeWidth={1.5} />
         </div>
 
         <div className={cn("flex-1 text-left ml-3 transition-all duration-300 overflow-hidden whitespace-nowrap", isOpen ? "w-auto opacity-100" : "w-0 opacity-0 ml-0")}>
-          <span>{item.label}</span>
+          <span className={cn((isActive || isSubActive) && "font-semibold tracking-wide")}>{item.label}</span>
         </div>
 
         {isOpen && (
@@ -418,18 +430,23 @@ const NavItem = memo(({
           )}
         >
           <div className="relative pl-4 ml-5 border-l border-white/10 space-y-1 py-1">
-            {item.subItems.map((sub) => (
-              <Link
-                key={sub.href}
-                href={sub.href}
-                className={cn(
-                  "block px-4 py-2 rounded-lg text-sm transition-all duration-200 hover:translate-x-1",
-                  pathname === sub.href ? "text-white font-medium bg-white/5" : "text-slate-500 hover:text-pink-300"
-                )}
-              >
-                {sub.label}
-              </Link>
-            ))}
+            {item.subItems.map((sub) => {
+              const isChildActive = pathname === sub.href;
+              return (
+                <Link
+                  key={sub.href}
+                  href={sub.href}
+                  className={cn(
+                    "block px-4 py-2 rounded-lg text-sm transition-all duration-200 hover:translate-x-1",
+                    isChildActive 
+                      ? "text-white font-medium bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]" 
+                      : "text-slate-500 hover:text-indigo-300"
+                  )}
+                >
+                  {sub.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
@@ -470,7 +487,7 @@ const UserProfileFooter = memo(({ isOpen, user }: { isOpen: boolean; user: any }
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:4000/api/users/logout", {}, { withCredentials: true });
+      await axios.post("http://localhost:5001/api/users/logout", {}, { withCredentials: true });
       window.location.href = "/login";
     } catch (e) { console.error(e); }
   };

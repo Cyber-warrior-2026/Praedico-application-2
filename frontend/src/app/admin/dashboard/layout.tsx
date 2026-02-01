@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Sidebar } from "../_components/Sidebar";
 import DashboardNavbar from "@/app/admin/_components/DashboardNavbar";
-import UserManagementModal from "@/app/admin/_components/UserManagementModal";
 
 export default function AdminLayout({
   children,
@@ -11,7 +10,6 @@ export default function AdminLayout({
 }) {
   // State to manage sidebar visibility
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
@@ -20,7 +18,6 @@ export default function AdminLayout({
         role="admin"
         isOpen={isSidebarOpen}
         onToggle={() => setSidebarOpen(!isSidebarOpen)}
-        onUserManagementClick={() => setIsUserManagementOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -29,16 +26,10 @@ export default function AdminLayout({
         <DashboardNavbar />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-0">
           {children}
         </main>
       </div>
-
-      {/* User Management Modal */}
-      <UserManagementModal
-        isOpen={isUserManagementOpen}
-        onClose={() => setIsUserManagementOpen(false)}
-      />
     </div>
   );
 }
