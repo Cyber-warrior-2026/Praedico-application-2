@@ -55,5 +55,5 @@ lastActive: { type: Date, default: Date.now }
   timestamps: true
 });
 
-
+//Checking some new Git functionalities
 export const UserModel = mongoose.model<IUser>('User', UserSchema);
