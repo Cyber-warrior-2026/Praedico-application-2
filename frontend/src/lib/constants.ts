@@ -26,4 +26,15 @@ export const API_ENDPOINTS = {
     PROFILE: '/api/users/profile',
     UPDATE: '/api/users/update',
   },
+
+    // ✨ NEW: Stock Market Data
+  STOCK: {
+    ALL_LATEST: '/api/stocks/latest',
+    NIFTY50: '/api/stocks/latest?category=NIFTY50',
+    ETF: '/api/stocks/latest?category=ETF',
+    BY_SYMBOL: (symbol: string) => `/api/stocks/${symbol}`,
+    SCRAPER_STATUS: '/api/scraper/status',
+    MANUAL_SCRAPE: '/api/stocks/scrape',
+  },
+  
 } as const;

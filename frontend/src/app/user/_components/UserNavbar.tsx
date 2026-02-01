@@ -49,7 +49,8 @@ export function UserNavbar() {
   const navItems = [
     { label: "Dashboard", href: "/user", icon: LayoutDashboard },
     { label: "Portfolio", href: "/user/portfolio", icon: Briefcase },
-    { label: "Trading", href: "/user/trading", icon: BarChart2 },
+{ label: "Trading", href: "/user/dashboard/trading", icon: BarChart2 },
+
     { label: "Wallet", href: "/user/wallet", icon: Wallet },
     { label: "Reports", href: "/user/reports", icon: ArrowRightLeft },
   ];
