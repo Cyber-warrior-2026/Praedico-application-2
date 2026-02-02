@@ -20,7 +20,10 @@ import {
   Sparkles,
   Shield,
   Clock,
-  RotateCcw
+  RotateCcw,
+  Save,
+  Mail,
+  CheckCircle2
 } from "lucide-react";
 import axios from "axios";
 
@@ -89,9 +92,18 @@ export default function UserManagementPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
 
+  // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  // Edit Form State (NEW)
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    email: "",
+    role: "user"
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // ============================================
   // API FUNCTIONS
@@ -119,7 +131,6 @@ export default function UserManagementPage() {
         setPagination(response.data.pagination);
       }
     } catch (err: any) {
-      // Don't wipe users immediately on error to prevent "disappearing" list
       if (users.length === 0) {
         setError(err.response?.data?.message || "Failed to fetch users");
       }
@@ -144,9 +155,7 @@ export default function UserManagementPage() {
     }
   };
 
-  // --- FIXED: OPTIMISTIC DELETE ---
   const handleDeleteUser = async (userId: string) => {
-    // 1. Optimistic Update: Remove from UI immediately
     const previousUsers = [...users];
     setUsers((current) => current.filter((u) => u._id !== userId));
     setDeleteModalOpen(false);
@@ -158,36 +167,27 @@ export default function UserManagementPage() {
       );
 
       if (response.data.success) {
-        // Success - update stats quietly
         fetchStats();
-        // If the page is now empty but we have more pages, fetch previous page
         if (users.length === 1 && pagination.page > 1) {
             setPagination(prev => ({...prev, page: prev.page - 1}));
         }
       }
     } catch (err: any) {
-      // Revert if failed
       setUsers(previousUsers);
       alert(err.response?.data?.message || "Failed to delete user");
     }
   };
 
-  // --- FIXED: OPTIMISTIC TOGGLE ---
   const handleToggleActive = async (userId: string) => {
-    // 1. Optimistic Update: Flip status immediately in UI
     const previousUsers = [...users];
-    
     setUsers((currentUsers) => 
       currentUsers.map((user) => {
         if (user._id === userId) {
-          // Flip the logic immediately
           return { ...user, isActive: !user.isActive };
         }
         return user;
       })
     );
-    
-    // Close menu immediately for better UX
     setActionMenuOpen(null);
 
     try {
@@ -201,18 +201,54 @@ export default function UserManagementPage() {
       );
 
       if (response.data.success) {
-        // Success! Just update stats in background
         fetchStats();
       } else {
-        // Server said no? Revert.
         setUsers(previousUsers);
         alert("Server failed to update status");
       }
     } catch (err: any) {
-      // Network error? Revert.
       console.error("Toggle error:", err);
       setUsers(previousUsers);
       alert("Failed to update status. Please check your connection.");
+    }
+  };
+
+  // --- NEW: EDIT FUNCTIONALITY ---
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+        name: user.name,
+        email: user.email,
+        role: user.role
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    setIsSaving(true);
+    try {
+        const response = await axios.put(
+            `http://localhost:5001/api/users/${selectedUser._id}`,
+            editFormData,
+            { withCredentials: true }
+        );
+
+        if (response.data.success) {
+            // Optimistic update locally
+            setUsers(prev => prev.map(u => 
+                u._id === selectedUser._id ? { ...u, ...editFormData } : u
+            ));
+            setEditModalOpen(false);
+            // Optional: fetchStats() if roles affect stats
+        }
+    } catch (err: any) {
+        console.error("Update error:", err);
+        alert(err.response?.data?.message || "Failed to update user");
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -251,7 +287,6 @@ export default function UserManagementPage() {
     fetchStats();
   }, [pagination.page, searchQuery, roleFilter, statusFilter]);
 
-  // Reset pagination when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, [searchQuery, roleFilter, statusFilter]);
@@ -516,7 +551,7 @@ export default function UserManagementPage() {
                                                     <Eye className="h-4 w-4" />
                                                 </button>
                                                 <button 
-                                                    onClick={() => { setSelectedUser(user); setEditModalOpen(true); }}
+                                                    onClick={() => handleEditClick(user)}
                                                     className="p-2 rounded-lg hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-400 transition-all"
                                                 >
                                                     <Edit className="h-4 w-4" />
@@ -623,6 +658,92 @@ export default function UserManagementPage() {
                     <span className="text-sm font-semibold text-slate-200">{formatDate(selectedUser.createdAt)}</span>
                 </div>
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- NEW EDIT MODAL --- */}
+      {editModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+             <button onClick={() => setEditModalOpen(false)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-slate-400 transition-colors">
+                <X className="h-5 w-5" />
+             </button>
+
+             <div className="flex flex-col items-center text-center mb-6">
+                 <div className="h-14 w-14 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-400 mb-4 border border-emerald-500/20">
+                    <Edit className="h-6 w-6" />
+                 </div>
+                 <h3 className="text-xl font-bold text-white">Edit User Profile</h3>
+                 <p className="text-slate-500 text-sm mt-1">Update account details and permissions.</p>
+             </div>
+
+             <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+                    <div className="relative group">
+                        <Users className="absolute left-4 top-3.5 h-4 w-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                        <input 
+                            type="text"
+                            value={editFormData.name}
+                            onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                            className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-600"
+                            placeholder="John Doe"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+                    <div className="relative group">
+                        <Mail className="absolute left-4 top-3.5 h-4 w-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                        <input 
+                            type="email"
+                            value={editFormData.email}
+                            onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                            className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-600"
+                            placeholder="john@example.com"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">System Role</label>
+                    <div className="relative group">
+                        <Shield className="absolute left-4 top-3.5 h-4 w-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                        <select 
+                            value={editFormData.role}
+                            // @ts-ignore
+                            onChange={(e) => setEditFormData({...editFormData, role: e.target.value})}
+                            className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 outline-none transition-all appearance-none cursor-pointer"
+                        >
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                        <ChevronRight className="absolute right-4 top-3.5 h-4 w-4 text-slate-500 rotate-90 pointer-events-none" />
+                    </div>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                    <button 
+                        type="button"
+                        onClick={() => setEditModalOpen(false)}
+                        className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium transition-all"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="submit"
+                        disabled={isSaving}
+                        className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                    >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Save Changes
+                    </button>
+                </div>
+             </form>
           </div>
         </div>
       )}
