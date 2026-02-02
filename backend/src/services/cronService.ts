@@ -17,7 +17,7 @@ class CronService {
     const minute = now.getMinutes();
     const currentTime = hour * 60 + minute;
     
-    const marketOpen = 9 * 60 + 15;  // 9:15 AM
+    const marketOpen = 9 * 60 ;  // 9:00 AM
     const marketClose = 15 * 60 + 30; // 3:30 PM
     
     return currentTime >= marketOpen && currentTime <= marketClose;
@@ -25,9 +25,9 @@ class CronService {
 
   // Start the scraper cron job
   startScraperJob(): void {
-    // Run every 2 minutes on weekdays during market hours
-    // Cron format: */2 * * * 1-5 means every 2 minutes, Monday-Friday
-    this.scraperJob = cron.schedule('*/2 * * * 1-5', async () => {
+    // Run every 1 minutes on weekdays during market hours
+    // Cron format: */1 * * * 1-5 means every 1 minutes, Monday-Friday
+    this.scraperJob = cron.schedule('*/1 * * * 1-5', async () => {
       
       if (!this.isWeekday()) {
         console.log('Skipping: Weekend detected');
