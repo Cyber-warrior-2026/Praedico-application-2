@@ -30,5 +30,10 @@ export const ENV = {
   EMAIL_PASS: getEnv('EMAIL_PASS'),
   
   // Frontend
-  FRONTEND_URL: getEnv('FRONTEND_URL', 'http://localhost:3000')
+  FRONTEND_URL: getEnv('FRONTEND_URL', 'http://localhost:3000'),
+  
+  // AI Configuration
+  GEMINI_API_KEY: getEnv('GEMINI_API_KEY'),
+  AI_MODEL: getEnv('AI_MODEL', 'gemini-1.5-flash'),
+  AI_MAX_HISTORY: getEnv('AI_MAX_HISTORY', '20')
 };

@@ -5,6 +5,8 @@ import { Search, TrendingUp, TrendingDown, RefreshCw, Activity, Zap, ArrowUpDown
 import { stockApi } from "@/lib/api";
 import { Stock } from "@/lib/types/stock.types";
 import StockDetailModal from "@/app/user/_components/StockDetailModal";
+import AIChatButton from '@/app/user/_components/chat/AIChatButton';
+
 
 export default function Nifty50Page() {
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -285,6 +287,8 @@ const fetchStocks = async () => {
         }}
         stock={selectedStock}
       />
+         {/* AI Chatbot */}
+      <AIChatButton />
     </div>
   );
 }
