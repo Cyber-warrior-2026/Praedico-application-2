@@ -18,20 +18,24 @@ export default function Nifty50Page() {
   const [sortBy, setSortBy] = useState<'symbol' | 'change'>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const fetchStocks = async () => {
-    try {
-      setLoading(true);
-      const response = await stockApi.getNifty50Stocks();
-      setStocks(response.data);
-      setFilteredStocks(response.data);
-      setLastUpdated(response.lastUpdated || new Date().toISOString());
-      setError("");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch stocks");
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchStocks = async () => {
+  try {
+    setLoading(true);
+    const response = await stockApi.getNifty50Stocks();
+    
+    // ✅ FIX: Access response.data
+    setStocks(response.data);
+    setFilteredStocks(response.data);
+    setLastUpdated(response.lastUpdated || new Date().toISOString());
+    setError("");
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch Nifty 50 stocks");
+    console.error("Error fetching Nifty 50 stocks:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchStocks();
