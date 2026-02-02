@@ -67,12 +67,12 @@ const MENU_GROUPS: MenuGroup[] = [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/analytics", label: "Analytics", icon: BarChart3, badge: "New", variant: "new" },
       {
-        label: "eCommerce",
+        label: "Trading",
         icon: ShoppingBag,
         subItems: [
-          { href: "/admin/ecommerce/products", label: "Products" },
-          { href: "/admin/ecommerce/orders", label: "Orders" },
-          { href: "/admin/ecommerce/customers", label: "Customers" },
+          { href: "/admin/trading/etf", label: "ETF" },
+          { href: "/admin/trading/nifty50", label: "Nifty50" },
+          // { href: "/admin/ecommerce/customers", label: "Customers" },
         ],
       },
     ],
@@ -82,7 +82,7 @@ const MENU_GROUPS: MenuGroup[] = [
     items: [
       // FIXED: Added leading slash '/' to make path absolute (Prevents appending)
       { 
-        href: "/admin/dashboard/user-management", 
+        href: "/admin/user-management", 
         label: "User Management", 
         icon: Users 
       },
