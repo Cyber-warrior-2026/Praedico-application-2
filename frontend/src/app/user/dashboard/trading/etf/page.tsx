@@ -6,6 +6,8 @@ import { stockApi } from "@/lib/api/stock.api";
 import { Stock } from "@/lib/types/stock.types";
 import StockDetailModal from "@/app/user/_components/StockDetailModal";
 
+import AIChatButton from '@/app/user/_components/chat/AIChatButton';
+
 export default function ETFPage() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<Stock[]>([]);
@@ -287,6 +289,9 @@ const fetchStocks = async () => {
         }}
         stock={selectedStock}
       />
+ {/* AI Chatbot */}
+      <AIChatButton />
+
     </div>
   );
 }
