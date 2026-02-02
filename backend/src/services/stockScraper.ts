@@ -64,42 +64,96 @@ class StockScraperService {
   }
 
   // Scrape ETF data from NSE
-  async scrapeETF(): Promise<any[]> {
+// Scrape ETF data from NSE
+async scrapeETF(): Promise<any[]> {
+  try {
+    await this.initSession();
+    
+    // ✅ Use correct NSE ETF endpoint
+    const response = await axios.get(
+      `${this.nseBaseUrl}/live-analysis-variations?index=etf`,
+      { headers: this.headers }
+    );
+
+    const etfData = response.data.data || [];
+    
+    const formattedData = etfData.map((etf: any) => ({
+      symbol: etf.symbol || etf.meta?.symbol,
+      name: etf.symbol || etf.meta?.companyName || etf.symbol,
+      category: 'ETF',
+      // ✅ Try multiple field names (NSE uses different names for ETFs)
+      price: parseFloat(etf.lastPrice || etf.ltp || etf.ltP || etf.last) || 0,
+      open: parseFloat(etf.open || etf.openPrice) || 0,
+      high: parseFloat(etf.dayHigh || etf.high || etf.highPrice) || 0,
+      low: parseFloat(etf.dayLow || etf.low || etf.lowPrice) || 0,
+      previousClose: parseFloat(etf.previousClose || etf.prevClose || etf.previousPrice) || 0,
+      change: parseFloat(etf.change || etf.netChange) || 0,
+      changePercent: parseFloat(etf.pChange || etf.perChange || etf.percentChange) || 0,
+      volume: parseInt(etf.totalTradedVolume || etf.volume || etf.totalVolume) || 0,
+      marketCap: parseFloat(etf.totalTradedValue || etf.totalValue) || 0,
+      timestamp: new Date(),
+      lastUpdated: new Date()
+    }));
+
+    // ✅ Log first item to see structure
+    if (formattedData.length > 0) {
+      console.log('Sample ETF data:', JSON.stringify(formattedData[0], null, 2));
+    }
+
+    console.log(`Scraped ${formattedData.length} ETFs`);
+    return formattedData;
+  } catch (error: any) {
+    console.error('Error scraping ETF:', error.message);
+    
+    // ✅ FALLBACK: Try alternative endpoint
     try {
+      console.log('Trying alternative ETF endpoint...');
       await this.initSession();
       
       const response = await axios.get(
-        `${this.nseBaseUrl}/etf`,
+        'https://www.nseindia.com/api/etf',
         { headers: this.headers }
       );
-
-      const etfData = response.data.data || [];
       
-      const formattedData = etfData.map((etf: any) => ({
-        symbol: etf.symbol,
-        name: etf.symbol,
-        category: 'ETF',
-        price: parseFloat(etf.lastPrice) || 0,
-        open: parseFloat(etf.open) || 0,
-        high: parseFloat(etf.dayHigh) || 0,
-        low: parseFloat(etf.dayLow) || 0,
-        previousClose: parseFloat(etf.previousClose) || 0,
-        change: parseFloat(etf.change) || 0,
-        changePercent: parseFloat(etf.pChange) || 0,
-        volume: parseInt(etf.totalTradedVolume) || 0,
-        marketCap: parseFloat(etf.totalTradedValue) || 0,
-        timestamp: new Date(),
-        lastUpdated: new Date()
-      }));
-
-      console.log(`Scraped ${formattedData.length} ETFs`);
-      return formattedData;
+      const etfData = response.data.data || response.data || [];
+      console.log(`Alternative endpoint returned ${etfData.length} ETFs`);
       
-    } catch (error: any) {
-      console.error('Error scraping ETF:', error.message);
+      // Log raw structure to see what fields are available
+      if (etfData.length > 0) {
+        console.log('Raw ETF structure:', JSON.stringify(etfData[0], null, 2));
+      }
+      
+      return this.formatETFData(etfData);
+    } catch (fallbackError: any) {
+      console.error('Fallback ETF scraping also failed:', fallbackError.message);
       return [];
     }
   }
+}
+
+// Helper function to format ETF data
+// Helper function to format ETF data
+private formatETFData(etfData: any[]): any[] {
+  return etfData.map((etf: any) => ({
+    symbol: etf.symbol,
+    name: etf.meta?.companyName || etf.assets || etf.symbol,
+    category: 'ETF',
+    // ✅ Use correct NSE ETF field names
+    price: parseFloat(etf.ltP || etf.lastPrice) || 0,  // ltP = Last Traded Price
+    open: parseFloat(etf.open) || 0,
+    high: parseFloat(etf.high) || 0,
+    low: parseFloat(etf.low) || 0,
+    previousClose: parseFloat(etf.prevClose) || 0,
+    change: parseFloat(etf.chn) || 0,  // chn = change
+    changePercent: parseFloat(etf.per) || 0,  // per = percentage
+    volume: parseInt(etf.qty) || 0,  // qty = quantity/volume
+    marketCap: parseFloat(etf.trdVal) || 0,  // trdVal = traded value
+    timestamp: new Date(),
+    lastUpdated: new Date()
+  }));
+}
+
+
 
   // Alternative: Scrape from Investing.com (backup method)
   async scrapeFromInvesting(): Promise<any[]> {

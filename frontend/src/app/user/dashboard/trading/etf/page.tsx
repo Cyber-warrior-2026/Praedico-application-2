@@ -18,21 +18,24 @@ export default function ETFPage() {
   const [sortBy, setSortBy] = useState<'symbol' | 'change'>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const fetchStocks = async () => {
-    try {
-      setLoading(true);
-      const response = await stockApi.getETFStocks();
-      setStocks(response.data);
-      setFilteredStocks(response.data);
-      setLastUpdated(response.lastUpdated || new Date().toISOString());
-      setError("");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch ETFs");
-      console.error("Error fetching ETF stocks:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchStocks = async () => {
+  try {
+    setLoading(true);
+    const response = await stockApi.getETFStocks();
+    
+    // ✅ FIX: Access response.data (not response directly)
+    setStocks(response.data);
+    setFilteredStocks(response.data);
+    setLastUpdated(response.lastUpdated || new Date().toISOString());
+    setError("");
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch ETFs");
+    console.error("Error fetching ETF stocks:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchStocks();
