@@ -23,7 +23,10 @@ import {
   RotateCcw,
   Save,
   Mail,
-  CheckCircle2
+  CheckCircle2,
+  Archive,     // NEW
+  RefreshCcw,  // NEW
+  History      // NEW
 } from "lucide-react";
 import axios from "axios";
 
@@ -38,6 +41,8 @@ interface User {
   role: "user" | "admin" | "super_admin";
   isVerified: boolean;
   isActive: boolean;
+  isDeleted: boolean; // NEW: Soft delete flag
+  deletedAt?: string; // NEW: Soft delete timestamp
   lastLogin?: string;
   lastActive?: string;
   createdAt: string;
@@ -50,6 +55,7 @@ interface UserStats {
   inactiveUsers: number;
   blockedUsers: number;
   registeredUsers: number;
+  deletedUsers: number; // NEW: Stats for deletion
 }
 
 interface Pagination {
@@ -79,6 +85,7 @@ export default function UserManagementPage() {
     inactiveUsers: 0,
     blockedUsers: 0,
     registeredUsers: 0,
+    deletedUsers: 0,
   });
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
@@ -95,9 +102,10 @@ export default function UserManagementPage() {
   // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [archiveModalOpen, setArchiveModalOpen] = useState(false); // Renamed from Delete
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false); // NEW
 
-  // Edit Form State (NEW)
+  // Edit Form State
   const [editFormData, setEditFormData] = useState({
     name: "",
     email: "",
@@ -118,7 +126,7 @@ export default function UserManagementPage() {
         limit: pagination.limit.toString(),
         search: searchQuery,
         role: roleFilter,
-        status: statusFilter,
+        status: statusFilter, // Backend should handle 'deleted' status filter
       });
 
       const response = await axios.get(
@@ -155,26 +163,63 @@ export default function UserManagementPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  // --- NEW: PROFESSIONAL SOFT DELETE (ARCHIVE) ---
+  const handleSoftDeleteUser = async (userId: string) => {
     const previousUsers = [...users];
-    setUsers((current) => current.filter((u) => u._id !== userId));
-    setDeleteModalOpen(false);
+    
+    // Optimistic Update: Mark as deleted locally first
+    setUsers((current) => 
+        current.map(u => u._id === userId ? { ...u, isDeleted: true, deletedAt: new Date().toISOString() } : u)
+    );
+    setArchiveModalOpen(false);
 
     try {
-      const response = await axios.delete(
-        `http://localhost:5001/api/users/${userId}`,
+      // Using PATCH implies we are modifying the 'isDeleted' field, not removing the record
+      const response = await axios.patch(
+        `http://localhost:5001/api/users/${userId}/soft-delete`,
+        {},
         { withCredentials: true }
       );
 
       if (response.data.success) {
         fetchStats();
-        if (users.length === 1 && pagination.page > 1) {
-            setPagination(prev => ({...prev, page: prev.page - 1}));
+        // If we are actively filtering out deleted users, remove from view
+        if (statusFilter !== 'deleted' && statusFilter !== 'all') {
+            setUsers(prev => prev.filter(u => u._id !== userId));
         }
       }
     } catch (err: any) {
-      setUsers(previousUsers);
-      alert(err.response?.data?.message || "Failed to delete user");
+      setUsers(previousUsers); // Rollback
+      alert(err.response?.data?.message || "Failed to archive user");
+    }
+  };
+
+  // --- NEW: RESTORE FUNCTIONALITY ---
+  const handleRestoreUser = async (userId: string) => {
+    const previousUsers = [...users];
+    
+    // Optimistic Update
+    setUsers((current) => 
+        current.map(u => u._id === userId ? { ...u, isDeleted: false, deletedAt: undefined } : u)
+    );
+    setRestoreModalOpen(false);
+
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/users/${userId}/restore`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        fetchStats();
+        if (statusFilter === 'deleted') {
+            setUsers(prev => prev.filter(u => u._id !== userId));
+        }
+      }
+    } catch (err: any) {
+      setUsers(previousUsers); // Rollback
+      alert(err.response?.data?.message || "Failed to restore user");
     }
   };
 
@@ -213,7 +258,6 @@ export default function UserManagementPage() {
     }
   };
 
-  // --- NEW: EDIT FUNCTIONALITY ---
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
     setEditFormData({
@@ -237,12 +281,10 @@ export default function UserManagementPage() {
         );
 
         if (response.data.success) {
-            // Optimistic update locally
             setUsers(prev => prev.map(u => 
                 u._id === selectedUser._id ? { ...u, ...editFormData } : u
             ));
             setEditModalOpen(false);
-            // Optional: fetchStats() if roles affect stats
         }
     } catch (err: any) {
         console.error("Update error:", err);
@@ -259,10 +301,10 @@ export default function UserManagementPage() {
         u.name,
         u.email,
         u.role,
-        u.isActive && u.isVerified
+        u.isDeleted 
+          ? "Archived" 
+          : u.isActive && u.isVerified
           ? "Active"
-          : !u.isActive
-          ? "Blocked"
           : "Inactive",
         new Date(u.createdAt).toLocaleDateString(),
       ]),
@@ -296,6 +338,16 @@ export default function UserManagementPage() {
   // ============================================
 
   const getStatusBadge = (user: User) => {
+    // Priority 1: Deleted
+    if (user.isDeleted) {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
+                <span className="text-slate-500 text-xs font-semibold tracking-wide uppercase">Archived</span>
+            </div>
+        );
+    }
+    // Priority 2: Active
     if (user.isActive && user.isVerified) {
       return (
         <div className="flex items-center gap-2">
@@ -356,8 +408,8 @@ export default function UserManagementPage() {
   const statsCards = [
     { icon: Users, label: "Total Users", value: stats.totalUsers, color: "text-white", gradient: "from-blue-600 to-indigo-600" },
     { icon: Sparkles, label: "Active Now", value: stats.activeUsers, color: "text-emerald-300", gradient: "from-emerald-600 to-teal-600" },
-    { icon: UserX, label: "Inactive", value: stats.inactiveUsers, color: "text-amber-300", gradient: "from-amber-600 to-orange-600" },
     { icon: Shield, label: "Blocked", value: stats.blockedUsers, color: "text-rose-300", gradient: "from-rose-600 to-red-600" },
+    { icon: Archive, label: "Archived", value: stats.deletedUsers || 0, color: "text-slate-300", gradient: "from-slate-600 to-gray-600" }, // Updated Stat
   ];
 
   // ============================================
@@ -476,6 +528,7 @@ export default function UserManagementPage() {
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
+                            <option value="deleted">Archived</option> {/* NEW OPTION */}
                             <option value="unverified">Unverified</option>
                         </select>
                         <div className="absolute right-3.5 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-slate-600 pointer-events-none" />
@@ -514,18 +567,20 @@ export default function UserManagementPage() {
                                 {users.map((user, index) => (
                                     <tr 
                                         key={user._id} 
-                                        className="group hover:bg-white/[0.02] transition-colors duration-300"
+                                        className={`group hover:bg-white/[0.02] transition-colors duration-300 ${user.isDeleted ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
                                         style={{ animation: `slideUp 0.3s ease-out ${index * 0.05}s backwards` }}
                                     >
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-4">
                                                 <div className={`h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg bg-gradient-to-br ${
-                                                    ['from-pink-500 to-rose-500', 'from-indigo-500 to-blue-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500'][index % 4]
+                                                    user.isDeleted 
+                                                    ? 'from-slate-600 to-gray-600'
+                                                    : ['from-pink-500 to-rose-500', 'from-indigo-500 to-blue-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500'][index % 4]
                                                 }`}>
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-200 group-hover:text-indigo-400 transition-colors">{user.name}</p>
+                                                    <p className={`text-sm font-semibold text-slate-200 ${!user.isDeleted && 'group-hover:text-indigo-400'} transition-colors`}>{user.name}</p>
                                                     <p className="text-xs text-slate-500 font-medium mt-0.5">{user.email}</p>
                                                 </div>
                                             </div>
@@ -550,12 +605,27 @@ export default function UserManagementPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
-                                                <button 
-                                                    onClick={() => handleEditClick(user)}
-                                                    className="p-2 rounded-lg hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-400 transition-all"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </button>
+                                                
+                                                {/* Only show Edit for non-deleted users */}
+                                                {!user.isDeleted && (
+                                                    <button 
+                                                        onClick={() => handleEditClick(user)}
+                                                        className="p-2 rounded-lg hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-400 transition-all"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                
+                                                {/* Restore Button (Visible directly if deleted) */}
+                                                {user.isDeleted && (
+                                                    <button 
+                                                        onClick={() => { setSelectedUser(user); setRestoreModalOpen(true); }}
+                                                        className="p-2 rounded-lg hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-400 transition-all"
+                                                        title="Restore User"
+                                                    >
+                                                        <RefreshCcw className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                                 
                                                 <div className="relative">
                                                     <button 
@@ -569,20 +639,32 @@ export default function UserManagementPage() {
                                                         <>
                                                             <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
                                                             <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-[#0F172A] border border-white/10 shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                                                <button 
-                                                                    onClick={() => handleToggleActive(user._id)}
-                                                                    className="w-full text-left px-4 py-3 text-xs font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
-                                                                >
-                                                                    <Ban className="h-3.5 w-3.5" />
-                                                                    {user.isActive ? "Block Access" : "Unblock User"}
-                                                                </button>
-                                                                <button 
-                                                                    onClick={() => { setSelectedUser(user); setDeleteModalOpen(true); }}
-                                                                    className="w-full text-left px-4 py-3 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-2 border-t border-white/5"
-                                                                >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                    Delete Account
-                                                                </button>
+                                                                {!user.isDeleted ? (
+                                                                    <>
+                                                                        <button 
+                                                                            onClick={() => handleToggleActive(user._id)}
+                                                                            className="w-full text-left px-4 py-3 text-xs font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                                                                        >
+                                                                            <Ban className="h-3.5 w-3.5" />
+                                                                            {user.isActive ? "Block Access" : "Unblock User"}
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={() => { setSelectedUser(user); setArchiveModalOpen(true); }}
+                                                                            className="w-full text-left px-4 py-3 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors flex items-center gap-2 border-t border-white/5"
+                                                                        >
+                                                                            <Archive className="h-3.5 w-3.5" />
+                                                                            Archive User
+                                                                        </button>
+                                                                    </>
+                                                                ) : (
+                                                                    <button 
+                                                                        onClick={() => { setSelectedUser(user); setRestoreModalOpen(true); }}
+                                                                        className="w-full text-left px-4 py-3 text-xs font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-2"
+                                                                    >
+                                                                        <RefreshCcw className="h-3.5 w-3.5" />
+                                                                        Restore Account
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </>
                                                     )}
@@ -625,7 +707,7 @@ export default function UserManagementPage() {
 
       </div>
 
-      {/* --- MODALS (Glassmorphism & Spring Animations) --- */}
+      {/* --- MODALS --- */}
       
       {/* View User Modal */}
       {viewModalOpen && selectedUser && (
@@ -653,16 +735,18 @@ export default function UserManagementPage() {
                     <span className="text-sm text-slate-500">Account Status</span>
                     {getStatusBadge(selectedUser)}
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#020617] border border-white/5">
-                    <span className="text-sm text-slate-500">Joined Date</span>
-                    <span className="text-sm font-semibold text-slate-200">{formatDate(selectedUser.createdAt)}</span>
-                </div>
+                {selectedUser.isDeleted && (
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-[#020617] border border-white/5">
+                        <span className="text-sm text-slate-500">Archived Date</span>
+                        <span className="text-sm font-semibold text-amber-500">{formatDate(selectedUser.deletedAt || new Date().toISOString())}</span>
+                    </div>
+                )}
              </div>
           </div>
         </div>
       )}
 
-      {/* --- NEW EDIT MODAL --- */}
+      {/* Edit Modal */}
       {editModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -748,20 +832,39 @@ export default function UserManagementPage() {
         </div>
       )}
 
-      {/* Delete Modal */}
-      {deleteModalOpen && selectedUser && (
+      {/* Archive (Soft Delete) Modal */}
+      {archiveModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-300">
-              <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                 <Trash2 className="h-8 w-8 text-rose-500" />
+              <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <Archive className="h-8 w-8 text-amber-500" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Delete Account?</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Archive User?</h3>
               <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-                 You are about to permanently remove <span className="text-white font-semibold">{selectedUser.name}</span>. This action cannot be undone.
+                 You are about to archive <span className="text-white font-semibold">{selectedUser.name}</span>. The user will be hidden but can be restored later.
               </p>
               <div className="flex gap-3">
-                 <button onClick={() => setDeleteModalOpen(false)} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium transition-all">Cancel</button>
-                 <button onClick={() => handleDeleteUser(selectedUser._id)} className="flex-1 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold shadow-lg shadow-rose-500/20 transition-all">Confirm Delete</button>
+                 <button onClick={() => setArchiveModalOpen(false)} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium transition-all">Cancel</button>
+                 <button onClick={() => handleSoftDeleteUser(selectedUser._id)} className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-500/20 transition-all">Archive</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Restore Modal */}
+      {restoreModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-300">
+              <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <RefreshCcw className="h-8 w-8 text-emerald-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Restore Account?</h3>
+              <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                 You are about to restore <span className="text-white font-semibold">{selectedUser.name}</span>. They will regain access immediately.
+              </p>
+              <div className="flex gap-3">
+                 <button onClick={() => setRestoreModalOpen(false)} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium transition-all">Cancel</button>
+                 <button onClick={() => handleRestoreUser(selectedUser._id)} className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all">Confirm Restore</button>
               </div>
            </div>
         </div>

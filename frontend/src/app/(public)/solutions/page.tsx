@@ -1,519 +1,393 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  Sparkles,
   Building2,
   Heart,
   ShoppingCart,
-  TrendingUp,
-  DollarSign,
   Factory,
   Cpu,
-  GraduationCap,
-  Plane,
-  Home,
   Shield,
   Zap,
-  Users,
   BarChart3,
-  Globe,
-  CheckCircle,
-  ArrowRight,
-  Rocket,
-  Target,
   Brain,
-  LineChart,
   Database,
-  Lock,
-  Clock,
-  Star,
-  ChevronRight,
+  ArrowRight,
+  Sparkles,
+  Workflow,
+  Globe,
+  Layers,
+  Code2,
+  Server, // ✅ Fixed: Imported Server icon
+  Lock    // ✅ Fixed: Imported Lock icon
 } from "lucide-react";
+import { 
+  motion, 
+  useScroll, 
+  useTransform, 
+  useMotionTemplate, 
+  useMotionValue
+} from "framer-motion";
 import RegisterModal from "@/app/user/_components/RegisterModal";
 import LoginModal from "@/app/user/_components/LoginModal";
+import { cn } from "@/lib/utils"; 
 
-export default function SolutionsPage() {
-  const [activeIndustry, setActiveIndustry] = useState(0);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
+// --- 1. CINEMATIC HERO COMPONENT ---
+const CinematicHero = ({ onGetStarted }: { onGetStarted: () => void }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
 
-  // Parallax scroll effect
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Text Scaling Effect (Zoom through)
+  const scale = useTransform(scrollYProgress, [0, 0.4], [1, 50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.35, 0.4], [1, 1, 0]);
+  const blur = useTransform(scrollYProgress, [0.3, 0.4], ["0px", "20px"]);
+  
+  // UI Reveal Effect
+  const uiOpacity = useTransform(scrollYProgress, [0.4, 0.5], [0, 1]);
+  const uiScale = useTransform(scrollYProgress, [0.4, 0.6], [0.8, 1]);
+  const uiY = useTransform(scrollYProgress, [0.4, 0.6], [100, 0]);
 
-  const handleGetStarted = () => {
-    setIsRegisterModalOpen(true);
-  };
+  return (
+    <section ref={containerRef} className="relative h-[400vh] bg-black">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+        
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse" />
+        
+        <motion.div 
+          style={{ scale, opacity, filter: `blur(${blur})` }} 
+          className="relative z-20 text-center origin-center"
+        >
+          <div className="inline-flex items-center gap-2 border border-white/20 px-4 py-1.5 rounded-full text-xs font-mono text-white mb-8 backdrop-blur-md">
+             <Sparkles className="w-3 h-3 text-indigo-400" />
+             <span>PRAEDICO ENGINE V3.0</span>
+          </div>
+          <h1 className="text-[12vw] font-bold text-white leading-[0.8] tracking-tighter">
+            PURE <br/> INTELLIGENCE
+          </h1>
+        </motion.div>
 
-  const handleSwitchToLogin = () => {
-    setIsRegisterModalOpen(false);
-    setIsLoginModalOpen(true);
-  };
+        <motion.div 
+          style={{ opacity: uiOpacity, scale: uiScale, y: uiY }}
+          className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none md:pointer-events-auto"
+        >
+           <div className="relative w-[90%] max-w-6xl h-[80%] rounded-3xl border border-white/10 bg-[#0B1121]/80 backdrop-blur-xl overflow-hidden shadow-2xl">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
+              <div className="absolute top-0 left-0 w-full h-16 border-b border-white/10 flex items-center px-8 gap-4">
+                 <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                 </div>
+              </div>
+              
+              <div className="p-20 flex flex-col items-center justify-center h-full text-center">
+                 <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+                    Welcome to the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Future.</span>
+                 </h2>
+                 <p className="text-xl text-slate-400 max-w-2xl mb-10">
+                    The world's most advanced predictive engine is ready.
+                 </p>
+                 <button onClick={onGetStarted} className="px-10 py-4 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform pointer-events-auto">
+                    Initialize System
+                 </button>
+              </div>
+           </div>
+        </motion.div>
 
-  const handleSwitchToRegister = () => {
-    setIsLoginModalOpen(false);
-    setIsRegisterModalOpen(true);
-  };
+        <motion.div 
+          style={{ opacity: useTransform(scrollYProgress, [0, 0.1], [1, 0]) }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-xs tracking-widest uppercase animate-bounce"
+        >
+           Scroll to Enter
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- 2. CARD STACK COMPONENT ---
+const Card = ({
+  i,
+  title,
+  subtitle,
+  desc,
+  icon: Icon,
+  color,
+  accent,
+  border,
+  progress,
+  range,
+  targetScale,
+}: any) => {
+  const container = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: container,
+    offset: ['start end', 'start start']
+  });
+
+  const scale = useTransform(progress, range, [1, targetScale]);
+  
+  return (
+    <div ref={container} className="h-screen flex items-center justify-center sticky top-0">
+      <motion.div 
+        style={{ scale, top: `calc(-5vh + ${i * 25}px)` }} 
+        className={cn(
+          "relative -top-[25%] flex flex-col md:flex-row h-[600px] w-full max-w-6xl rounded-[3rem] border border-white/10 p-10 md:p-16 shadow-2xl origin-top overflow-hidden bg-black",
+          border
+        )}
+      >
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-soft-light pointer-events-none" />
+        <div className={cn("absolute top-[-50%] right-[-20%] w-[800px] h-[800px] rounded-full blur-[150px] opacity-20 pointer-events-none", accent.replace('text', 'bg'))} />
+
+        <div className="relative z-20 flex flex-col justify-between w-full md:w-[50%] h-full">
+           <div>
+              <div className={cn("flex items-center gap-3 mb-6 uppercase tracking-widest text-xs font-bold font-mono", accent)}>
+                 {/* ✅ Fixed: Icon component is passed and rendered correctly */}
+                 <Icon className="w-4 h-4" />
+                 <span>0{i + 1} — {title}</span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-[0.9] tracking-tighter">{subtitle}</h2>
+              <p className="text-lg text-slate-300 leading-relaxed max-w-md">{desc}</p>
+           </div>
+           
+           <div className="flex items-center gap-4 text-sm font-bold text-white cursor-pointer group w-fit mt-8">
+              <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                 <ArrowRight className="w-5 h-5" />
+              </div>
+              <span>Explore Module</span>
+           </div>
+        </div>
+
+        <div className="relative h-full w-full md:w-[50%] rounded-3xl overflow-hidden mt-8 md:mt-0 md:ml-12 border border-white/5 bg-[#050505]">
+           <div className="absolute inset-0 flex items-center justify-center">
+              <div className={cn("w-32 h-32 border-2 rounded-full animate-[spin_10s_linear_infinite]", accent.replace('text', 'border'))} />
+              <div className={cn("absolute w-64 h-64 border border-dashed rounded-full animate-[spin_20s_linear_infinite_reverse] opacity-30", accent.replace('text', 'border'))} />
+           </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+const CardStack = () => {
+  const container = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: container,
+    offset: ['start start', 'end end']
+  })
 
   const industries = [
     {
-      icon: Building2,
-      name: "Finance & Banking",
-      description: "AI-powered risk assessment and fraud detection",
-      color: "from-blue-500 to-cyan-600",
-      bgColor: "bg-blue-500/10",
-      features: [
-        "Real-time fraud detection",
-        "Credit risk assessment",
-        "Market trend prediction",
-        "Automated compliance",
-      ],
-      stats: { accuracy: "99.8%", reduction: "73%", time: "10x faster" },
+      id: "finance",
+      title: "Finance",
+      subtitle: "Risk Intelligence",
+      desc: "Detect fraud anomalies and forecast market volatility with sub-millisecond latency using our proprietary neural engine.",
+      color: "#0f172a", 
+      accent: "text-blue-400",
+      border: "border-blue-500/20",
+      icon: Building2
     },
     {
-      icon: Heart,
-      name: "Healthcare",
-      description: "Predictive analytics for patient outcomes",
-      color: "from-rose-500 to-pink-600",
-      bgColor: "bg-rose-500/10",
-      features: [
-        "Disease prediction",
-        "Treatment optimization",
-        "Resource allocation",
-        "Patient risk scoring",
-      ],
-      stats: { accuracy: "94.5%", reduction: "60%", time: "5x faster" },
+      id: "healthcare",
+      title: "Healthcare",
+      subtitle: "Genomic Prediction",
+      desc: "Analyze genomic datasets to predict readmission risks and optimize treatment pathways tailored to individual biology.",
+      color: "#1e1b4b",
+      accent: "text-rose-400",
+      border: "border-rose-500/20",
+      icon: Heart
     },
     {
-      icon: ShoppingCart,
-      name: "Retail & E-commerce",
-      description: "Demand forecasting and inventory optimization",
-      color: "from-purple-500 to-indigo-600",
-      bgColor: "bg-purple-500/10",
-      features: [
-        "Demand forecasting",
-        "Dynamic pricing",
-        "Customer segmentation",
-        "Inventory optimization",
-      ],
-      stats: { accuracy: "96.2%", reduction: "45%", time: "8x faster" },
+      id: "manufacturing",
+      title: "IoT",
+      subtitle: "Smart Manufacturing",
+      desc: "Predict equipment failure weeks in advance using digital twin technology to simulate production bottlenecks.",
+      color: "#312e81", 
+      accent: "text-amber-400",
+      border: "border-amber-500/20",
+      icon: Factory
     },
     {
-      icon: Factory,
-      name: "Manufacturing",
-      description: "Predictive maintenance and quality control",
-      color: "from-orange-500 to-amber-600",
-      bgColor: "bg-orange-500/10",
-      features: [
-        "Equipment failure prediction",
-        "Quality assurance",
-        "Supply chain optimization",
-        "Production forecasting",
-      ],
-      stats: { accuracy: "97.1%", reduction: "68%", time: "12x faster" },
-    },
-    {
-      icon: Cpu,
-      name: "Technology",
-      description: "AI infrastructure and scalability solutions",
-      color: "from-green-500 to-emerald-600",
-      bgColor: "bg-green-500/10",
-      features: [
-        "System performance prediction",
-        "Anomaly detection",
-        "Capacity planning",
-        "Security threat analysis",
-      ],
-      stats: { accuracy: "98.3%", reduction: "82%", time: "15x faster" },
-    },
-    {
-      icon: GraduationCap,
-      name: "Education",
-      description: "Student performance and engagement analytics",
-      color: "from-yellow-500 to-orange-600",
-      bgColor: "bg-yellow-500/10",
-      features: [
-        "Student success prediction",
-        "Personalized learning",
-        "Dropout prevention",
-        "Resource optimization",
-      ],
-      stats: { accuracy: "91.7%", reduction: "55%", time: "6x faster" },
-    },
+      id: "retail",
+      title: "Retail",
+      subtitle: "Hyper Demand",
+      desc: "Optimize supply chains with hyper-local demand prediction models that adjust to micro-trends instantly.",
+      color: "#020617",
+      accent: "text-purple-400",
+      border: "border-purple-500/20",
+      icon: ShoppingCart
+    }
   ];
-
-  const useCases = [
-    {
-      icon: TrendingUp,
-      title: "Revenue Forecasting",
-      description:
-        "Predict future revenue with machine learning models trained on historical data.",
-      benefit: "+34% accuracy improvement",
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      icon: Users,
-      title: "Customer Churn Prediction",
-      description:
-        "Identify at-risk customers before they leave and take proactive action.",
-      benefit: "65% churn reduction",
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      icon: Shield,
-      title: "Fraud Detection",
-      description:
-        "Real-time anomaly detection to prevent fraudulent transactions.",
-      benefit: "99.8% fraud prevention",
-      color: "from-red-500 to-rose-500",
-    },
-    {
-      icon: BarChart3,
-      title: "Demand Planning",
-      description:
-        "Optimize inventory levels with accurate demand forecasting.",
-      benefit: "42% cost savings",
-      color: "from-green-500 to-emerald-500",
-    },
-    {
-      icon: Brain,
-      title: "Sentiment Analysis",
-      description:
-        "Understand customer sentiment from reviews and social media.",
-      benefit: "87% insight accuracy",
-      color: "from-orange-500 to-amber-500",
-    },
-    {
-      icon: Zap,
-      title: "Process Automation",
-      description:
-        "Automate repetitive tasks with intelligent workflow optimization.",
-      benefit: "10x productivity boost",
-      color: "from-violet-500 to-purple-500",
-    },
-  ];
-
-  const benefits = [
-    {
-      icon: Target,
-      title: "Industry-Specific Models",
-      description:
-        "Pre-trained models tailored to your industry's unique challenges.",
-    },
-    {
-      icon: Rocket,
-      title: "Rapid Deployment",
-      description: "Go from proof-of-concept to production in weeks, not months.",
-    },
-    {
-      icon: Globe,
-      title: "Scalable Infrastructure",
-      description: "Handle millions of predictions per second with ease.",
-    },
-    {
-      icon: Lock,
-      title: "Enterprise Security",
-      description: "Bank-level encryption and compliance certifications.",
-    },
-  ];
-
-  const activeIndustryData = industries[activeIndustry];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background with Parallax */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-1/4 -left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse"
-          style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-        />
-        <div
-          className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-pulse delay-700"
-          style={{ transform: `translateY(${-scrollY * 0.3}px)` }}
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-
-        {/* Floating Grid */}
-        <div
-          className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px]"
-          style={{ transform: `translateY(${scrollY * 0.1}px)` }}
-        />
-      </div>
-
-      {/* Navbar */}
-      <nav className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2 group">
-                <ArrowLeft className="h-5 w-5 text-purple-400 group-hover:-translate-x-1 transition-transform" />
-                <span className="text-white font-semibold">Back to Home</span>
-              </Link>
-            </div>
-            <button
-              onClick={handleGetStarted}
-              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
-            >
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Sparkles className="h-4 w-4 text-purple-400 animate-pulse" />
-            <span className="text-purple-300 text-sm font-medium">
-              Industry Solutions
-            </span>
-          </div>
-
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-            <span className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              Solutions Built for
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">
-              Your Industry
-            </span>
-          </h1>
-
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-            Unlock the power of AI-driven predictions tailored to solve your
-            specific business challenges. Trusted by industry leaders worldwide.
-          </p>
-        </div>
-
-        {/* Industry Tabs */}
-        <div className="mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {industries.map((industry, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveIndustry(index)}
-                className={`group flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
-                  activeIndustry === index
-                    ? `bg-gradient-to-r ${industry.color} text-white shadow-lg scale-105`
-                    : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"
-                }`}
-              >
-                <industry.icon className="h-5 w-5" />
-                <span className="text-sm">{industry.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Active Industry Showcase */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 md:p-12 relative overflow-hidden group hover:bg-white/10 transition-all duration-500">
-            {/* Glow Effect */}
-            <div
-              className={`absolute inset-0 bg-gradient-to-r ${activeIndustryData.color} opacity-0 group-hover:opacity-10 rounded-3xl blur-2xl transition-opacity duration-500`}
-            />
-
-            <div className="relative grid md:grid-cols-2 gap-12 items-center">
-              {/* Left Content */}
-              <div>
-                <div
-                  className={`inline-flex items-center gap-3 ${activeIndustryData.bgColor} backdrop-blur-sm border border-white/10 rounded-2xl p-4 mb-6`}
-                >
-                  <div
-                    className={`p-3 bg-gradient-to-r ${activeIndustryData.color} rounded-xl`}
-                  >
-                    <activeIndustryData.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">
-                      {activeIndustryData.name}
-                    </h3>
-                    <p className="text-sm text-slate-400">
-                      {activeIndustryData.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-8">
-                  {activeIndustryData.features.map((feature, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 text-slate-300 group/feature hover:translate-x-2 transition-transform"
-                    >
-                      <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
-                      <span className="group-hover/feature:text-white transition-colors">
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={handleGetStarted}
-                  className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${activeIndustryData.color} text-white rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all`}
-                >
-                  Explore Solution
-                  <ArrowRight className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Right Stats */}
-              <div className="grid grid-cols-1 gap-6">
-                {Object.entries(activeIndustryData.stats).map(
-                  ([key, value], i) => (
-                    <div
-                      key={i}
-                      className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:scale-105 transition-all hover:shadow-lg hover:shadow-purple-500/20"
-                    >
-                      <p className="text-sm text-slate-400 uppercase tracking-wider mb-2">
-                        {key.replace(/([A-Z])/g, " $1").trim()}
-                      </p>
-                      <p
-                        className={`text-4xl font-bold bg-gradient-to-r ${activeIndustryData.color} bg-clip-text text-transparent`}
-                      >
-                        {value}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Use Cases Grid */}
-        <div className="mb-20">
-          <h2 className="text-4xl font-bold text-center mb-4 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            Popular Use Cases
-          </h2>
-          <p className="text-center text-slate-400 mb-12 max-w-2xl mx-auto">
-            Discover how leading companies are leveraging predictive analytics
-          </p>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {useCases.map((useCase, index) => (
-              <div
-                key={index}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
-              >
-                {/* Animated Border */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r ${useCase.color} opacity-0 group-hover:opacity-20 rounded-2xl blur-xl transition-opacity duration-300`}
-                />
-
-                <div className="relative">
-                  <div
-                    className={`inline-flex p-3 bg-gradient-to-r ${useCase.color} rounded-xl mb-4`}
-                  >
-                    <useCase.icon className="h-6 w-6 text-white" />
-                  </div>
-
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {useCase.title}
-                  </h3>
-                  <p className="text-slate-400 mb-4">{useCase.description}</p>
-
-                  <div
-                    className={`inline-flex px-3 py-1 bg-gradient-to-r ${useCase.color} bg-opacity-10 border border-white/10 rounded-full`}
-                  >
-                    <span
-                      className={`text-sm font-semibold bg-gradient-to-r ${useCase.color} bg-clip-text text-transparent`}
-                    >
-                      {useCase.benefit}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Benefits Section */}
-        <div className="mb-20">
-          <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            Why Choose Praedico
-          </h2>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all hover:scale-105 text-center"
-              >
-                <div className="inline-flex p-4 bg-purple-500/10 rounded-2xl mb-4">
-                  <benefit.icon className="h-8 w-8 text-purple-400" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">
-                  {benefit.title}
-                </h3>
-                <p className="text-sm text-slate-400">{benefit.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="relative bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20 backdrop-blur-sm border border-white/10 rounded-3xl p-12 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 animate-pulse" />
-
-          <div className="relative">
-            <Rocket className="h-16 w-16 text-purple-400 mx-auto mb-6 animate-bounce" />
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Ready to Transform Your Business?
-            </h2>
-            <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-              Join industry leaders using Praedico to drive data-driven
-              decisions.
-            </p>
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={handleGetStarted}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105 flex items-center gap-2"
-              >
-                Start Free Trial
-                <ChevronRight className="h-5 w-5" />
-              </button>
-              <Link
-                href="/contacts"
-                className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full font-semibold hover:bg-white/20 transition-all hover:scale-105"
-              >
-                Talk to Sales
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-md mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <p className="text-center text-slate-400 text-sm">
-            © 2026 Praedico. All rights reserved.
-          </p>
-        </div>
-      </div>
-
-      {/* Modals */}
-      <RegisterModal
-        isOpen={isRegisterModalOpen}
-        onClose={() => setIsRegisterModalOpen(false)}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onSwitchToRegister={handleSwitchToRegister}
-      />
+    <div ref={container} className="relative mt-[10vh]">
+      {industries.map((project, i) => {
+        const targetScale = 1 - ( (industries.length - i) * 0.05);
+        return (
+          <Card 
+            key={i} 
+            i={i} 
+            {...project} 
+            progress={scrollYProgress}
+            range={[i * .25, 1]}
+            targetScale={targetScale}
+          />
+        )
+      })}
     </div>
+  )
+}
+
+// --- 3. HORIZONTAL PARALLAX CAPABILITIES ---
+const CapabilitiesSection = () => {
+  const targetRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: targetRef });
+  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-60%"]);
+
+  const caps = [
+    { title: "Real-Time Ingestion", desc: "5ms Latency", icon: Zap, color: "bg-blue-500" },
+    { title: "Neural Analysis", desc: "Transformer Models", icon: Brain, color: "bg-purple-500" },
+    { title: "Vector Database", desc: "Semantic Search", icon: Database, color: "bg-rose-500" },
+    { title: "Edge Inference", desc: "On-Device AI", icon: Cpu, color: "bg-amber-500" },
+    { title: "Auto-Scaling", desc: "Infinite Throughput", icon: BarChart3, color: "bg-emerald-500" },
+    { title: "Military Security", desc: "Zero Trust", icon: Shield, color: "bg-cyan-500" },
+  ];
+
+  return (
+    <section ref={targetRef} className="relative h-[400vh] bg-black">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden pl-10 md:pl-20">
+        <div className="absolute top-20 left-10 md:left-20 z-10">
+           <h2 className="text-6xl font-bold text-white mb-2">Core Capabilities</h2>
+           <p className="text-slate-400">The engine behind the magic.</p>
+        </div>
+        <motion.div style={{ x }} className="flex gap-10">
+          {caps.map((cap, i) => {
+            const CapIcon = cap.icon; // ✅ Fixed: Assign to capitalized variable
+            return (
+              <div key={i} className="flex-shrink-0 h-[500px] w-[350px] rounded-[3rem] border border-white/10 bg-[#0B1121] p-10 flex flex-col justify-between relative overflow-hidden group hover:border-white/30 transition-all">
+                 <div className={`absolute top-0 right-0 w-40 h-40 rounded-full blur-[80px] opacity-20 ${cap.color}`} />
+                 <CapIcon className="w-12 h-12 text-white opacity-80" />
+                 <div>
+                    <h3 className="text-3xl font-bold text-white mb-2">{cap.title}</h3>
+                    <p className="text-lg text-slate-400">{cap.desc}</p>
+                 </div>
+                 <div className="w-full h-[1px] bg-gradient-to-r from-white/20 to-transparent" />
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- 4. APPLE-STYLE GRID (TECH SPECS) ---
+const TechGrid = () => {
+  const specs = [
+    { label: "Architecture", val: "Transformer", icon: Layers },
+    { label: "Encryption", val: "AES-256", icon: Lock },
+    { label: "API Protocol", val: "GraphQL", icon: Code2 },
+    { label: "Deployment", val: "Global Edge", icon: Globe },
+    { label: "Integrations", val: "Webhooks", icon: Workflow },
+    { label: "Uptime", val: "99.99%", icon: Server },
+  ];
+
+  return (
+    <section className="py-40 px-6 bg-black relative overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px] opacity-20" />
+      
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-24 border-b border-white/10 pb-10 flex items-end justify-between">
+           <h2 className="text-7xl font-bold text-white tracking-tighter">System <br/> Specs</h2>
+           <div className="text-right hidden md:block">
+              <div className="text-sm font-mono text-indigo-400 mb-2">ARCHITECTURE</div>
+              <div className="text-xl text-white">Rust / C++ / WASM</div>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-white/10 border border-white/10">
+           {specs.map((item, i) => {
+             const ItemIcon = item.icon; // ✅ Fixed: Assign to capitalized variable
+             return (
+               <div key={i} className="bg-black p-12 group hover:bg-white/5 transition-colors">
+                  <ItemIcon className="w-8 h-8 text-slate-500 mb-6 group-hover:text-white transition-colors" />
+                  <div className="text-sm text-slate-500 mb-2 uppercase tracking-widest">{item.label}</div>
+                  <div className="text-3xl font-bold text-white">{item.val}</div>
+               </div>
+             );
+           })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default function SolutionsPage() {
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
+  // Dynamic Background Color for the whole page
+  const { scrollYProgress } = useScroll();
+  const backgroundColor = useTransform(
+    scrollYProgress,
+    [0, 0.2, 0.8, 1],
+    ["#000000", "#000000", "#050505", "#000000"]
+  );
+
+  const handleGetStarted = () => setIsRegisterModalOpen(true);
+  const handleSwitchToLogin = () => { setIsRegisterModalOpen(false); setIsLoginModalOpen(true); };
+  const handleSwitchToRegister = () => { setIsLoginModalOpen(false); setIsRegisterModalOpen(true); };
+
+  return (
+    <motion.div 
+      style={{ backgroundColor }} 
+      className="text-slate-200 selection:bg-indigo-500/30 selection:text-white font-sans overflow-x-hidden"
+    >
+      <motion.div style={{ scaleX: scrollYProgress }} className="fixed top-0 left-0 right-0 h-1 bg-white mix-blend-difference origin-left z-[100]" />
+
+      {/* 1. HERO */}
+      <CinematicHero onGetStarted={handleGetStarted} />
+
+      {/* 2. CAPABILITIES (HORIZONTAL) */}
+      <CapabilitiesSection />
+
+      {/* 3. VERTICAL SOLUTIONS (STACK) */}
+      <section className="relative z-10 bg-black pt-20">
+         <div className="max-w-7xl mx-auto px-6 mb-20 text-center">
+            <h2 className="text-5xl md:text-8xl font-bold text-white mb-6">Vertical Solutions</h2>
+            <p className="text-xl text-slate-400">Tailored intelligence for every sector.</p>
+         </div>
+         <CardStack />
+      </section>
+
+      {/* 4. TECH SPECS */}
+      <TechGrid />
+
+      {/* 5. FINAL CTA */}
+      <section className="h-[80vh] flex items-center justify-center bg-black relative overflow-hidden">
+         <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/20 to-transparent pointer-events-none" />
+         <div className="text-center z-10 px-6">
+            <h2 className="text-7xl md:text-[12rem] font-bold text-white tracking-tighter mb-10 leading-none">
+               Start <br/> Now.
+            </h2>
+            <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+               <button onClick={handleGetStarted} className="px-12 py-5 bg-white text-black rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_50px_rgba(255,255,255,0.4)]">
+                  Start Free Trial
+               </button>
+               <Link href="/contacts" className="px-12 py-5 border border-white/20 rounded-full text-xl font-bold hover:bg-white/10 transition-colors">
+                  Contact Sales
+               </Link>
+            </div>
+         </div>
+      </section>
+
+      {/* MODALS */}
+      <RegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} onSwitchToLogin={handleSwitchToLogin} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onSwitchToRegister={handleSwitchToRegister} />
+    </motion.div>
   );
 }

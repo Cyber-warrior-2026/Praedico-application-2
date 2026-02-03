@@ -1,344 +1,295 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import RegisterModal from "@/app/user/_components/RegisterModal";
-import LoginModal from "@/app/user/_components/LoginModal";
-
 import {
-  ArrowLeft,
   Mail,
   Linkedin,
   Twitter,
   Github,
   Globe,
   Sparkles,
-  Code,
   Rocket,
   Award,
   Coffee,
   Heart,
+  Code,
+  ArrowRight,
+  MessageCircle
 } from "lucide-react";
+import { 
+  motion, 
+  useScroll, 
+  useTransform, 
+  useSpring, 
+  useMotionTemplate, 
+  useMotionValue 
+} from "framer-motion";
+import RegisterModal from "@/app/user/_components/RegisterModal";
+import LoginModal from "@/app/user/_components/LoginModal";
+import { cn } from "@/lib/utils";
+
+// --- 3D TILT CARD COMPONENT ---
+function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const xSpring = useSpring(x);
+  const ySpring = useSpring(y);
+
+  const transform = useMotionTemplate`rotateX(${xSpring}deg) rotateY(${ySpring}deg)`;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = (e.clientX - rect.left) * 32.5;
+    const mouseY = (e.clientY - rect.top) * 32.5;
+    const rX = (mouseY / height - 32.5 / 2) * -1;
+    const rY = mouseX / width - 32.5 / 2;
+    x.set(rX);
+    y.set(rY);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transformStyle: "preserve-3d", transform }}
+      className={cn("relative h-full w-full rounded-2xl transition-all duration-200 ease-out", className)}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function ContactsPage() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const handleGetStarted = () => {
-    setIsRegisterModalOpen(true);
-  };
-  const handleSwitchToLogin = () => {
-  setIsRegisterModalOpen(false);
-  setIsLoginModalOpen(true);
-};
-const handleSwitchToRegister = () => {
-  setIsLoginModalOpen(false);
-  setIsRegisterModalOpen(true);
-};
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleGetStarted = () => setIsRegisterModalOpen(true);
+  const handleSwitchToLogin = () => { setIsRegisterModalOpen(false); setIsLoginModalOpen(true); };
+  const handleSwitchToRegister = () => { setIsLoginModalOpen(false); setIsRegisterModalOpen(true); };
+
   const teamMembers = [
     {
       id: 1,
       name: "Priyank Gupta",
       role: "Team Leader & Core Mastermind",
       title: "The Visionary",
-      description:
-        "The heart and soul of Team Praedico. Priyank leads with vision, passion, and innovation, turning ambitious ideas into reality.",
-      image: "/team/priyank.jpg", // Add your image path
+      description: "The heart and soul of Team Praedico. Priyank leads with vision, passion, and innovation, turning ambitious ideas into reality.",
+      image: "/team/priyank.jpg", 
       skills: ["Leadership", "Strategy", "Innovation", "Product Design"],
       social: {
         email: "priyank@praedico.com",
-        linkedin: "https://www.linkedin.com/in/priyank-gupta-25795b244/",
-        twitter: "https://twitter.com/priyankgupta",
-        github: "https://github.com/priyankgupta",
+        linkedin: "https://linkedin.com",
+        twitter: "https://twitter.com",
+        github: "https://github.com",
         website: "https://priyankgupta.dev",
       },
-      gradient: "from-purple-500 via-pink-500 to-red-500",
-      bgGradient: "from-purple-50 to-pink-50",
-      accentColor: "purple",
+      gradient: "from-purple-500 to-pink-600",
+      border: "border-purple-500/30",
+      accent: "text-purple-400"
     },
     {
       id: 2,
       name: "Arjun Singh Bhadoriya",
       role: "Core Developer",
       title: "The Architect",
-      description:
-        "Master of clean code and scalable architecture. Arjun transforms complex problems into elegant solutions with precision and creativity.",
-      image: "/team/arjun.jpg", // Add your image path
-      skills: ["Full-Stack Dev", "System Design", "Database", "DevOps"],
+      description: "Master of clean code and scalable architecture. Arjun transforms complex problems into elegant solutions with precision.",
+      image: "/team/arjun.jpg",
+      skills: ["Full-Stack", "System Design", "Database", "DevOps"],
       social: {
         email: "arjun@praedico.com",
-        linkedin: "https://www.linkedin.com/in/arjun-singh-bhadauriya/",
-        twitter: "https://twitter.com/arjunbhadoriya",
-        github: "https://github.com/22Arjun",
+        linkedin: "https://linkedin.com",
+        twitter: "https://twitter.com",
+        github: "https://github.com",
         website: "https://arjunbhadoriya.dev",
       },
-      gradient: "from-blue-500 via-cyan-500 to-teal-500",
-      bgGradient: "from-blue-50 to-cyan-50",
-      accentColor: "blue",
+      gradient: "from-blue-500 to-cyan-600",
+      border: "border-blue-500/30",
+      accent: "text-cyan-400"
     },
     {
       id: 3,
       name: "Sambhav Jain",
       role: "Core Developer",
       title: "The Innovator",
-      description:
-        "Creative problem-solver and tech enthusiast. Sambhav brings cutting-edge solutions and relentless energy to every project.",
-      image: "/team/sambhav.jpg", // Add your image path
-      skills: ["Frontend", "UI/UX", "React/Next.js", "Animations"],
+      description: "Creative problem-solver and tech enthusiast. Sambhav brings cutting-edge solutions and relentless energy to every project.",
+      image: "/team/sambhav.jpg",
+      skills: ["Frontend", "UI/UX", "Three.js", "Animations"],
       social: {
         email: "sambhav@praedico.com",
-        linkedin: "https://www.linkedin.com/in/sambhav-jain-9a1aa5164/",
-        twitter: "https://twitter.com/sambhavjain",
-        github: "https://github.com/Cyber-warrior-2026",
+        linkedin: "https://linkedin.com",
+        twitter: "https://twitter.com",
+        github: "https://github.com",
         website: "https://sambhavjain.dev",
       },
-      gradient: "from-green-500 via-emerald-500 to-teal-500",
-      bgGradient: "from-green-50 to-emerald-50",
-      accentColor: "green",
+      gradient: "from-emerald-500 to-green-600",
+      border: "border-emerald-500/30",
+      accent: "text-emerald-400"
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-500" />
+    <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-indigo-500/30 selection:text-white font-sans overflow-x-hidden relative">
+      
+      {/* --- GLOBAL AMBIENT BACKGROUND --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[900px] h-[900px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[900px] h-[900px] bg-fuchsia-600/10 rounded-full blur-[120px] animate-pulse delay-700" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
       </div>
 
-      {/* Navbar */}
-      <nav className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-white hover:text-purple-400 transition-colors group"
+      {/* --- HERO SECTION --- */}
+      <section className="relative z-10 pt-48 pb-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-mono mb-8 backdrop-blur-md"
           >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-semibold">Back to Home</span>
-          </Link>
+            <Sparkles className="w-3 h-3" />
+            <span>THE ARCHITECTS</span>
+          </motion.div>
 
-        <button
-  onClick={handleGetStarted}
-  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
->
-  Get Started
-</button>
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-500"
+          >
+            Minds Behind <br/> The Machine.
+          </motion.h1>
 
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-xl text-slate-400 max-w-2xl mx-auto mb-16 leading-relaxed"
+          >
+            Three passionate developers united by a shared vision: to build 
+            extraordinary intelligence that reshapes industries.
+          </motion.p>
         </div>
-      </nav>
+      </section>
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
-        {/* Header Section */}
-        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom duration-700">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-6">
-            <Sparkles className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm font-semibold text-white">
-              Meet the Dream Team
-            </span>
-          </div>
+      {/* --- TEAM GRID (3D TILT CARDS) --- */}
+      <section className="relative z-10 py-10 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+          {teamMembers.map((member, i) => (
+            <div key={member.id} className="h-[650px] w-full perspective-1000">
+              <TiltCard className="group">
+                <div className={cn(
+                  "relative h-full w-full rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border p-8 flex flex-col items-center text-center transition-all duration-500 group-hover:bg-slate-900/60 shadow-2xl",
+                  member.border
+                )}>
+                  {/* Background Glow */}
+                  <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-gradient-to-br", member.gradient)} />
+                  
+                  {/* Badge */}
+                  {member.id === 1 && (
+                    <div className="absolute top-6 right-6 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold rounded-full flex items-center gap-1">
+                      <Award className="w-3 h-3" /> LEADER
+                    </div>
+                  )}
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-            The Minds Behind Praedico
-          </h1>
-
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-            Three passionate developers united by a shared vision to build
-            extraordinary products that make a difference.
-          </p>
-        </div>
-
-        {/* Team Members Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          {teamMembers.map((member, index) => (
-            <div
-              key={member.id}
-              className="group relative animate-in fade-in slide-in-from-bottom duration-700"
-              style={{ animationDelay: `${index * 150}ms` }}
-              onMouseEnter={() => setHoveredCard(member.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              {/* Card Glow Effect */}
-              <div
-                className={`absolute -inset-0.5 bg-gradient-to-r ${member.gradient} rounded-2xl blur opacity-0 group-hover:opacity-75 transition-all duration-500`}
-              />
-
-              {/* Main Card */}
-              <div className="relative bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-8 h-full hover:border-white/20 transition-all duration-500">
-                {/* Leader Badge */}
-                {member.id === 1 && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                      <Award className="w-4 h-4" />
-                      <span>Team Leader</span>
+                  {/* Image Container */}
+                  <div className="relative w-48 h-48 mb-8 mt-4 group-hover:scale-105 transition-transform duration-500">
+                    <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-30 bg-gradient-to-br", member.gradient)} />
+                    <div className="relative w-full h-full rounded-full border-2 border-white/10 overflow-hidden bg-black">
+                       <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
                     </div>
                   </div>
-                )}
 
-                {/* Image Section */}
-                <div className="relative mb-6">
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${member.bgGradient} rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity`}
-                  />
-                  <div className="relative w-48 h-48 mx-auto">
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${member.gradient} rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity`}
-                    />
-                 <img
-                     src={member.image}
-                     alt={member.name}
-                     className="w-full h-full rounded-2xl object-cover border-4 border-white/20 group-hover:border-white/40 transition-all duration-500 group-hover:scale-105"
-                    />
-
+                  {/* Text Content */}
+                  <h3 className="text-3xl font-bold text-white mb-1">{member.name}</h3>
+                  <p className={cn("text-sm font-bold uppercase tracking-wider mb-4", member.accent)}>{member.role}</p>
+                  
+                  <div className="flex items-center gap-2 text-slate-400 text-sm mb-6 bg-white/5 px-3 py-1 rounded-lg">
+                    <Rocket className="w-4 h-4" /> {member.title}
                   </div>
-                </div>
 
-                {/* Name & Title */}
-                <div className="text-center mb-4">
-                  <h2 className="text-2xl font-bold text-white mb-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-white group-hover:to-purple-200 transition-all">
-                    {member.name}
-                  </h2>
-                  <p
-                    className={`text-sm font-semibold text-${member.accentColor}-400 mb-2`}
-                  >
-                    {member.role}
+                  <p className="text-slate-400 text-sm leading-relaxed mb-8 max-w-xs mx-auto">
+                    {member.description}
                   </p>
-                  <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-                    <Rocket className="w-4 h-4" />
-                    <span>{member.title}</span>
+
+                  {/* Skills Pills */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-8">
+                    {member.skills.map(skill => (
+                      <span key={skill} className="px-3 py-1 rounded-md bg-white/5 border border-white/5 text-xs text-slate-300 hover:bg-white/10 transition-colors cursor-default">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Social Dock */}
+                  <div className="mt-auto flex items-center gap-4">
+                    {[
+                      { icon: Mail, href: `mailto:${member.social.email}` },
+                      { icon: Linkedin, href: member.social.linkedin },
+                      { icon: Github, href: member.social.github },
+                      { icon: Globe, href: member.social.website }
+                    ].map((item, k) => (
+                      <a 
+                        key={k} 
+                        href={item.href} 
+                        className="p-3 rounded-full bg-white/5 hover:bg-white/20 text-slate-400 hover:text-white transition-all hover:scale-110"
+                      >
+                        <item.icon className="w-5 h-5" />
+                      </a>
+                    ))}
                   </div>
                 </div>
-
-                {/* Description */}
-                <p className="text-slate-300 text-sm leading-relaxed mb-6 text-center">
-                  {member.description}
-                </p>
-
-                {/* Skills */}
-                <div className="flex flex-wrap gap-2 mb-6 justify-center">
-                  {member.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-slate-300 hover:bg-white/10 transition-colors"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Social Links */}
-                <div className="flex items-center justify-center gap-3">
-                  <a
-                    href={`mailto:${member.social.email}`}
-                    className={`p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-gradient-to-r hover:${member.gradient} hover:border-transparent text-slate-400 hover:text-white transition-all hover:scale-110`}
-                    title="Email"
-                  >
-                    <Mail className="w-5 h-5" />
-                  </a>
-                  <a
-                    href={member.social.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-600 hover:border-transparent text-slate-400 hover:text-white transition-all hover:scale-110"
-                    title="LinkedIn"
-                  >
-                    <Linkedin className="w-5 h-5" />
-                  </a>
-                  <a
-                    href={member.social.twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-sky-500 hover:border-transparent text-slate-400 hover:text-white transition-all hover:scale-110"
-                    title="Twitter"
-                  >
-                    <Twitter className="w-5 h-5" />
-                  </a>
-                  <a
-                    href={member.social.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-gray-700 hover:border-transparent text-slate-400 hover:text-white transition-all hover:scale-110"
-                    title="GitHub"
-                  >
-                    <Github className="w-5 h-5" />
-                  </a>
-                  <a
-                    href={member.social.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-purple-600 hover:border-transparent text-slate-400 hover:text-white transition-all hover:scale-110"
-                    title="Website"
-                  >
-                    <Globe className="w-5 h-5" />
-                  </a>
-                </div>
-              </div>
+              </TiltCard>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* Bottom CTA Section */}
-        <div className="relative bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 backdrop-blur-sm border border-white/10 rounded-3xl p-12 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 animate-pulse" />
+      {/* --- CONTACT CTA SECTION --- */}
+      <section className="relative z-10 py-32 px-6">
+        <div className="max-w-5xl mx-auto rounded-[3rem] bg-gradient-to-b from-white/5 to-transparent border border-white/10 p-12 md:p-24 text-center overflow-hidden relative">
+           
+           {/* Decorative Elements */}
+           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+           <Code className="absolute top-20 right-20 w-24 h-24 text-white/5 -rotate-12" />
+           <Coffee className="absolute bottom-20 left-20 w-24 h-24 text-white/5 rotate-12" />
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 mb-6">
-              <Heart className="w-6 h-6 text-red-400 animate-pulse" />
-              <Coffee className="w-6 h-6 text-amber-400" />
-              <Code className="w-6 h-6 text-green-400" />
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Want to Work With Us?
-            </h2>
-            <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-              We're always excited to collaborate on innovative projects. Drop
-              us a message and let's build something amazing together!
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="mailto:team@praedico.com"
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
-              >
-                Send Us an Email
-              </a>
-            <button
-  onClick={handleGetStarted}
-  className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full font-semibold hover:bg-white/20 transition-all hover:scale-105"
->
-  Get Started
-</button>
-
-            </div>
-          </div>
+           <div className="relative z-10">
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Let's build something impossible.</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12">
+                 We are always looking for ambitious partners. Whether you have a groundbreaking idea 
+                 or a complex problem, we have the engine to solve it.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                 <button onClick={handleGetStarted} className="h-16 px-10 rounded-full bg-white text-black font-bold text-lg hover:bg-indigo-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
+                    Start a Project
+                 </button>
+                 <a href="mailto:team@praedico.com" className="h-16 px-10 rounded-full bg-white/5 border border-white/10 text-white font-bold text-lg hover:bg-white/10 transition-all flex items-center gap-2 group">
+                    <MessageCircle className="w-5 h-5 group-hover:text-indigo-400 transition-colors" />
+                    Chat with Team
+                 </a>
+              </div>
+           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Footer */}
-      <div className="relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <p className="text-center text-slate-400 text-sm">
-            © 2026 Praedico. Built with{" "}
-            <Heart className="inline w-4 h-4 text-red-400 animate-pulse" /> by
-            the Dream Team
-          </p>
-        </div>
-      </div>
-           {/* Register Modal */}
-     <RegisterModal
-  isOpen={isRegisterModalOpen}
-  onClose={() => setIsRegisterModalOpen(false)}
-  onSwitchToLogin={handleSwitchToLogin}
-/>
-<LoginModal
-  isOpen={isLoginModalOpen}
-  onClose={() => setIsLoginModalOpen(false)}
-  onSwitchToRegister={handleSwitchToRegister}
-/>
-
+      {/* --- MODALS --- */}
+      <RegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} onSwitchToLogin={handleSwitchToLogin} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onSwitchToRegister={handleSwitchToRegister} />
     </div>
   );
 }

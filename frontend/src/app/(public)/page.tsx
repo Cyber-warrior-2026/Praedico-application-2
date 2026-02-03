@@ -1,58 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation"; 
-// 1. Import your component
+import { useState } from "react";
+import Link from "next/link"; // Kept for CTA buttons
 import IntegrationsMarquee from "@/app/user/_components/IntegrationsMarquee"; 
 import { 
-  ArrowRight, CheckCircle2, Play, Menu, X, 
+  ArrowRight, CheckCircle2, Play, 
   Shield, Zap, Globe, BarChart3, Lock, Smartphone, Check
 } from "lucide-react";
-import LoginModal from "@/app/user/_components/LoginModal";
-import RegisterModal from "@/app/user/_components/RegisterModal";
-
 
 export default function UserPortal() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-
-
-  
-  // PRICING STATE
+  // PRICING STATE (Specific to this page content)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
-  const router = useRouter(); 
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (searchParams.get("openLogin") === "true") {
-      setIsLoginModalOpen(true);
-
-      // Optional: Remove the query param from URL so it looks clean
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [searchParams]);
-
-
-const handleSignIn = () => setIsLoginModalOpen(true);
-
-const handleGetStarted = () => setIsRegisterModalOpen(true);
-
 
   return (
     <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans pb-20">
       
-      {/* GLOBAL STYLES (Only for Hero/General animations, Marquee styles are inside the component now) */}
+      {/* GLOBAL STYLES (Animations) */}
       <style jsx global>{`
         @keyframes float {
           0% { transform: translateY(0px); }
@@ -68,117 +31,11 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
         .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
       `}</style>
 
-      {/* BACKGROUND */}
+      {/* PAGE BACKGROUND (Layered over layout background) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px] animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-[128px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
       </div>
-
-      {/* NAVBAR */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
-        isScrolled 
-          ? "bg-[#020617]/80 backdrop-blur-xl border-slate-800 py-4 shadow-lg shadow-indigo-500/5" 
-          : "bg-transparent border-transparent py-6"
-      }`}>
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300">
-              <Zap className="w-6 h-6 text-white fill-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-              Praedico<span className="font-light text-slate-500">GlobalResearch</span>
-            </span>
-          </div>
-
-        <div className="hidden md:flex items-center gap-8 bg-white/5 px-6 py-2 rounded-full border border-white/10">
-  <Link 
-    href="/product" 
-    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-  >
-    Product
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
-  </Link>
-  
-  <Link 
-    href="/solutions" 
-    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-  >
-    Solutions
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
-  </Link>
-  
-  <Link 
-    href="/contacts" 
-    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-  >
-    Contacts
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
-  </Link>
-  
-  <Link 
-    href="/docs" 
-    className="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group"
-  >
-    Docs
-    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 group-hover:w-full transition-all duration-300" />
-  </Link>
-</div>
-
-
-          <div className="hidden md:flex items-center gap-4">
-            <button onClick={handleSignIn} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Sign in</button>
-            <button onClick={handleGetStarted} className="group relative px-5 py-2.5 rounded-full font-semibold text-sm bg-white text-slate-950 overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              <span className="relative z-10">Get Started</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-            </button>
-          </div>
-
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white">
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-[#020617] border-b border-slate-800 p-6 md:hidden flex flex-col gap-4 animate-in slide-in-from-top-5">
-          <Link 
-  href="/product" 
-  onClick={() => setMobileMenuOpen(false)}
-  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
->
-  Product
-</Link>
-
-<Link 
-  href="/solutions" 
-  onClick={() => setMobileMenuOpen(false)}
-  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
->
-  Solutions
-</Link>
-
-<Link 
-  href="/contacts" 
-  onClick={() => setMobileMenuOpen(false)}
-  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
->
-  Contacts
-</Link>
-
-<Link 
-  href="/docs" 
-  onClick={() => setMobileMenuOpen(false)}
-  className="block px-6 py-3 text-lg font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
->
-  Docs
-</Link>
-
-            <div className="h-px bg-slate-800 my-2" />
-            <button onClick={handleSignIn} className="w-full py-3 rounded-xl bg-slate-800 text-white font-medium">Sign In</button>
-            <button onClick={handleGetStarted} className="w-full py-3 rounded-xl bg-indigo-600 text-white font-medium">Get Started</button>
-          </div>
-        )}
-      </nav>
 
       {/* HERO SECTION */}
       <section className="relative pt-40 pb-20 lg:pt-52 lg:pb-32 overflow-hidden">
@@ -202,9 +59,10 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-reveal" style={{ animationDelay: '0.3s' }}>
-            <button onClick={handleGetStarted} className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-bold shadow-[0_0_40px_rgba(79,70,229,0.4)] hover:shadow-[0_0_60px_rgba(79,70,229,0.6)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group">
+            {/* Replaced handleGetStarted with direct Link since Modals are global now */}
+            <Link href="/register" className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-bold shadow-[0_0_40px_rgba(79,70,229,0.4)] hover:shadow-[0_0_60px_rgba(79,70,229,0.6)] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group">
               Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Link>
             <button className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#0f172a]/50 border border-slate-700 text-white font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 backdrop-blur-md hover:border-slate-500">
               <Play className="w-4 h-4 fill-white" /> Watch Demo
             </button>
@@ -229,13 +87,8 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
         </div>
       </section>
 
-      {/* ==============================================================
-          2. INTEGRATIONS MARQUEE (IMPORTED COMPONENT)
-      ============================================================== */}
-      
+      {/* INTEGRATIONS MARQUEE */}
       <IntegrationsMarquee />
-
-      {/* ============================================================== */}
 
       {/* LOGO STRIP */}
       <section className="py-10 border-b border-white/5 bg-white/[0.02]">
@@ -372,27 +225,6 @@ const handleGetStarted = () => setIsRegisterModalOpen(true);
         </div>
       </section>
 
-      {/* Login Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)}
-        onSwitchToRegister={() => {
-          setIsLoginModalOpen(false)
-          setIsRegisterModalOpen(true)
-        }}
-      />
-
-    <RegisterModal 
-      isOpen={isRegisterModalOpen} 
-      onClose={() => setIsRegisterModalOpen(false)}
-      onSwitchToLogin={() => {
-        setIsRegisterModalOpen(false);
-        setIsLoginModalOpen(true);
-      }}
-    />
-
-
-      {/* FOOTER REMOVED FROM HERE */}
     </div>
   );
 }

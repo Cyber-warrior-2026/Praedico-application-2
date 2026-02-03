@@ -4,42 +4,82 @@ import StockData from '../models/stockData';
 
 class StockScraperService {
   
-  // NSE India API endpoint (more reliable than web scraping)
   private nseBaseUrl = 'https://www.nseindia.com/api';
-  
-  // Headers to mimic browser request
+  private cookies = ''; // Store the session cookies here
+
+  // Headers must match a real browser EXACTLY
   private headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Referer': 'https://www.nseindia.com/market-data/live-equity-market'
   };
 
-  // Initialize session with NSE
+  // ✅ FIX 1: Capture and Store Cookies
   async initSession() {
     try {
-      await axios.get('https://www.nseindia.com', { headers: this.headers });
-      console.log('NSE session initialized');
+      const response = await axios.get('https://www.nseindia.com', { 
+        headers: this.headers 
+      });
+      
+      // Extract cookies from the response headers
+      const setCookie = response.headers['set-cookie'];
+      if (setCookie) {
+        this.cookies = setCookie.join('; ');
+        console.log('✅ NSE Session Initialized with cookies');
+      }
     } catch (error) {
       console.error('Failed to initialize NSE session:', error);
     }
   }
 
-  // Scrape Nifty 50 stocks from NSE API
+  // ✅ FIX 2: Helper to get headers with cookies
+  private getAuthHeaders() {
+    return {
+      ...this.headers,
+      'Cookie': this.cookies // Attach the stored cookie
+    };
+  }
+
   async scrapeNifty50(): Promise<any[]> {
     try {
-      await this.initSession();
+      if (!this.cookies) await this.initSession();
       
       const response = await axios.get(
         `${this.nseBaseUrl}/equity-stockIndices?index=NIFTY%2050`,
-        { headers: this.headers }
+        { headers: this.getAuthHeaders() } // Use authenticated headers
       );
 
-      const stocksData = response.data.data || [];
+      // Validate data structure before mapping
+      const stocksData = response.data?.data;
+      if (!Array.isArray(stocksData)) {
+        // If cookies expired, retry once
+        console.log("Session expired, re-initializing...");
+        await this.initSession();
+        const retryResponse = await axios.get(
+            `${this.nseBaseUrl}/equity-stockIndices?index=NIFTY%2050`,
+            { headers: this.getAuthHeaders() }
+        );
+        return this.formatNiftyData(retryResponse.data?.data || []);
+      }
+
+      const formattedData = this.formatNiftyData(stocksData);
+      console.log(`Scraped ${formattedData.length} Nifty 50 stocks`);
+      return formattedData;
       
-      const formattedData = stocksData.map((stock: any) => ({
+    } catch (error: any) {
+      console.error('Error scraping Nifty 50:', error.message);
+      return [];
+    }
+  }
+
+  // Extracted formatter for cleanliness
+  private formatNiftyData(data: any[]) {
+      return data.map((stock: any) => ({
         symbol: stock.symbol,
-        name: stock.symbol, // Can be enhanced with full company name
+        name: stock.symbol,
         category: 'NIFTY50',
         price: parseFloat(stock.lastPrice) || 0,
         open: parseFloat(stock.open) || 0,
@@ -53,150 +93,61 @@ class StockScraperService {
         timestamp: new Date(),
         lastUpdated: new Date()
       }));
+  }
 
-      console.log(`Scraped ${formattedData.length} Nifty 50 stocks`);
-      return formattedData;
+  async scrapeETF(): Promise<any[]> {
+    try {
+      if (!this.cookies) await this.initSession();
       
+      const response = await axios.get(
+        `${this.nseBaseUrl}/etf`, // This endpoint is often more stable for ETFs
+        { headers: this.getAuthHeaders() }
+      );
+
+      // NSE API data structure check
+      let etfData = [];
+      if (response.data && Array.isArray(response.data.data)) {
+          etfData = response.data.data;
+      } else if (Array.isArray(response.data)) {
+          etfData = response.data;
+      } else {
+          throw new Error("Invalid ETF data structure received (likely 403 HTML page)"); 
+      }
+      
+      const formattedData = this.formatETFData(etfData);
+      console.log(`Scraped ${formattedData.length} ETFs`);
+      return formattedData;
+
     } catch (error: any) {
-      console.error('Error scraping Nifty 50:', error.message);
+      console.error('Error scraping ETF:', error.message);
       return [];
     }
   }
 
-  // Scrape ETF data from NSE
-// Scrape ETF data from NSE
-async scrapeETF(): Promise<any[]> {
-  try {
-    await this.initSession();
-    
-    // ✅ Use correct NSE ETF endpoint
-    const response = await axios.get(
-      `${this.nseBaseUrl}/live-analysis-variations?index=etf`,
-      { headers: this.headers }
-    );
-
-    const etfData = response.data.data || [];
-    
-    const formattedData = etfData.map((etf: any) => ({
-      symbol: etf.symbol || etf.meta?.symbol,
-      name: etf.symbol || etf.meta?.companyName || etf.symbol,
+  private formatETFData(etfData: any[]): any[] {
+    return etfData.map((etf: any) => ({
+      symbol: etf.symbol,
+      name: etf.meta?.companyName || etf.assets || etf.symbol,
       category: 'ETF',
-      // ✅ Try multiple field names (NSE uses different names for ETFs)
-      price: parseFloat(etf.lastPrice || etf.ltp || etf.ltP || etf.last) || 0,
-      open: parseFloat(etf.open || etf.openPrice) || 0,
-      high: parseFloat(etf.dayHigh || etf.high || etf.highPrice) || 0,
-      low: parseFloat(etf.dayLow || etf.low || etf.lowPrice) || 0,
-      previousClose: parseFloat(etf.previousClose || etf.prevClose || etf.previousPrice) || 0,
-      change: parseFloat(etf.change || etf.netChange) || 0,
-      changePercent: parseFloat(etf.pChange || etf.perChange || etf.percentChange) || 0,
-      volume: parseInt(etf.totalTradedVolume || etf.volume || etf.totalVolume) || 0,
-      marketCap: parseFloat(etf.totalTradedValue || etf.totalValue) || 0,
+      price: parseFloat(etf.ltP || etf.lastPrice) || 0,
+      open: parseFloat(etf.open) || 0,
+      high: parseFloat(etf.high) || 0,
+      low: parseFloat(etf.low) || 0,
+      previousClose: parseFloat(etf.prevClose) || 0,
+      change: parseFloat(etf.chn) || 0,
+      changePercent: parseFloat(etf.per) || 0,
+      volume: parseInt(etf.qty) || 0,
+      marketCap: parseFloat(etf.trdVal) || 0,
       timestamp: new Date(),
       lastUpdated: new Date()
     }));
-
-    // ✅ Log first item to see structure
-    if (formattedData.length > 0) {
-      console.log('Sample ETF data:', JSON.stringify(formattedData[0], null, 2));
-    }
-
-    console.log(`Scraped ${formattedData.length} ETFs`);
-    return formattedData;
-  } catch (error: any) {
-    console.error('Error scraping ETF:', error.message);
-    
-    // ✅ FALLBACK: Try alternative endpoint
-    try {
-      console.log('Trying alternative ETF endpoint...');
-      await this.initSession();
-      
-      const response = await axios.get(
-        'https://www.nseindia.com/api/etf',
-        { headers: this.headers }
-      );
-      
-      const etfData = response.data.data || response.data || [];
-      console.log(`Alternative endpoint returned ${etfData.length} ETFs`);
-      
-      // Log raw structure to see what fields are available
-      if (etfData.length > 0) {
-        console.log('Raw ETF structure:', JSON.stringify(etfData[0], null, 2));
-      }
-      
-      return this.formatETFData(etfData);
-    } catch (fallbackError: any) {
-      console.error('Fallback ETF scraping also failed:', fallbackError.message);
-      return [];
-    }
   }
-}
 
-// Helper function to format ETF data
-// Helper function to format ETF data
-private formatETFData(etfData: any[]): any[] {
-  return etfData.map((etf: any) => ({
-    symbol: etf.symbol,
-    name: etf.meta?.companyName || etf.assets || etf.symbol,
-    category: 'ETF',
-    // ✅ Use correct NSE ETF field names
-    price: parseFloat(etf.ltP || etf.lastPrice) || 0,  // ltP = Last Traded Price
-    open: parseFloat(etf.open) || 0,
-    high: parseFloat(etf.high) || 0,
-    low: parseFloat(etf.low) || 0,
-    previousClose: parseFloat(etf.prevClose) || 0,
-    change: parseFloat(etf.chn) || 0,  // chn = change
-    changePercent: parseFloat(etf.per) || 0,  // per = percentage
-    volume: parseInt(etf.qty) || 0,  // qty = quantity/volume
-    marketCap: parseFloat(etf.trdVal) || 0,  // trdVal = traded value
-    timestamp: new Date(),
-    lastUpdated: new Date()
-  }));
-}
-
-
-
-  // Alternative: Scrape from Investing.com (backup method)
-  async scrapeFromInvesting(): Promise<any[]> {
-    try {
-      const response = await axios.get(
-        'https://www.investing.com/indices/s-p-cnx-nifty-components',
-        { headers: this.headers }
-      );
-      
-      const $ = cheerio.load(response.data);
-      const stocks: any[] = [];
-      
-      $('#cr1 tbody tr').each((index, element) => {
-        const $row = $(element);
-        
-        const symbol = $row.find('td:nth-child(2)').text().trim();
-        const name = $row.find('td:nth-child(2)').text().trim();
-        const price = parseFloat($row.find('td:nth-child(3)').text().replace(/,/g, '')) || 0;
-        const change = parseFloat($row.find('td:nth-child(5)').text().replace(/,/g, '')) || 0;
-        const changePercent = parseFloat($row.find('td:nth-child(6)').text().replace(/%/g, '')) || 0;
-        
-        if (symbol) {
-          stocks.push({
-            symbol,
-            name,
-            category: 'NIFTY50',
-            price,
-            change,
-            changePercent,
-            timestamp: new Date(),
-            lastUpdated: new Date()
-          });
-        }
-      });
-      
-      console.log(`Scraped ${stocks.length} stocks from Investing.com`);
-      return stocks;
-      
-    } catch (error: any) {
-      console.error('Error scraping Investing.com:', error.message);
-      return [];
-    }
-  }
+  // ... (Keep existing scrapeFromInvesting and saveStockData methods) ...
+  // Ensure you include the rest of your class methods here
+  
+  // Save scraped data to database
+// ... inside StockScraperService class
 
   // Save scraped data to database
   async saveStockData(stocksData: any[]): Promise<void> {
@@ -206,31 +157,26 @@ private formatETFData(etfData: any[]): any[] {
         return;
       }
 
-      // Bulk insert/update operations
-      const operations = stocksData.map(stock => ({
-        updateOne: {
-          filter: { 
-            symbol: stock.symbol, 
-            category: stock.category 
-          },
-          update: { $set: stock },
-          upsert: true
-        }
-      }));
+      // FIX: Use 'insertMany' to APPEND data (creating history) 
+      // instead of 'bulkWrite'/'updateOne' (which overwrites).
+      await StockData.insertMany(stocksData);
 
-      const result = await StockData.bulkWrite(operations);
-      console.log(`Stock data saved: ${result.upsertedCount} new, ${result.modifiedCount} updated`);
+      console.log(`Stock data saved: ${stocksData.length} new records created.`);
       
     } catch (error: any) {
       console.error('Error saving stock data:', error.message);
     }
   }
+  
 
   // Main scraping function
   async scrapeAllStocks(): Promise<void> {
     try {
       console.log(`[${new Date().toISOString()}] Starting stock data scraping...`);
       
+      // Initialize session ONCE before parallel requests
+      await this.initSession();
+
       // Scrape Nifty 50 and ETF in parallel
       const [nifty50Data, etfData] = await Promise.all([
         this.scrapeNifty50(),
@@ -239,9 +185,7 @@ private formatETFData(etfData: any[]): any[] {
       
       const allStocks = [...nifty50Data, ...etfData];
       
-      // Save to database
       await this.saveStockData(allStocks);
-      
       console.log(`[${new Date().toISOString()}] Scraping completed successfully`);
       
     } catch (error: any) {

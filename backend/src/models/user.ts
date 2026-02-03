@@ -50,7 +50,9 @@ isActive: {
   type: Boolean,
   default: true
 },
-lastActive: { type: Date, default: Date.now }
+lastActive: { type: Date, default: Date.now },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
 }, {
   timestamps: true
 });
