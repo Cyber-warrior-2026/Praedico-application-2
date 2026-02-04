@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import PriceRangeSlider from "@/app/user/_components/PriceRangeSlider"; 
+import PriceRangeSlider from "@/app/user/_components/PriceRangeSlider";
 import {
   Briefcase,
   BarChart2,
@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Plus
 } from "lucide-react";
-import { 
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
 import { authApi } from "@/lib/api";
@@ -53,7 +53,7 @@ export default function UserDashboard() {
     const checkAuth = async () => {
       try {
         const response = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true 
+          withCredentials: true
         });
 
         if (response.data.success) {
@@ -76,7 +76,7 @@ export default function UserDashboard() {
   // 2. Added <div className="h-28" /> Spacer at top for Navbar
   // =================================================================================
   return (
-    <>
+    <div className="px-6 md:px-8 lg:px-10 pb-10">
       {/* SPACER: Pushes content down so Navbar floats above */}
       <div className="h-28 w-full" />
 
@@ -97,7 +97,7 @@ export default function UserDashboard() {
 
       {/* SECTION 2: MAIN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        
+
         {/* COLUMN 1: STATS */}
         <div className="lg:col-span-3 flex flex-col gap-6">
           <div className="bg-[#6366F1] rounded-[24px] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
@@ -136,7 +136,7 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-green-600 font-bold flex items-center justify-end gap-1"><TrendingUp size={12}/> +17.63%</p>
+                <p className="text-sm text-green-600 font-bold flex items-center justify-end gap-1"><TrendingUp size={12} /> +17.63%</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -150,17 +150,17 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="h-12 w-full mb-4">
-               <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={[{v:10},{v:20},{v:15},{v:25},{v:30},{v:25},{v:35}]}>
-                    <defs>
-                      <linearGradient id="miniGreen" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="v" stroke="#22C55E" strokeWidth={2} fill="url(#miniGreen)" />
-                  </AreaChart>
-               </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={[{ v: 10 }, { v: 20 }, { v: 15 }, { v: 25 }, { v: 30 }, { v: 25 }, { v: 35 }]}>
+                  <defs>
+                    <linearGradient id="miniGreen" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="v" stroke="#22C55E" strokeWidth={2} fill="url(#miniGreen)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
             <button className="w-full py-3 bg-[#6366F1] text-white rounded-xl font-bold text-sm hover:bg-[#4F46E5] transition-all shadow-lg shadow-indigo-500/20 active:scale-95">
               View Stock Details
@@ -170,72 +170,72 @@ export default function UserDashboard() {
 
         {/* COLUMN 2: MAIN CHART */}
         <div className="lg:col-span-6 bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col h-full">
-           <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-50">
-             <div className="flex gap-2">
-               <button className="px-4 py-2 bg-[#6366F1] text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-transform active:scale-95">NASDAQ</button>
-               <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">SSE</button>
-               <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">Euronext</button>
-             </div>
-             <div className="flex bg-slate-50 p-1 rounded-lg">
-                {['1D', '5D', '1M', '6M', '1Y'].map(time => (
-                  <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
-                ))}
-             </div>
-           </div>
-           <div className="flex-1 min-h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mainChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="mainChartColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'}} 
-                    cursor={{stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '5 5'}}
-                  />
-                  <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} fill="url(#mainChartColor)" activeDot={{r: 6, strokeWidth: 0}} />
-                </AreaChart>
-              </ResponsiveContainer>
-           </div>
-           <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-50">
-              <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">High</p><p className="font-bold text-slate-800 text-sm">11,691.89</p></div>
-              <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Low</p><p className="font-bold text-slate-800 text-sm">11,470.47</p></div>
-              <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Prev Close</p><p className="font-bold text-slate-800 text-sm">11,512.41</p></div>
-              <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Open</p><p className="font-bold text-slate-800 text-sm">11,690.11</p></div>
-           </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-50">
+            <div className="flex gap-2">
+              <button className="px-4 py-2 bg-[#6366F1] text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-transform active:scale-95">NASDAQ</button>
+              <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">SSE</button>
+              <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">Euronext</button>
+            </div>
+            <div className="flex bg-slate-50 p-1 rounded-lg">
+              {['1D', '5D', '1M', '6M', '1Y'].map(time => (
+                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 min-h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={mainChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="mainChartColor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}
+                  cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '5 5' }}
+                />
+                <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} fill="url(#mainChartColor)" activeDot={{ r: 6, strokeWidth: 0 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-50">
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">High</p><p className="font-bold text-slate-800 text-sm">11,691.89</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Low</p><p className="font-bold text-slate-800 text-sm">11,470.47</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Prev Close</p><p className="font-bold text-slate-800 text-sm">11,512.41</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Open</p><p className="font-bold text-slate-800 text-sm">11,690.11</p></div>
+          </div>
         </div>
 
         {/* COLUMN 3: SLIDER */}
         <div className="lg:col-span-3 h-full">
-           <PriceRangeSlider />
+          <PriceRangeSlider />
         </div>
       </div>
 
       {/* 4. BOTTOM GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Analytics */}
         <div className="lg:col-span-8 bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-slate-800 text-lg">Portfolio Analytics</h3>
             <div className="flex bg-slate-50 p-1 rounded-lg">
-               {['1D', '1W', '1M', '1Y'].map(time => (
-                  <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
-                ))}
+              {['1D', '1W', '1M', '1Y'].map(time => (
+                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
+              ))}
             </div>
           </div>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={portfolioData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} />
-                <Tooltip 
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
@@ -246,7 +246,7 @@ export default function UserDashboard() {
                       );
                     }
                     return null;
-                  }} 
+                  }}
                 />
                 <Line type="monotone" dataKey="value" stroke="#818CF8" strokeWidth={3} dot={{ r: 4, fill: "#fff", stroke: "#6366F1", strokeWidth: 2 }} activeDot={{ r: 8, fill: "#6366F1", stroke: "#fff", strokeWidth: 3 }} />
               </LineChart>
@@ -270,7 +270,7 @@ export default function UserDashboard() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -284,7 +284,7 @@ function StockCard({ symbol, name, price, change, bg, text, chartColor, isNegati
       <div className="flex justify-between items-start mb-3 relative z-10">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-sm">
-             <span className={`text-[10px] font-bold ${text}`}>{symbol[0]}</span>
+            <span className={`text-[10px] font-bold ${text}`}>{symbol[0]}</span>
           </div>
           <span className={`text-sm font-bold ${text}`}>{name}</span>
         </div>
@@ -296,11 +296,11 @@ function StockCard({ symbol, name, price, change, bg, text, chartColor, isNegati
         <span className={`text-xs font-bold ${isNegative ? 'text-red-500' : 'text-green-600'}`}>{change}</span>
       </div>
       <div className="absolute bottom-0 left-0 w-full h-12 opacity-30 group-hover:scale-110 transition-transform origin-bottom">
-         <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={[{v:10},{v:15},{v:12},{v:20},{v:18},{v:25},{v:22}]}>
-               <Line type="monotone" dataKey="v" stroke={chartColor} strokeWidth={2} dot={false} />
-            </LineChart>
-         </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={[{ v: 10 }, { v: 15 }, { v: 12 }, { v: 20 }, { v: 18 }, { v: 25 }, { v: 22 }]}>
+            <Line type="monotone" dataKey="v" stroke={chartColor} strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -311,7 +311,7 @@ function WatchlistItem({ name, ticker, price, change, isNegative, logo }: any) {
     <div className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group border border-transparent hover:border-slate-100">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center p-2 shadow-sm group-hover:scale-110 transition-transform">
-           <span className="font-bold text-xs text-slate-700">{ticker[0]}</span>
+          <span className="font-bold text-xs text-slate-700">{ticker[0]}</span>
         </div>
         <div>
           <p className="text-sm font-bold text-slate-800">{name}</p>
@@ -321,7 +321,7 @@ function WatchlistItem({ name, ticker, price, change, isNegative, logo }: any) {
       <div className="text-right">
         <p className="text-sm font-bold text-slate-800">${price}</p>
         <p className={`text-xs font-bold ${isNegative ? 'text-red-500' : 'text-green-500'} flex items-center justify-end gap-0.5`}>
-          {isNegative ? <TrendingDown size={10}/> : <TrendingUp size={10}/>} {change}
+          {isNegative ? <TrendingDown size={10} /> : <TrendingUp size={10} />} {change}
         </p>
       </div>
     </div>

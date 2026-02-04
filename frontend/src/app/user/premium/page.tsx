@@ -148,7 +148,7 @@ export default function PremiumPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FE] pt-10 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
+        <div className="min-h-screen bg-[#F8F9FE] pt-28 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
             {/* 1. 3D BACKGROUND LAYER */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <Premium3DBackground />
@@ -158,18 +158,76 @@ export default function PremiumPage() {
 
                 {/* HEADING MOVED DOWN */}
 
+                {/* TRIAL EXPIRED BANNER */}
+                {hasUsedTrial && !isOnTrial && currentPlan === 'Free' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="max-w-2xl mx-auto mb-12 relative group"
+                    >
+                        {/* Red Glow */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+
+                        {/* Red Gradient Card */}
+                        <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
+
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
+                                    <Shield className="h-5 w-5 text-white fill-white" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                                        Trial Period Finished
+                                        <span className="flex h-2 w-2 rounded-full bg-white/50 animate-pulse"></span>
+                                    </p>
+                                    <p className="text-orange-50 text-xs mt-0.5 font-medium">Subscribe now to regain premium access</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    // Scroll to pricing cards
+                                    document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="bg-white text-rose-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-50 transition-colors shadow-sm"
+                            >
+                                Subscribe Now
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* TRIAL BANNER */}
                 {isOnTrial && (
                     <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-indigo-600 text-white p-4 rounded-xl shadow-lg mb-8 text-center"
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="max-w-2xl mx-auto mb-12 relative group"
                     >
-                        <p className="font-bold text-lg flex items-center justify-center gap-2">
-                            <Zap className="fill-yellow-400 text-yellow-400" size={20} />
-                            Your 7-Day Free Trial is Active!
-                        </p>
-                        <p className="text-indigo-200 text-sm">Valid until {expiryDate}</p>
+                        {/* Animated Glow Effect */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+
+                        {/* Card Content */}
+                        <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl shadow-2xl border border-indigo-400/30">
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
+
+                                    <Zap className="h-5 w-5 text-white fill-white" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                                        {currentPlan} Trial Active
+                                        <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse ring-2 ring-white/20"></span>
+                                    </p>
+                                    <p className="text-indigo-100/80 text-xs mt-0.5 font-medium">Full functionality unlocked</p>
+                                </div>
+                            </div>
+
+                            <div className="text-right pl-4 border-l border-white/10">
+                                <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider mb-0.5">Expires On</p>
+                                <p className="text-sm font-bold text-white tabular-nums">{expiryDate}</p>
+                            </div>
+                        </div>
                     </motion.div>
                 )}
 
@@ -178,7 +236,7 @@ export default function PremiumPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="text-center mb-16"
+                    className="text-center mb-12"
                 >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -233,7 +291,7 @@ export default function PremiumPage() {
                                 <h3 className="text-xl font-bold text-slate-900">{currentPlan} Membership {isOnTrial && <span className="text-indigo-600">(Trial)</span>}</h3>
                             </div>
                         </div>
-                        {expiryDate && (
+                        {expiryDate && currentPlan !== 'Free' && (
                             <div className="text-right">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Renews On</p>
                                 <p className="text-sm font-bold text-slate-800">{expiryDate}</p>

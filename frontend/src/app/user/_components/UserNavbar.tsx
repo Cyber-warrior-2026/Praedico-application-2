@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared-components/ui/avat
 export function UserNavbar() {
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("Loading...");
+  const [currentPlan, setCurrentPlan] = useState("Free"); // Added state
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
@@ -33,8 +34,8 @@ export function UserNavbar() {
           // If data.user.name is empty, fallback to the part of the email before '@'
           const nameFromEmail = data.user.email?.split('@')[0];
           setUserName(data.user.name || nameFromEmail);
-
           setUserEmail(data.user.email);
+          setCurrentPlan(data.user.currentPlan || "Free"); // Set plan
         }
       } catch (e) { console.error("Guest mode"); }
     };
@@ -47,7 +48,7 @@ export function UserNavbar() {
 
   // 2. Navigation Items
   const navItems = [
-    { label: "Dashboard", href: "/user", icon: LayoutDashboard },
+    { label: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
     { label: "Portfolio", href: "/user/portfolio", icon: Briefcase },
     { label: "Trading", href: "/user/dashboard/trading", icon: BarChart2 },
 
@@ -73,15 +74,15 @@ export function UserNavbar() {
 
       <header
         className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-500 animate-slide-down ${scrolled
-            ? "bg-white/70 backdrop-blur-2xl border-b border-indigo-100/50 shadow-sm shadow-indigo-500/5"
-            : "bg-transparent border-transparent"
+          ? "bg-white/70 backdrop-blur-2xl border-b border-indigo-100/50 shadow-sm shadow-indigo-500/5"
+          : "bg-transparent border-transparent"
           }`}
       >
         <div className="max-w-[1920px] mx-auto px-6 md:px-8 h-20 flex items-center justify-between">
 
           {/* LEFT: LOGO */}
           <div className="flex items-center gap-12">
-            <Link href="/user" className="flex items-center gap-3 group">
+            <Link href="/user/dashboard" className="flex items-center gap-3 group">
               <div className="relative h-10 w-10">
                 <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
                 <div className="relative h-10 w-10 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold shadow-xl border border-white/10 group-hover:scale-105 transition-transform duration-300">
@@ -103,8 +104,8 @@ export function UserNavbar() {
                     key={item.href}
                     href={item.href}
                     className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${isActive
-                        ? "text-white shadow-md shadow-indigo-500/25"
-                        : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                      ? "text-white shadow-md shadow-indigo-500/25"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
                       }`}
                   >
                     {isActive && (
@@ -152,7 +153,7 @@ export function UserNavbar() {
                   </Avatar>
                   <div className="text-left hidden md:block">
                     <p className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{userName}</p>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Pro Account</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{currentPlan} Account</p>
                   </div>
                   <ChevronDown size={14} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
                 </button>
