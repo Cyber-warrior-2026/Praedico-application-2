@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared-components/ui/avat
 export function UserNavbar() {
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("Loading...");
+  const [currentPlan, setCurrentPlan] = useState("Free"); // Added state
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
@@ -33,8 +34,8 @@ export function UserNavbar() {
           // If data.user.name is empty, fallback to the part of the email before '@'
           const nameFromEmail = data.user.email?.split('@')[0];
           setUserName(data.user.name || nameFromEmail);
-
           setUserEmail(data.user.email);
+          setCurrentPlan(data.user.currentPlan || "Free"); // Set plan
         }
       } catch (e) { console.error("Guest mode"); }
     };
@@ -152,7 +153,7 @@ export function UserNavbar() {
                   </Avatar>
                   <div className="text-left hidden md:block">
                     <p className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{userName}</p>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Pro Account</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{currentPlan} Account</p>
                   </div>
                   <ChevronDown size={14} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
                 </button>
