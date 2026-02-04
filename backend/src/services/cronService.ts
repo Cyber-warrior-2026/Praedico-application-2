@@ -17,7 +17,7 @@ class CronService {
     const minute = now.getMinutes();
     const currentTime = hour * 60 + minute;
     
-    const marketOpen = 9 * 60 ;  // 9:00 AM
+    const marketOpen = 9 * 60;  // 9:00 AM
     const marketClose = 15 * 60 + 30; // 3:30 PM
     
     return currentTime >= marketOpen && currentTime <= marketClose;
@@ -49,7 +49,7 @@ class CronService {
     // ensure the task is started
     this.scraperJob.start();
 
-    console.log('Stock scraper cron job started (every 2 minutes on weekdays)');
+    console.log('Stock scraper cron job started (every 1 minutes on weekdays)');
   }
 
   // Manual trigger for testing

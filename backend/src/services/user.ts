@@ -77,15 +77,15 @@ export class UserService {
   // 3. LOGIN (The "Gatekeeper")
   // =================================================================
   async login(email: string, plainPass: string) {
-    // Select passwordHash to verify password
-    // Mongoose selects 'isActive' by default (unless schema has select: false)
     const user = await UserModel.findOne({ email }).select("+passwordHash");
 
     if (!user) throw new Error("Invalid credentials");
     if (!user.isVerified) throw new Error("Please verify your email first");
 
-    // 🛑 SECURITY GATE 1: Check Database Status
-    // If the Admin set this to false, we block the login immediately.
+    // 🛑 SECURITY GATE: Check if Deleted OR Inactive
+    if (user.isDeleted) {
+      throw new Error("This account has been deleted. Contact support to restore it.");
+    }
     if (user.isActive === false) {
       throw new Error("Your account has been deactivated. Please contact support.");
     }
@@ -93,9 +93,7 @@ export class UserService {
     const isValid = await argon2.verify(user.passwordHash!, plainPass);
     if (!isValid) throw new Error("Invalid credentials");
 
-    // Generate Tokens (Embeds the status)
     const { accessToken, refreshToken } = this.generateTokens(user);
-
     return { user, accessToken, refreshToken };
   }
 
@@ -183,6 +181,7 @@ export class UserService {
 
     const query: any = {};
 
+    // 1. Search Logic
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -190,17 +189,27 @@ export class UserService {
       ];
     }
 
+    // 2. Role Logic
     if (role && role !== 'all') {
       query.role = role;
     }
 
-    if (status === 'active') {
-      query.isActive = true;
-      query.isVerified = true;
-    } else if (status === 'inactive') {
-      query.isActive = false;
-    } else if (status === 'unverified') {
-      query.isVerified = false;
+    // 3. Status Logic (CRITICAL UPDATE)
+    if (status === 'deleted') {
+      // Only show soft-deleted users
+      query.isDeleted = true;
+    } else {
+      // By default, HIDE deleted users unless specifically asked for
+      query.isDeleted = { $ne: true };
+
+      if (status === 'active') {
+        query.isActive = true;
+        query.isVerified = true;
+      } else if (status === 'inactive') {
+        query.isActive = false;
+      } else if (status === 'unverified') {
+        query.isVerified = false;
+      }
     }
 
     const users = await UserModel.find(query)
@@ -223,34 +232,28 @@ export class UserService {
   }
 
   async getUserStats() {
-    const total = await UserModel.countDocuments();
-    const active = await UserModel.countDocuments({ isActive: true, isVerified: true });
-    const inactive = await UserModel.countDocuments({ isActive: false });
-    const blocked = await UserModel.countDocuments({ isActive: false, isVerified: true });
-    const registered = await UserModel.countDocuments({ isVerified: true });
+    // Determine counts ensuring 'deleted' users aren't counted as active/inactive
+    const total = await UserModel.countDocuments({ isDeleted: { $ne: true } });
+    const active = await UserModel.countDocuments({ isActive: true, isVerified: true, isDeleted: { $ne: true } });
+    const inactive = await UserModel.countDocuments({ isActive: false, isDeleted: { $ne: true } });
+    const blocked = await UserModel.countDocuments({ isActive: false, isVerified: true, isDeleted: { $ne: true } });
     
-    const adminCount = await UserModel.countDocuments({ role: 'admin' });
-    const superAdminCount = await UserModel.countDocuments({ role: 'super_admin' });
-    const userCount = await UserModel.countDocuments({ role: 'user' });
+    // NEW: Count deleted users
+    const deleted = await UserModel.countDocuments({ isDeleted: true });
 
     return {
       totalUsers: total,
       activeUsers: active,
       inactiveUsers: inactive,
       blockedUsers: blocked,
-      registeredUsers: registered,
-      byRole: {
-        admin: adminCount,
-        super_admin: superAdminCount,
-        user: userCount
-      }
+      deletedUsers: deleted, // Return this new stat
+      registeredUsers: await UserModel.countDocuments({ isVerified: true }),
     };
   }
 
   async getUserById(userId: string) {
     const user = await UserModel.findById(userId)
       .select('-passwordHash -verificationToken -resetPasswordToken');
-    
     if (!user) throw new Error('User not found');
     return user;
   }
@@ -258,21 +261,43 @@ export class UserService {
   async updateUser(userId: string, updateData: any) {
     const allowedUpdates = ['name', 'email', 'role', 'isActive'];
     const updates: any = {};
-
     Object.keys(updateData).forEach(key => {
-      if (allowedUpdates.includes(key)) {
-        updates[key] = updateData[key];
-      }
+      if (allowedUpdates.includes(key)) updates[key] = updateData[key];
     });
 
     const user = await UserModel.findByIdAndUpdate(
       userId,
       { $set: updates },
       { new: true, runValidators: true }
-    ).select('-passwordHash -verificationToken -resetPasswordToken');
+    ).select('-passwordHash');
 
     if (!user) throw new Error('User not found');
     return user;
+  }
+
+  async softDeleteUser(userId: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.isActive = false; // Automatically deactivate logic access
+    await user.save();
+
+    return { message: "User archived successfully" };
+  }
+
+  async restoreUser(userId: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    user.isDeleted = false;
+    user.deletedAt = undefined;
+    // Optional: Decide if you want to auto-activate or keep them inactive upon restore
+    // user.isActive = true; 
+    await user.save();
+
+    return { message: "User restored successfully" };
   }
 
   async deleteUser(userId: string) {

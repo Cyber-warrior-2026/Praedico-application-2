@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -73,7 +74,7 @@ const rowVariants = {
   visible: { 
     x: 0, 
     opacity: 1, 
-    transition: { type: "spring", stiffness: 100, damping: 15 }
+    transition: { type: "spring" as const, stiffness: 100, damping: 15 }
   },
   hover: { 
     scale: 1.01,
@@ -116,12 +117,18 @@ const MiniSparkline = ({ isPositive }: { isPositive: boolean }) => {
 // COMPONENT: STOCK DETAIL MODAL
 // ==========================================
 
+const TIME_RANGES = ['1D', '1W', '1M', '6M', '1Y', 'YTD', 'All'];
+
 const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null; isOpen: boolean; onClose: () => void }) => {
   const [history, setHistory] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeRange, setActiveRange] = useState("1D");
 
   useEffect(() => {
     if (isOpen && stock) {
+      // Reset range to 1D when opening a new stock
+      setActiveRange("1D");
+      
       const fetchHistory = async () => {
         setLoading(true);
         try {
@@ -133,12 +140,14 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
           if (response.data.success) {
             const filteredHistory = response.data.data
               .filter((item: any) => item.symbol === stock.symbol)
-              .reverse();
+              // Sort ascending by time for the chart
+              .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
             
             setHistory(filteredHistory.length > 0 ? filteredHistory : [stock]);
           }
         } catch (error) {
           console.error("Failed to fetch history", error);
+          setHistory([stock]);
         } finally {
           setLoading(false);
         }
@@ -146,6 +155,44 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
       fetchHistory();
     }
   }, [isOpen, stock]);
+
+  // Filter Data based on Active Range
+  const chartData = useMemo(() => {
+    if (!history.length) return [];
+    
+    const now = new Date();
+    const cutoff = new Date();
+
+    switch (activeRange) {
+        case '1D':
+            // For 1D, we typically want today's data. 
+            // If data is scarce, we might fallback to last 24h.
+            cutoff.setHours(0, 0, 0, 0); 
+            break;
+        case '1W':
+            cutoff.setDate(now.getDate() - 7);
+            break;
+        case '1M':
+            cutoff.setMonth(now.getMonth() - 1);
+            break;
+        case '6M':
+            cutoff.setMonth(now.getMonth() - 6);
+            break;
+        case '1Y':
+            cutoff.setFullYear(now.getFullYear() - 1);
+            break;
+        case 'YTD':
+            cutoff.setMonth(0, 1); // January 1st of current year
+            cutoff.setHours(0, 0, 0, 0);
+            break;
+        case 'All':
+            return history;
+        default:
+            return history;
+    }
+
+    return history.filter(item => new Date(item.timestamp) >= cutoff);
+  }, [history, activeRange]);
 
   if (!isOpen || !stock) return null;
 
@@ -227,8 +274,17 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                     <p className="text-xs text-slate-500">Real-time trading data</p>
                   </div>
                   <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                    {['1D', '1W', '1M', '1Y'].map((t) => (
-                      <button key={t} className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-md hover:bg-white/10 transition-all">
+                    {TIME_RANGES.map((t) => (
+                      <button 
+                        key={t} 
+                        onClick={() => setActiveRange(t)}
+                        className={cn(
+                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                            activeRange === t 
+                                ? "bg-cyan-500/20 text-cyan-400 shadow-sm" 
+                                : "text-slate-400 hover:text-white hover:bg-white/10"
+                        )}
+                      >
                         {t}
                       </button>
                     ))}
@@ -241,9 +297,14 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                       <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
                       <span className="text-xs text-slate-500 font-medium">Loading historical data...</span>
                     </div>
+                  ) : chartData.length === 0 ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-500">
+                        <Activity className="h-8 w-8 opacity-20" />
+                        <span className="text-xs">No data for this time range</span>
+                    </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={history}>
+                      <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="colorPriceNifty" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={Color} stopOpacity={0.3} />
@@ -253,12 +314,16 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                         <XAxis dataKey="timestamp" hide />
                         <YAxis 
-                          domain={['auto', 'auto']} 
+                          /* FIX FOR FLAT GRAPH: 
+                            Using 'dataMin' and 'dataMax' forces the Y-axis to scale 
+                            to the exact range of the data, showing even small fluctuations.
+                          */
+                          domain={['dataMin', 'dataMax']} 
                           orientation="right" 
                           tick={{ fill: '#64748b', fontSize: 11 }}
                           axisLine={false}
                           tickLine={false}
-                          tickFormatter={(val) => `₹${val}`}
+                          tickFormatter={(val) => `₹${val.toFixed(0)}`}
                           width={60}
                         />
                         <Tooltip 
@@ -267,7 +332,15 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                           labelStyle={{ display: 'none' }}
                           formatter={(value: any) => [`₹${value}`, 'Price']}
                         />
-                        <Area type="monotone" dataKey="price" stroke={Color} strokeWidth={2} fillOpacity={1} fill="url(#colorPriceNifty)" animationDuration={1500} />
+                        <Area 
+                            type="monotone" 
+                            dataKey="price" 
+                            stroke={Color} 
+                            strokeWidth={2} 
+                            fillOpacity={1} 
+                            fill="url(#colorPriceNifty)" 
+                            animationDuration={1000} 
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
@@ -321,19 +394,34 @@ export default function Nifty50Page() {
   // ============================================
   // DATA FETCHING LOGIC
   // ============================================
+  // ... inside Nifty50Page component
+
   const fetchStocks = async () => {
     if (stocks.length === 0) setLoading(true);
     try {
       const { data } = await axios.get("http://localhost:5001/api/stocks/nifty50", { withCredentials: true });
       
       if (data.success) {
-        // FAIL-SAFE: Manually filter for 'NIFTY50' category only.
-        const niftyOnly = data.data.filter((item: StockData) => item.category === 'NIFTY50');
-        const strictNifty = niftyOnly.length > 0 ? niftyOnly : data.data.filter((item: StockData) => 
-          !item.symbol.includes('ETF') && !item.symbol.includes('BEES') && !item.symbol.includes('LIQUID')
+        // 1. Filter for Nifty 50 only
+        const niftyOnly = data.data.filter((item: StockData) => 
+          item.category === 'NIFTY50' && 
+          !item.symbol.includes('ETF') && !item.symbol.includes('BEES')
         );
 
-        setStocks(strictNifty);
+        // 2. NEW FIX: Deduplicate to get only the LATEST entry for each symbol
+        // (This prevents the main list from showing the same company 50 times)
+        const latestStocksMap = new Map();
+        niftyOnly.forEach((stock: StockData) => {
+          const existing = latestStocksMap.get(stock.symbol);
+          // If stock is newer than what we have, replace it
+          if (!existing || new Date(stock.timestamp) > new Date(existing.timestamp)) {
+            latestStocksMap.set(stock.symbol, stock);
+          }
+        });
+
+        const distinctStocks = Array.from(latestStocksMap.values()) as StockData[];
+
+        setStocks(distinctStocks);
         setLastUpdated(new Date().toLocaleTimeString());
       }
     } catch (error) {
