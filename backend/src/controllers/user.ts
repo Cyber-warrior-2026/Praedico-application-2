@@ -183,14 +183,14 @@ updateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 softDeleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const userId = req.params.id as string;
   await userService.softDeleteUser(userId);
   res.status(200).json({ success: true, message: "User archived successfully" });
 });
 
   // 2. Restore Handler
 restoreUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const userId = req.params.id as string;
   await userService.restoreUser(userId);
   res.status(200).json({ success: true, message: "User restored successfully" });
 });

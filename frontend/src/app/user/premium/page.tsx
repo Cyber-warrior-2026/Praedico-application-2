@@ -116,7 +116,7 @@ export default function PremiumPage() {
                         }, { withCredentials: true });
 
                         if (verifyRes.data.success) {
-                            alert(isTrial ? "Trial Activated! Enjoy 7 days free." : "Welcome to Premium! Your plan has been upgraded.");
+                            alert(isTrial ? "Trial Activated! Enjoy 7 days free." : `Welcome to ${currentPlan}! Your plan has been upgraded.`);
                             window.location.reload();
                         } else {
                             alert("Payment verification failed.");
@@ -307,6 +307,7 @@ export default function PremiumPage() {
                     <PricingCard
                         title="Pro"
                         price={billingCycle === 'monthly' ? "99" : "999"}
+                        billingCycle={billingCycle}
                         desc="Essential tools for serious traders."
                         features={['Real-time AI Alerts', 'Advanced Charting', '50 Social Connections', 'Priority Email Support']}
                         icon={Zap}
@@ -321,6 +322,7 @@ export default function PremiumPage() {
                     <PricingCard
                         title="Team"
                         price={billingCycle === 'monthly' ? "169" : "1599"}
+                        billingCycle={billingCycle}
                         desc="Collaborate and scale your trading."
                         features={['Everything in Pro', 'Unlimited Connections', 'Shared Workspaces', 'API Access', '24/7 Phone Support']}
                         icon={Rocket}
@@ -336,6 +338,7 @@ export default function PremiumPage() {
                     <PricingCard
                         title="Enterprise"
                         price={billingCycle === 'monthly' ? "249" : "2599"}
+                        billingCycle={billingCycle}
                         desc="Full power for institutions."
                         features={['Everything in Team', 'Dedicated Account Manager', 'Custom AI Models', 'White-label Reports', 'SLA Guarantee']}
                         icon={Crown}
@@ -354,7 +357,7 @@ export default function PremiumPage() {
 }
 
 // COMPONENT: PRICING CARD
-function PricingCard({ title, price, desc, features, icon: Icon, highlight, delay, currentPlan, hasUsedTrial, onSubscribe, onTrial }: any) {
+function PricingCard({ title, price, billingCycle, desc, features, icon: Icon, highlight, delay, currentPlan, hasUsedTrial, onSubscribe, onTrial }: any) {
     const isCurrent = currentPlan === title;
 
     return (
@@ -388,7 +391,7 @@ function PricingCard({ title, price, desc, features, icon: Icon, highlight, dela
 
                 <div className="flex items-baseline gap-1 mb-8">
                     <span className="text-4xl font-black text-slate-900 tracking-tight">₹{price}</span>
-                    <span className="text-slate-400 font-medium">/mo</span>
+                    <span className="text-slate-400 font-medium">{billingCycle === 'yearly' ? '/yr' : '/mo'}</span>
                 </div>
 
                 {/* Primary Action Button */}

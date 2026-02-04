@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Your company logo URL
-const LOGO_URL = './praedico_global_research_pvt_ltd_logo.jpg';
+const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-application-2/main/backend/praedico_global_research_pvt_ltd_logo.jpg';
 
 
 
