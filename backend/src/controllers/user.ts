@@ -56,24 +56,41 @@ export class UserController {
   });
 
   getMe = asyncHandler(async (req: Request, res: Response) => {
-    const user = (req as any).user;
+    const tokenUser = (req as any).user;
 
-    if (!user) {
+    if (!tokenUser || !tokenUser.id) {
       res.status(401).json({ success: false, message: "Not authenticated" });
       return;
     }
 
-    // 4. UPDATE: Ensure a valid name is always returned
+    // Fetch fresh user data from database to get latest subscription info
+    const user = await userService.getUserById(tokenUser.id);
+
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    // Ensure a valid name is always returned
     const displayName =
       user.name && user.name !== "User" ? user.name : user.email.split("@")[0];
 
     res.status(200).json({
       success: true,
       user: {
-        id: user.id,
+        id: user.id || user._id,
         email: user.email,
         role: user.role,
         name: displayName,
+        // Subscription fields
+        currentPlan: user.currentPlan || 'Free',
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionExpiry: user.subscriptionExpiry,
+        subscriptionId: user.subscriptionId,
+        // Trial fields
+        hasUsedTrial: user.hasUsedTrial || false,
+        isOnTrial: user.isOnTrial || false,
+        trialEndDate: user.trialEndDate,
       },
     });
   });

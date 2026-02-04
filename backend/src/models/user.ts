@@ -18,6 +18,11 @@ export interface IUser extends Document {
   subscriptionStatus?: 'active' | 'created' | 'authenticated' | 'past_due' | 'completed' | 'cancelled' | 'paused' | 'expired' | 'pending' | 'halted';
   currentPlan?: 'Pro' | 'Team' | 'Enterprise' | 'Free';
   subscriptionExpiry?: Date;
+  
+  // Trial Fields
+  hasUsedTrial?: boolean;
+  isOnTrial?: boolean;
+  trialEndDate?: Date;
 }
 
 
@@ -65,6 +70,11 @@ lastActive: { type: Date, default: Date.now },
   subscriptionStatus: { type: String, default: 'active' }, // Defaulting to active for free tier logic if needed, or null
   currentPlan: { type: String, default: 'Free' },
   subscriptionExpiry: { type: Date },
+
+  // Trial Fields
+  hasUsedTrial: { type: Boolean, default: false },
+  isOnTrial: { type: Boolean, default: false },
+  trialEndDate: { type: Date },
 }, {
   timestamps: true
 });

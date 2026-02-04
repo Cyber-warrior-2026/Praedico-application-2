@@ -40,6 +40,42 @@ export const initiateSubscription = async (req: Request, res: Response) => {
 };
 
 /**
+ * INIT TRIAL SUBSCRIPTION (7 Days)
+ * Route: POST /api/payments/trial
+ */
+export const initiateTrial = async (req: AuthRequest, res: Response) => {
+  try {
+    const { planId } = req.body;
+    const userId = req.user.id;
+
+    if (!planId) return res.status(400).json({ success: false, message: "Plan ID is required" });
+
+    // Check if user already used trial
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    if (user.hasUsedTrial) {
+      return res.status(403).json({ success: false, message: "You have already used your free trial." });
+    }
+
+    // Trial Start: Now + 7 Days
+    const startAt = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
+
+    const subscription = await PaymentService.createSubscription(planId, startAt);
+
+    return res.status(200).json({
+      success: true,
+      subscriptionId: subscription.id,
+      keyId: ENV.razorpay.keyId,
+      isTrial: true
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
  * VERIFY PAYMENT
  * Route: POST /api/payments/verify
  */
@@ -63,15 +99,31 @@ export const verifySubscription = async (req: AuthRequest, res: Response) => {
     }
 
     // UPDATE USER SUBSCRIPTION
-    const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Mock 1 year, or calc based on API response
+    const { isTrial } = req.body;
+    
+    // Calculate expiry
+    let expiryDate = new Date();
+    if (isTrial) {
+        expiryDate.setDate(expiryDate.getDate() + 7); // 7 Day Trial
+    } else {
+        expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Default 1 year (or depend on plan)
+    }
 
-    await UserModel.findByIdAndUpdate(userId, {
+    // Prepare update object
+    const updateData: any = {
         subscriptionId: razorpay_subscription_id,
-        subscriptionStatus: 'active',
+        subscriptionStatus: isTrial ? 'on_trial' : 'active',
         currentPlan: planName || 'Pro',
         subscriptionExpiry: expiryDate
-    });
+    };
+
+    if (isTrial) {
+        updateData.isOnTrial = true;
+        updateData.hasUsedTrial = true;
+        updateData.trialEndDate = expiryDate;
+    }
+
+    await UserModel.findByIdAndUpdate(userId, updateData);
 
     return res.status(200).json({ success: true, message: "Payment Verified & Subscription Activated" });
 
@@ -143,7 +195,8 @@ export const handleWebhook = async (req: Request, res: Response) => {
         { subscriptionId: subscriptionId },
         { 
           subscriptionStatus: 'active',
-          subscriptionExpiry: currentPeriodEnd
+          subscriptionExpiry: currentPeriodEnd,
+          isOnTrial: false // Clear trial status on charge
         },
         { new: true }
       );
@@ -169,7 +222,8 @@ export const handleWebhook = async (req: Request, res: Response) => {
         { 
           subscriptionStatus: 'cancelled',
           currentPlan: 'Free',
-          subscriptionExpiry: new Date()
+          subscriptionExpiry: new Date(),
+          isOnTrial: false
         },
         { new: true }
       );
