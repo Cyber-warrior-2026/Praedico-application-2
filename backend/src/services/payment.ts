@@ -7,7 +7,7 @@ export class PaymentService {
    * Creates a subscription link for a specific Plan ID.
    * @param planId - The Plan ID generated in Razorpay Dashboard
    */
-  static async createSubscription(planId: string, customerId?: string) {
+  static async createSubscription(planId: string, startAt?: number, customerId?: string) {
     try {
       // 1. Create subscription
       const subscription = await razorpayInstance.subscriptions.create({
@@ -15,6 +15,7 @@ export class PaymentService {
         total_count: 12, // Billing cycles (e.g., 1 year if monthly)
         quantity: 1,
         customer_notify: 1, // Razorpay notifies customer
+        start_at: startAt, // Optional: Start timestamp for trial period
         // customer_id: customerId, // Optional: if you already have a Razorpay customer ID
       });
 

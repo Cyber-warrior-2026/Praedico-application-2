@@ -11,6 +11,9 @@ export default function PremiumPage() {
     const [loading, setLoading] = useState(false);
     const [currentPlan, setCurrentPlan] = useState<string>("Free");
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
+    const [hasUsedTrial, setHasUsedTrial] = useState(false);
+    const [isOnTrial, setIsOnTrial] = useState(false);
+    const [trialParams, setTrialParams] = useState<{ planName: string, price: string } | null>(null);
 
     // FETCH CURRENT PLAN
     useEffect(() => {
@@ -19,6 +22,8 @@ export default function PremiumPage() {
                 const { data } = await axios.get("http://localhost:5001/api/users/me", { withCredentials: true });
                 if (data.success && data.user) {
                     setCurrentPlan(data.user.currentPlan || "Free");
+                    setHasUsedTrial(data.user.hasUsedTrial || false);
+                    setIsOnTrial(data.user.isOnTrial || false);
                     if (data.user.subscriptionExpiry) {
                         setExpiryDate(new Date(data.user.subscriptionExpiry).toLocaleDateString());
                     }
@@ -41,8 +46,8 @@ export default function PremiumPage() {
         });
     };
 
-    // HANDLE SUBSCRIPTION
-    const handleSubscribe = async (planName: string, price: string) => {
+    // HANDLE SUBSCRIPTION OR TRIAL
+    const handlePayment = async (planName: string, price: string, isTrial: boolean = false) => {
         setLoading(true);
         const isLoaded = await loadRazorpay();
         if (!isLoaded) {
@@ -51,7 +56,6 @@ export default function PremiumPage() {
             return;
         }
 
-        // Map Plans to Mock IDs (Replace with Real Razorpay Plan IDs in Production)
         // Map Plans to Real Razorpay Plan IDs (Monthly & Yearly)
         const planIdMapping: Record<string, Record<'monthly' | 'yearly', string>> = {
             'Pro': {
@@ -77,8 +81,12 @@ export default function PremiumPage() {
         }
 
         try {
-            // 1. Initiate Subscription
-            const { data } = await axios.post("http://localhost:5001/api/payments/subscribe",
+            // 1. Initiate Subscription (Regular or Trial)
+            const endpoint = isTrial
+                ? "http://localhost:5001/api/payments/trial"
+                : "http://localhost:5001/api/payments/subscribe";
+
+            const { data } = await axios.post(endpoint,
                 { planId: selectedPlanId },
                 { withCredentials: true }
             );
@@ -94,8 +102,8 @@ export default function PremiumPage() {
                 key: data.keyId,
                 subscription_id: data.subscriptionId,
                 name: "Praedico Global Research",
-                description: `Upgrade to ${planName}`,
-                image: "https://github.com/shadcn.png", // Replace with your logo
+                description: isTrial ? `7-Day Trial for ${planName}` : `Upgrade to ${planName}`,
+                image: "https://github.com/shadcn.png",
                 handler: async function (response: any) {
                     // 3. Verify Payment
                     try {
@@ -103,12 +111,13 @@ export default function PremiumPage() {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_subscription_id: response.razorpay_subscription_id,
                             razorpay_signature: response.razorpay_signature,
-                            planName: planName
+                            planName: planName,
+                            isTrial: isTrial // Pass trial flag to verification
                         }, { withCredentials: true });
 
                         if (verifyRes.data.success) {
-                            alert("Welcome to Premium! Your plan has been upgraded.");
-                            window.location.reload(); // Refresh to show new plan status
+                            alert(isTrial ? "Trial Activated! Enjoy 7 days free." : "Welcome to Premium! Your plan has been upgraded.");
+                            window.location.reload();
                         } else {
                             alert("Payment verification failed.");
                         }
@@ -117,9 +126,9 @@ export default function PremiumPage() {
                     }
                 },
                 prefill: {
-                    name: "Praedico User",
-                    email: "user@praedico.com",
-                    contact: ""
+                    name: "Priyank Gupta",
+                    email: "guptapriyank@gmail.com",
+                    contact: "9876543210"
                 },
                 theme: {
                     color: "#6366f1"
@@ -140,13 +149,29 @@ export default function PremiumPage() {
 
     return (
         <div className="min-h-screen bg-[#F8F9FE] pt-10 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
-
             {/* 1. 3D BACKGROUND LAYER */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <Premium3DBackground />
             </div>
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
+
+                {/* HEADING MOVED DOWN */}
+
+                {/* TRIAL BANNER */}
+                {isOnTrial && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-indigo-600 text-white p-4 rounded-xl shadow-lg mb-8 text-center"
+                    >
+                        <p className="font-bold text-lg flex items-center justify-center gap-2">
+                            <Zap className="fill-yellow-400 text-yellow-400" size={20} />
+                            Your 7-Day Free Trial is Active!
+                        </p>
+                        <p className="text-indigo-200 text-sm">Valid until {expiryDate}</p>
+                    </motion.div>
+                )}
 
                 {/* HEADER SECTION */}
                 <motion.div
@@ -205,7 +230,7 @@ export default function PremiumPage() {
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Plan</p>
-                                <h3 className="text-xl font-bold text-slate-900">{currentPlan} Membership</h3>
+                                <h3 className="text-xl font-bold text-slate-900">{currentPlan} Membership {isOnTrial && <span className="text-indigo-600">(Trial)</span>}</h3>
                             </div>
                         </div>
                         {expiryDate && (
@@ -229,7 +254,9 @@ export default function PremiumPage() {
                         icon={Zap}
                         delay={0.4}
                         currentPlan={currentPlan}
-                        onSubscribe={() => handleSubscribe('Pro', billingCycle === 'monthly' ? "99" : "999")}
+                        hasUsedTrial={hasUsedTrial}
+                        onSubscribe={() => handlePayment('Pro', billingCycle === 'monthly' ? "99" : "999")}
+                        onTrial={() => handlePayment('Pro', billingCycle === 'monthly' ? "99" : "999", true)}
                     />
 
                     {/* TEAM PLAN (Popular) */}
@@ -242,7 +269,9 @@ export default function PremiumPage() {
                         highlight
                         delay={0.5}
                         currentPlan={currentPlan}
-                        onSubscribe={() => handleSubscribe('Team', billingCycle === 'monthly' ? "169" : "1599")}
+                        hasUsedTrial={hasUsedTrial}
+                        onSubscribe={() => handlePayment('Team', billingCycle === 'monthly' ? "169" : "1599")}
+                        onTrial={() => handlePayment('Team', billingCycle === 'monthly' ? "169" : "1599", true)}
                     />
 
                     {/* ENTERPRISE PLAN */}
@@ -254,7 +283,9 @@ export default function PremiumPage() {
                         icon={Crown}
                         delay={0.6}
                         currentPlan={currentPlan}
-                        onSubscribe={() => handleSubscribe('Enterprise', billingCycle === 'monthly' ? "249" : "2599")}
+                        hasUsedTrial={hasUsedTrial}
+                        onSubscribe={() => handlePayment('Enterprise', billingCycle === 'monthly' ? "249" : "2599")}
+                        onTrial={() => handlePayment('Enterprise', billingCycle === 'monthly' ? "249" : "2599", true)}
                     />
 
                 </div>
@@ -265,7 +296,7 @@ export default function PremiumPage() {
 }
 
 // COMPONENT: PRICING CARD
-function PricingCard({ title, price, desc, features, icon: Icon, highlight, delay, currentPlan, onSubscribe }: any) {
+function PricingCard({ title, price, desc, features, icon: Icon, highlight, delay, currentPlan, hasUsedTrial, onSubscribe, onTrial }: any) {
     const isCurrent = currentPlan === title;
 
     return (
@@ -275,50 +306,64 @@ function PricingCard({ title, price, desc, features, icon: Icon, highlight, dela
             transition={{ delay: delay, duration: 0.6, type: "spring", stiffness: 100 }}
             whileHover={{ y: -8, transition: { duration: 0.3 } }}
             className={`
-                relative bg-white/80 backdrop-blur-md rounded-[32px] p-8 border group
+                relative bg-white/80 backdrop-blur-md rounded-[32px] p-8 border group flex flex-col justify-between
                 ${highlight
                     ? 'border-indigo-500 shadow-2xl shadow-indigo-500/20 z-10'
                     : 'border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/60'
                 }
             `}
         >
-            {highlight && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 ring-4 ring-[#F8F9FE]">
-                    Most Popular
+            <div>
+                {highlight && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 ring-4 ring-[#F8F9FE]">
+                        Most Popular
+                    </div>
+                )}
+
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ml-1 transition-colors duration-300 ${highlight ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600'
+                    }`}>
+                    <Icon size={24} />
                 </div>
-            )}
 
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ml-1 transition-colors duration-300 ${highlight ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600'
-                }`}>
-                <Icon size={24} />
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">{title}</h3>
+                <p className="text-slate-500 text-sm mb-6 h-10">{desc}</p>
+
+                <div className="flex items-baseline gap-1 mb-8">
+                    <span className="text-4xl font-black text-slate-900 tracking-tight">₹{price}</span>
+                    <span className="text-slate-400 font-medium">/mo</span>
+                </div>
+
+                {/* Primary Action Button */}
+                <motion.button
+                    onClick={onSubscribe}
+                    disabled={isCurrent}
+                    whileTap={{ scale: 0.98 }}
+                    className={`
+                        w-full py-4 rounded-xl font-bold text-sm mb-3 transition-all shadow-lg
+                        ${isCurrent
+                            ? 'bg-slate-100 text-slate-400 cursor-default shadow-none'
+                            : highlight
+                                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-500/40 hover:brightness-110'
+                                : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-slate-500/20'
+                        }
+                    `}
+                >
+                    {isCurrent ? "Current Plan" : "Get Started Now"}
+                </motion.button>
+
+                {/* Trial Button */}
+                {!hasUsedTrial && !isCurrent && (
+                    <motion.button
+                        onClick={onTrial}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-3 rounded-xl font-bold text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 mb-6 transition-colors border border-indigo-200"
+                    >
+                        Start 7-Day Free Trial
+                    </motion.button>
+                )}
             </div>
 
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">{title}</h3>
-            <p className="text-slate-500 text-sm mb-6 h-10">{desc}</p>
-
-            <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-4xl font-black text-slate-900 tracking-tight">₹{price}</span>
-                <span className="text-slate-400 font-medium">/mo</span>
-            </div>
-
-            <motion.button
-                onClick={onSubscribe}
-                disabled={isCurrent}
-                whileTap={{ scale: 0.98 }}
-                className={`
-                    w-full py-4 rounded-xl font-bold text-sm mb-8 transition-all shadow-lg
-                    ${isCurrent
-                        ? 'bg-slate-100 text-slate-400 cursor-default shadow-none'
-                        : highlight
-                            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-500/40 hover:brightness-110'
-                            : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-slate-500/20'
-                    }
-                `}
-            >
-                {isCurrent ? "Current Plan" : "Get Started"}
-            </motion.button>
-
-            <div className="space-y-4">
+            <div className="space-y-4 mt-6 border-t border-slate-100 pt-6">
                 {features.map((feat: string, i: number) => (
                     <motion.div
                         key={i}
