@@ -70,7 +70,7 @@ const rowVariants = {
   visible: { 
     x: 0, 
     opacity: 1, 
-    transition: { type: "spring", stiffness: 100, damping: 15 }
+    transition: { type: "spring" as const, stiffness: 100, damping: 15 }
   },
   hover: { 
     scale: 1.01,
