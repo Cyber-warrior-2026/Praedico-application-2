@@ -11,14 +11,14 @@ const getEnv = (key: string, defaultValue?: string): string => {
 };
 
 export const ENV = {
-  PORT: getEnv('PORT', '4000'),
+  PORT: getEnv('PORT', '5001'),
   
   // Database
   MONGODB_URI: getEnv('MONGODB_URI'),
   
   // Security Secrets
   JWT_SECRET: getEnv('JWT_SECRET'),
-  JWT_REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET'), // You called it REFRESH_SECRET in .env, make sure names match!
+  JWT_REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET'),
   ADMIN_SECRET_KEY: getEnv('ADMIN_SECRET_KEY'),
   
   // Configs
@@ -35,5 +35,12 @@ export const ENV = {
   // AI Configuration
   GEMINI_API_KEY: getEnv('GEMINI_API_KEY'),
   AI_MODEL: getEnv('AI_MODEL', 'gemini-1.5-flash'),
-  AI_MAX_HISTORY: getEnv('AI_MAX_HISTORY', '20')
+  AI_MAX_HISTORY: getEnv('AI_MAX_HISTORY', '20'),
+
+  //Razorpay Credentials
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || '',
+    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
+  },
 };

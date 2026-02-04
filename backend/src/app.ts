@@ -10,7 +10,8 @@ import { globalErrorHandler } from "./common/errors/errorHandler";
 import stockDataRoutes from './routes/stockData';
 import cronService from './services/cronService';
 import aiChatRoutes from './routes/aiChat'; 
-// Import Routes
+import paymentRoutes from './routes/payment';
+
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
 
@@ -55,6 +56,7 @@ export const createApp = (): Application => {
   app.use("/api/users", userRoutes);
   app.use('/api', stockDataRoutes);
   app.use('/api', aiChatRoutes);
+  app.use('/api/payments', paymentRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes

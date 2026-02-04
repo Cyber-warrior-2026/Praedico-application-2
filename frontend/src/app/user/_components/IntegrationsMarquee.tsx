@@ -34,35 +34,8 @@ const integrations = [
 export default function IntegrationsMarquee() {
   return (
     <section className="relative w-full py-32 overflow-hidden bg-[#020617] font-sans text-white border-y border-white/5">
-      
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scroll-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-        .animate-scroll-left { animation: scroll-left 80s linear infinite; }
-        .animate-scroll-right { animation: scroll-right 90s linear infinite; }
-        
-        .marquee-perspective {
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-        .marquee-track {
-          transform: rotateX(10deg) rotateZ(-5deg); 
-          width: 150%; 
-          margin-left: -25%; 
-        }
-        
-        /* The CSS Mask for smooth fade effects */
-        .fade-mask {
-          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-        }
-      `}</style>
+
+
 
       {/* --- BACKGROUND GLOWS --- */}
       <div className="absolute inset-0 pointer-events-none">
@@ -71,7 +44,7 @@ export default function IntegrationsMarquee() {
       </div>
 
       <div className="container relative z-10 mx-auto px-6 text-center">
-        
+
         {/* --- HEADER --- */}
         <div className="mb-20">
           <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-white drop-shadow-2xl">
@@ -87,10 +60,10 @@ export default function IntegrationsMarquee() {
 
         {/* --- 3D MARQUEE CONTAINER --- */}
         <div className="relative h-[400px] marquee-perspective flex flex-col justify-center fade-mask">
-          
+
           {/* Marquee Track */}
           <div className="marquee-track flex flex-col gap-6 opacity-100 transition-opacity duration-500">
-            
+
             {/* ROW 1: Scrolling Left */}
             <div className="flex gap-4 w-max animate-scroll-left hover:[animation-play-state:paused]">
               {[...integrations, ...integrations, ...integrations, ...integrations].map((item, idx) => (
@@ -126,16 +99,16 @@ export default function IntegrationsMarquee() {
 function IntegrationCard({ item }: { item: any }) {
   return (
     <div className="group relative w-20 h-20 md:w-24 md:h-24 bg-white rounded-[22px] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition-all duration-300 hover:scale-110 hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] cursor-pointer border border-transparent hover:border-white/50">
-      
+
       {/* 🚀 LOGO IMAGE */}
       <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
-        <img 
-          src={item.logo} 
-          alt={item.name} 
+        <img
+          src={item.logo}
+          alt={item.name}
           className="w-full h-full object-contain pointer-events-none select-none"
         />
       </div>
-      
+
       {/* Tooltip Effect */}
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-900/90 border border-white/10 text-white text-[10px] font-medium px-3 py-1.5 rounded-full pointer-events-none whitespace-nowrap shadow-xl transform translate-y-2 group-hover:translate-y-0 z-50">
         {item.name}

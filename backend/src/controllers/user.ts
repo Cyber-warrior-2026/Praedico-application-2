@@ -156,18 +156,19 @@ updateUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.updateUser(userId, updateData);
   res.status(200).json({ success: true, user, message: "User updated successfully" });
 });
-  softDeleteUser = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.id;
-    await userService.softDeleteUser(userId);
-    res.status(200).json({ success: true, message: "User archived successfully" });
-  });
+
+softDeleteUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  await userService.softDeleteUser(userId);
+  res.status(200).json({ success: true, message: "User archived successfully" });
+});
 
   // 2. Restore Handler
-  restoreUser = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.id;
-    await userService.restoreUser(userId);
-    res.status(200).json({ success: true, message: "User restored successfully" });
-  });
+restoreUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  await userService.restoreUser(userId);
+  res.status(200).json({ success: true, message: "User restored successfully" });
+});
 
 // Delete user
 deleteUser = asyncHandler(async (req: Request, res: Response) => {

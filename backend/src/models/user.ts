@@ -12,6 +12,12 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   lastLogin?: Date;
   lastActive?: Date; // NEW: Track last activity
+  
+  // Subscription Fields
+  subscriptionId?: string;
+  subscriptionStatus?: 'active' | 'created' | 'authenticated' | 'past_due' | 'completed' | 'cancelled' | 'paused' | 'expired' | 'pending' | 'halted';
+  currentPlan?: 'Pro' | 'Team' | 'Enterprise' | 'Free';
+  subscriptionExpiry?: Date;
 }
 
 
@@ -53,6 +59,12 @@ isActive: {
 lastActive: { type: Date, default: Date.now },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
+  
+  // Subscription Fields (New)
+  subscriptionId: { type: String },
+  subscriptionStatus: { type: String, default: 'active' }, // Defaulting to active for free tier logic if needed, or null
+  currentPlan: { type: String, default: 'Free' },
+  subscriptionExpiry: { type: Date },
 }, {
   timestamps: true
 });
