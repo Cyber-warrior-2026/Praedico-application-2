@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle, X, Loader2 } from 'lucide-react';
 import AIChatModal from './AIChatModal';
-import PremiumFeatureModal from './PremiumFeatureModal';
+import PremiumFeatureModal from '../PremiumFeatureModal';
 import axiosInstance from '@/lib/axios';
 
 export default function AIChatButton() {
