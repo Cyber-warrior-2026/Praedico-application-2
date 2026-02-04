@@ -90,8 +90,15 @@ export const handleWebhook = async (req: Request, res: Response) => {
     const secret = ENV.razorpay.webhookSecret;
     const signature = req.headers['x-razorpay-signature'] as string;
 
-    if (!secret || !signature) {
-      return res.status(400).json({ success: false, message: "Missing Secret or Signature" });
+    // 1. VALIDATE SIGNATURE
+    if (!secret) {
+      console.error('[WEBHOOK] Webhook secret not configured in environment');
+      return res.status(500).json({ success: false, message: "Webhook secret not configured" });
+    }
+
+    if (!signature) {
+      console.error('[WEBHOOK] Missing x-razorpay-signature header');
+      return res.status(400).json({ success: false, message: "Missing signature header" });
     }
 
     const body = JSON.stringify(req.body);
@@ -101,45 +108,101 @@ export const handleWebhook = async (req: Request, res: Response) => {
       .digest('hex');
 
     if (expectedSignature !== signature) {
-      console.error("Webhook Signature Mismatch");
-      return res.status(400).json({ success: false, message: "Invalid Signature" });
+      console.error('[WEBHOOK] Signature verification failed');
+      console.error('[WEBHOOK] Expected:', expectedSignature);
+      console.error('[WEBHOOK] Received:', signature);
+      return res.status(400).json({ success: false, message: "Invalid signature" });
     }
 
+    // 2. PARSE EVENT
     const event = req.body;
-    console.log("Webhook Event:", event.event);
+    const eventType = event.event;
 
-    if (event.event === 'subscription.charged') {
-      const subscriptionId = event.payload.subscription.entity.id;
-      // const paymentId = event.payload.payment.entity.id;
+    if (!eventType) {
+      console.error('[WEBHOOK] Event type missing in payload');
+      return res.status(400).json({ success: false, message: "Invalid event payload" });
+    }
+
+    console.log(`[WEBHOOK] Received event: ${eventType}`);
+
+    // 3. HANDLE DIFFERENT EVENT TYPES
+    if (eventType === 'subscription.charged') {
+      const subscriptionId = event.payload?.subscription?.entity?.id;
       
-      // Calculate new expiry (e.g., +1 month or +1 year based on plan)
-      // For simplicity, we just extend by 30 days or fetch plan details
-      const newExpiry = new Date();
-      newExpiry.setDate(newExpiry.getDate() + 30); 
+      if (!subscriptionId) {
+        console.error('[WEBHOOK] Missing subscription ID in subscription.charged event');
+        return res.status(400).json({ success: false, message: "Invalid payload structure" });
+      }
 
-      // Update User
-      await UserModel.findOneAndUpdate(
+      // Calculate expiry based on billing period
+      const currentPeriodEnd = event.payload.subscription.entity.current_end 
+        ? new Date(event.payload.subscription.entity.current_end * 1000) 
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      const updatedUser = await UserModel.findOneAndUpdate(
         { subscriptionId: subscriptionId },
         { 
           subscriptionStatus: 'active',
-          subscriptionExpiry: newExpiry
-        }
+          subscriptionExpiry: currentPeriodEnd
+        },
+        { new: true }
       );
-      console.log(`Subscription Renewed: ${subscriptionId}`);
+
+      if (!updatedUser) {
+        console.warn(`[WEBHOOK] No user found with subscriptionId: ${subscriptionId}`);
+      } else {
+        console.log(`[WEBHOOK] ✓ Subscription renewed for user ${updatedUser._id} (Plan: ${updatedUser.currentPlan})`);
+        console.log(`[WEBHOOK] New expiry: ${currentPeriodEnd.toISOString()}`);
+      }
     } 
-    else if (event.event === 'subscription.cancelled' || event.event === 'subscription.halted') {
-      const subscriptionId = event.payload.subscription.entity.id;
-      await UserModel.findOneAndUpdate(
+    else if (eventType === 'subscription.cancelled' || eventType === 'subscription.halted' || eventType === 'subscription.completed') {
+      const subscriptionId = event.payload?.subscription?.entity?.id;
+      
+      if (!subscriptionId) {
+        console.error(`[WEBHOOK] Missing subscription ID in ${eventType} event`);
+        return res.status(400).json({ success: false, message: "Invalid payload structure" });
+      }
+
+      // Reset user to Free plan when subscription ends
+      const updatedUser = await UserModel.findOneAndUpdate(
         { subscriptionId: subscriptionId },
-        { subscriptionStatus: 'cancelled' }
+        { 
+          subscriptionStatus: 'cancelled',
+          currentPlan: 'Free',
+          subscriptionExpiry: new Date()
+        },
+        { new: true }
       );
-       console.log(`Subscription Cancelled: ${subscriptionId}`);
+
+      if (!updatedUser) {
+        console.warn(`[WEBHOOK] No user found with subscriptionId: ${subscriptionId}`);
+      } else {
+        console.log(`[WEBHOOK] ✓ Subscription ${eventType} for user ${updatedUser._id}`);
+        console.log(`[WEBHOOK] User downgraded to Free plan`);
+      }
+    }
+    else if (eventType === 'subscription.authenticated' || eventType === 'subscription.activated') {
+      const subscriptionId = event.payload?.subscription?.entity?.id;
+      if (subscriptionId) {
+        await UserModel.findOneAndUpdate(
+          { subscriptionId: subscriptionId },
+          { subscriptionStatus: 'active' }
+        );
+        console.log(`[WEBHOOK] Subscription ${eventType}: ${subscriptionId}`);
+      }
+    }
+    else {
+      console.log(`[WEBHOOK] Unhandled event type: ${eventType}`);
     }
 
-    res.status(200).json({ success: true });
+    // Always return 200 to acknowledge receipt
+    return res.status(200).json({ success: true, event: eventType });
 
   } catch (error: any) {
-    console.error("Webhook Error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('[WEBHOOK] Error processing webhook:', error.message);
+    console.error('[WEBHOOK] Stack:', error.stack);
+    
+    // Still return 200 to prevent Razorpay from retrying on application errors
+    return res.status(200).json({ success: false, error: 'Internal processing error' });
   }
 };

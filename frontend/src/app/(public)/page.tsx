@@ -35,7 +35,7 @@ export default function UserPortal() {
     // 2. Call Backend to Create Subscription
     // NOTE: In real app, you'd map planName to actual Razorpay Plan IDs
     const planIdMapping: Record<string, string> = {
-      'Pro': 'plan_Pqe9i8G2p6y2i8', // REPLACE WITH REAL PLAN ID FROM RAZORPAY DASHBOARD
+      'Pro': 'plan_Pqe9i8G2p6y2i8', 
       'Team': 'plan_Pqe9i8G2p6y2i8',
       'Enterprise': 'plan_Pqe9i8G2p6y2i8'
     };

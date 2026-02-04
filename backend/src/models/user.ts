@@ -6,12 +6,12 @@ export interface IUser extends Document {
   passwordHash?: string;
   role: 'user' | 'admin' | 'super_admin';
   isVerified: boolean;
-  isActive: boolean; // NEW: Track if user is active/blocked
+  isActive: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   lastLogin?: Date;
-  lastActive?: Date; // NEW: Track last activity
+  lastActive?: Date;
   
   // Subscription Fields
   subscriptionId?: string;
