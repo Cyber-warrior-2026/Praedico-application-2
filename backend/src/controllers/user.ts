@@ -75,6 +75,14 @@ export class UserController {
     const displayName =
       user.name && user.name !== "User" ? user.name : user.email.split("@")[0];
 
+    // Check for Trial Expiry: If active trial date has passed, downgrade to Free immediately
+    if (user.isOnTrial && user.trialEndDate && new Date(user.trialEndDate) < new Date()) {
+      user.isOnTrial = false;
+      user.currentPlan = 'Free';
+      user.subscriptionStatus = 'expired';
+      await user.save();
+    }
+
     res.status(200).json({
       success: true,
       user: {

@@ -158,6 +158,45 @@ export default function PremiumPage() {
 
                 {/* HEADING MOVED DOWN */}
 
+                {/* TRIAL EXPIRED BANNER */}
+                {hasUsedTrial && !isOnTrial && currentPlan === 'Free' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="max-w-2xl mx-auto mb-12 relative group"
+                    >
+                        {/* Red Glow */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+
+                        {/* Red Gradient Card */}
+                        <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
+
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
+                                    <Shield className="h-5 w-5 text-white fill-white" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                                        Trial Period Finished
+                                        <span className="flex h-2 w-2 rounded-full bg-white/50 animate-pulse"></span>
+                                    </p>
+                                    <p className="text-orange-50 text-xs mt-0.5 font-medium">Subscribe now to regain premium access</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    // Scroll to pricing cards
+                                    document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="bg-white text-rose-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-50 transition-colors shadow-sm"
+                            >
+                                Subscribe Now
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* TRIAL BANNER */}
                 {isOnTrial && (
                     <motion.div
