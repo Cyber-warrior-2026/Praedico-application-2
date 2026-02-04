@@ -291,7 +291,7 @@ export default function PremiumPage() {
                                 <h3 className="text-xl font-bold text-slate-900">{currentPlan} Membership {isOnTrial && <span className="text-indigo-600">(Trial)</span>}</h3>
                             </div>
                         </div>
-                        {expiryDate && (
+                        {expiryDate && currentPlan !== 'Free' && (
                             <div className="text-right">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Renews On</p>
                                 <p className="text-sm font-bold text-slate-800">{expiryDate}</p>
