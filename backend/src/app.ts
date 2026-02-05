@@ -22,12 +22,17 @@ export const createApp = (): Application => {
   // --- 1. Security Middleware Layer ---
   app.use(helmet());
   app.use(securityHeaders);
-  app.use(
+app.use(
     cors({
-      origin: ENV.FRONTEND_URL,
+      origin: [
+        "http://localhost:3000",                      // For Local Development
+        "https://praedico-frontend.vercel.app",       // 👈 YOUR VERCEL FRONTEND
+        "https://www.praedico-frontend.vercel.app",   // Optional 'www' subdomain
+        ENV.FRONTEND_URL                              // Keep env variable as backup
+      ],
       credentials: true,
-      methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
-    }),
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    })
   );
   app.use(hpp());
 
