@@ -104,6 +104,38 @@ export const getStockBySymbol = async (req: Request, res: Response) => {
   }
 };
 
+export const getStockHistory = async (req: Request, res: Response) => {
+  try {
+    const { symbol } = req.params;
+    const { limit = 30 } = req.query; // Default to last 30 entries
+
+    const history = await StockData.find({ symbol })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit as string))
+      .lean();
+
+    if (!history || history.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: 'Stock history not found'
+        });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: history.length,
+      data: history
+    });
+
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching stock history',
+      error: error.message
+    });
+  }
+};
+
 export const manualScrape = async (req: Request, res: Response) => {
   try {
     await cronService.runScraperNow();

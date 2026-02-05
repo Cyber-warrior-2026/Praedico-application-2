@@ -40,6 +40,12 @@ export const stockApi = {
     return response.data;
   },
 
+  // Get stock history
+  getStockHistory: async (symbol: string): Promise<StockListResponse> => {
+    const response = await axiosInstance.get(API_ENDPOINTS.STOCK.HISTORY(symbol));
+    return response.data;
+  },
+
   // Get scraper status
   getScraperStatus: async (): Promise<ScraperStatusResponse> => {
     const response = await axiosInstance.get(API_ENDPOINTS.STOCK.SCRAPER_STATUS);

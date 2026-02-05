@@ -283,7 +283,11 @@ export default function MarketsPage() {
                                             key={stock.symbol}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.03, duration: 0.3 }}
+                                            transition={{
+                                                // Fix visibility delay: cap delay at 0.5s or reduce multiplier
+                                                delay: Math.min(i * 0.01, 0.5),
+                                                duration: 0.3
+                                            }}
                                             onClick={() => handleStockClick(stock)}
                                             className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-slate-800/50 hover:bg-white/5 transition-colors cursor-pointer group items-center"
                                         >

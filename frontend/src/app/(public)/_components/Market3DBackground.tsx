@@ -84,7 +84,16 @@ export default function Market3DBackground() {
 
                 {/* Environment & Atmosphere */}
                 <Environment preset="city" />
-                <ContactShadows position={[0, -4.5, 0]} opacity={0.4} scale={20} blur={2.5} far={4.5} color="#000000" />
+                <ContactShadows
+                    position={[0, -4.5, 0]}
+                    opacity={0.4}
+                    scale={40}
+                    blur={2.5}
+                    far={4.5}
+                    color="#000000"
+                    frames={1} // Fix flickering: render only once
+                    resolution={256}
+                />
 
                 {/* Subtle Particles */}
                 <Sparkles count={40} scale={12} size={3} speed={0.4} opacity={0.4} color="#818cf8" />

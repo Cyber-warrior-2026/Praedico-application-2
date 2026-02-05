@@ -3,6 +3,7 @@ import {
   getStockData,
   getLatestStockData,
   getStockBySymbol,
+  getStockHistory,
   manualScrape,
   getScraperStatus
 } from '../controllers/stockData';
@@ -31,6 +32,7 @@ router.get('/scraper/status', getScraperStatus);
 
 // ⚠️ CRITICAL: Dynamic :symbol route MUST BE LAST
 // Otherwise it catches /stocks/nifty50 and /stocks/etf as symbols
+router.get('/stocks/:symbol/history', getStockHistory);
 router.get('/stocks/:symbol', getStockBySymbol);
 
 export default router;

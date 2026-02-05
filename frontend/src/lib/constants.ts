@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
     NIFTY100: '/api/stocks/latest?category=NIFTY100',
     ETF: '/api/stocks/latest?category=ETF',
     BY_SYMBOL: (symbol: string) => `/api/stocks/${symbol}`,
+    HISTORY: (symbol: string) => `/api/stocks/${symbol}/history`,
     SCRAPER_STATUS: '/api/scraper/status',
     MANUAL_SCRAPE: '/api/stocks/scrape',
   },
