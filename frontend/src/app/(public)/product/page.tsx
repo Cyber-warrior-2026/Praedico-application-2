@@ -18,18 +18,25 @@ import {
   Cpu,
   Network
 } from "lucide-react";
-import { motion, useScroll, useTransform, useMotionTemplate, useMotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionTemplate, useMotionValue, Variants } from "framer-motion";
 import RegisterModal from "@/app/user/_components/RegisterModal";
 import LoginModal from "@/app/user/_components/LoginModal";
 import { cn } from "@/lib/utils";
 
 // --- ANIMATION VARIANTS ---
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.22, 1, 0.36, 1] as const
+    }
+  }
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
