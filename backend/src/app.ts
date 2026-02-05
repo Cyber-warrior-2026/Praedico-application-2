@@ -8,6 +8,7 @@ import { securityHeaders } from "./common/middlewares/security.middleware";
 import { requestLogger } from "./common/middlewares/logging.middleware";
 import { globalErrorHandler } from "./common/errors/errorHandler";
 import stockDataRoutes from './routes/stockData';
+import newsDataRoutes from './routes/newsData';
 import cronService from './services/cronService';
 import aiChatRoutes from './routes/aiChat'; 
 import paymentRoutes from './routes/payment';
@@ -55,6 +56,7 @@ export const createApp = (): Application => {
   // --- 4. Routes ---
   app.use("/api/users", userRoutes);
   app.use('/api', stockDataRoutes);
+  app.use('/api', newsDataRoutes); 
   app.use('/api', aiChatRoutes);
   app.use('/api/payments', paymentRoutes);
 
