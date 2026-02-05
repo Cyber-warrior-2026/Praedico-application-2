@@ -61,8 +61,8 @@ const Points = () => {
     return (
         <points>
             <bufferGeometry>
-                <bufferAttribute attach="attributes-position" count={conf.positions.length / 3} array={conf.positions} itemSize={3} />
-                <bufferAttribute attach="attributes-color" count={conf.colors.length / 3} array={conf.colors} itemSize={3} />
+                <bufferAttribute attach="attributes-position" count={conf.positions.length / 3} array={conf.positions} itemSize={3} args={[conf.positions, 3]} />
+                <bufferAttribute attach="attributes-color" count={conf.colors.length / 3} array={conf.colors} itemSize={3} args={[conf.colors, 3]} />
             </bufferGeometry>
             <pointsMaterial size={0.05} vertexColors transparent opacity={0.8} />
         </points>
