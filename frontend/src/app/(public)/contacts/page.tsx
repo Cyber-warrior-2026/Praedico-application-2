@@ -121,7 +121,9 @@ function ScrollHero() {
   );
 }
 
-export default function ContactsPage() {
+import { Suspense } from "react";
+
+function ContactsContent() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -289,7 +291,7 @@ export default function ContactsPage() {
           <Coffee className="absolute bottom-20 left-20 w-24 h-24 text-white/5 rotate-12" />
 
           <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Let's build something impossible.</h2>
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Lets build something impossible.</h2>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12">
               We are always looking for ambitious partners. Whether you have a groundbreaking idea
               or a complex problem, we have the engine to solve it.
@@ -312,5 +314,13 @@ export default function ContactsPage() {
       <RegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} onSwitchToLogin={handleSwitchToLogin} />
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onSwitchToRegister={handleSwitchToRegister} />
     </div>
+  );
+}
+
+export default function ContactsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#020617]" />}>
+      <ContactsContent />
+    </Suspense>
   );
 }
