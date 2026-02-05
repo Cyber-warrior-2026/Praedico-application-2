@@ -23,6 +23,10 @@ export interface IUser extends Document {
   hasUsedTrial?: boolean;
   isOnTrial?: boolean;
   trialEndDate?: Date;
+
+    // ✨ Add these two properties:
+  isDeleted?: boolean;
+  deletedAt?: Date;
 }
 
 
