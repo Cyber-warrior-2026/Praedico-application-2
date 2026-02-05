@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { newsApi } from "@/lib/api";
 import { NewsArticle } from "@/lib/types/news.types";
-import NewsDashboardCard from "@/app/user/news/_components/NewsDashboardCard.tsxNewsDashboardCard";
+import NewsDashboardCard from "../news/_components/NewsDashboardCard";
 
 import { Search, RefreshCw, Filter, LayoutGrid, List } from "lucide-react";
 import { motion } from "framer-motion";
