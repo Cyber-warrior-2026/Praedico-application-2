@@ -38,5 +38,17 @@ export const API_ENDPOINTS = {
     SCRAPER_STATUS: '/api/scraper/status',
     MANUAL_SCRAPE: '/api/stocks/scrape',
   },
+
+   // ✨ NEW: News Data
+  NEWS: {
+    LATEST: '/api/news/latest',
+    ALL: '/api/news',
+    MARKET: '/api/news/market',
+    STOCKS: '/api/news/stocks',
+    IPO: '/api/news/ipo',
+    BY_SYMBOL: (symbol: string) => `/api/news/symbol/${symbol}`,
+    SCRAPER_STATUS: '/api/news/scraper/status',
+    MANUAL_SCRAPE: '/api/news/scrape',
+  },
   
 } as const;
