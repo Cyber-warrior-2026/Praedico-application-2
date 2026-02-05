@@ -18,8 +18,8 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
-import { authApi } from "@/lib/api";
-import axios from 'axios';
+import { authApi, userApi } from "@/lib/api";
+// import axios from 'axios';
 
 // --- MOCK DATA ---
 const portfolioData = [
@@ -50,20 +50,20 @@ export default function UserDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+const checkAuth = async () => {
+  try {
+    const data = await userApi.getMe(); // Rename 'response' to 'data' for clarity
 
-        if (response.data.success) {
-          setUser(response.data.user);
-          setIsAuthorized(true);
-        }
-      } catch (error) {
-        router.push("/");
-      }
-    };
+    // Remove the extra '.data' property access
+    if (data.success) {
+      setUser(data.user); // Was response.data.user
+      setIsAuthorized(true);
+    }
+  } catch (error) {
+    console.error("Auth failed:", error); // Helpful for debugging
+    router.push("/login");
+  }
+};
 
     checkAuth();
   }, [router]);

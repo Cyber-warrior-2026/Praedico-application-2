@@ -23,8 +23,9 @@ export const API_ENDPOINTS = {
   
   // User
   USER: {
-    PROFILE: '/api/users/profile',
+    PROFILE: '/api/users/me',
     UPDATE: '/api/users/update',
+    LOGOUT: "/api/users/logout",
   },
 
     // ✨ NEW: Stock Market Data

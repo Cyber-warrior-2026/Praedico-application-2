@@ -14,4 +14,14 @@ export const userApi = {
     const response = await axiosInstance.put(API_ENDPOINTS.USER.UPDATE, data);
     return response.data;
   },
+
+// get me function
+  getMe: async () => {
+    const response = await axiosInstance.get(API_ENDPOINTS.USER.PROFILE, { withCredentials: true });
+    return response.data;
+  },
+  logout: async () => {
+    const response = await axiosInstance.post(API_ENDPOINTS.USER.LOGOUT);
+    return response.data;
+  },
 };

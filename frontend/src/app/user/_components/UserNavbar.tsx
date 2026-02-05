@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import axios from "axios";
+import { userApi } from "@/lib/api";
 import {
   LayoutDashboard, Briefcase, BarChart2, Wallet,
   ArrowRightLeft, LogOut, Bell, Search, User, Settings, ChevronDown,
@@ -26,9 +26,9 @@ export function UserNavbar() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+       // NEW
+// We remove the destructuring { data } because our API now returns the data directly
+const data = await userApi.getMe();
 
         if (data.success && data.user) {
           // 👇 CHANGE THIS PART
@@ -177,12 +177,13 @@ export function UserNavbar() {
                 <DropdownMenuSeparator className="bg-slate-100" />
                 <DropdownMenuItem
                   className="text-red-600 focus:text-red-700 focus:bg-red-50 rounded-xl py-2.5 font-bold cursor-pointer transition-colors"
-                  onClick={async () => {
-                    try {
-                      await axios.post("http://localhost:5001/api/users/logout", {}, { withCredentials: true });
-                      window.location.href = "/";
-                    } catch (e) { }
-                  }}
+               // NEW
+onClick={async () => {
+  try {
+    await userApi.logout(); // cleaner and simpler
+    window.location.href = "/";
+  } catch (e) { }
+}}
                 >
                   <LogOut className="mr-3 h-4 w-4" /> Log out
                 </DropdownMenuItem>
