@@ -95,6 +95,58 @@ class StockScraperService {
       }));
   }
 
+  async scrapeNifty100(): Promise<any[]> {
+    try {
+      if (!this.cookies) await this.initSession();
+      
+      const response = await axios.get(
+        `${this.nseBaseUrl}/equity-stockIndices?index=NIFTY%20100`,
+        { headers: this.getAuthHeaders() }
+      );
+
+      // Validate data structure before mapping
+      const stocksData = response.data?.data;
+      if (!Array.isArray(stocksData)) {
+        // If cookies expired, retry once
+        console.log("Session expired, re-initializing...");
+        await this.initSession();
+        const retryResponse = await axios.get(
+            `${this.nseBaseUrl}/equity-stockIndices?index=NIFTY%20100`,
+            { headers: this.getAuthHeaders() }
+        );
+        return this.formatNifty100Data(retryResponse.data?.data || []);
+      }
+
+      const formattedData = this.formatNifty100Data(stocksData);
+      console.log(`Scraped ${formattedData.length} Nifty 100 stocks`);
+      return formattedData;
+      
+    } catch (error: any) {
+      console.error('Error scraping Nifty 100:', error.message);
+      return [];
+    }
+  }
+
+  // Formatter for Nifty100 data
+  private formatNifty100Data(data: any[]) {
+      return data.map((stock: any) => ({
+        symbol: stock.symbol,
+        name: stock.symbol,
+        category: 'NIFTY100',
+        price: parseFloat(stock.lastPrice) || 0,
+        open: parseFloat(stock.open) || 0,
+        high: parseFloat(stock.dayHigh) || 0,
+        low: parseFloat(stock.dayLow) || 0,
+        previousClose: parseFloat(stock.previousClose) || 0,
+        change: parseFloat(stock.change) || 0,
+        changePercent: parseFloat(stock.pChange) || 0,
+        volume: parseInt(stock.totalTradedVolume) || 0,
+        marketCap: parseFloat(stock.totalTradedValue) || 0,
+        timestamp: new Date(),
+        lastUpdated: new Date()
+      }));
+  }
+
   async scrapeETF(): Promise<any[]> {
     try {
       if (!this.cookies) await this.initSession();
@@ -177,16 +229,18 @@ class StockScraperService {
       // Initialize session ONCE before parallel requests
       await this.initSession();
 
-      // Scrape Nifty 50 and ETF in parallel
-      const [nifty50Data, etfData] = await Promise.all([
+      // Scrape Nifty 50, Nifty 100, and ETF in parallel
+      const [nifty50Data, nifty100Data, etfData] = await Promise.all([
         this.scrapeNifty50(),
+        this.scrapeNifty100(),
         this.scrapeETF()
       ]);
       
-      const allStocks = [...nifty50Data, ...etfData];
+      const allStocks = [...nifty50Data, ...nifty100Data, ...etfData];
       
       await this.saveStockData(allStocks);
       console.log(`[${new Date().toISOString()}] Scraping completed successfully`);
+      console.log(`Summary: ${nifty50Data.length} Nifty50, ${nifty100Data.length} Nifty100, ${etfData.length} ETF stocks`);
       
     } catch (error: any) {
       console.error('Error in scrapeAllStocks:', error.message);

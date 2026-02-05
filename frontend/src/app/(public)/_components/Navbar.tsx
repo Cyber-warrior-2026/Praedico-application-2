@@ -36,16 +36,15 @@ export default function Navbar() {
   const handleGetStarted = () => setIsRegisterModalOpen(true);
 
   // Define navigation items
-  const navItems = ["Home", "Product", "Solutions", "Contacts", "Docs"];
+  const navItems = ["Home", "Product", "Solutions", "Markets", "Contacts", "Docs"];
 
   return (
     <>
       <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
-          isScrolled
+        className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${isScrolled
             ? "bg-[#020617]/80 backdrop-blur-xl border-slate-800 py-4 shadow-lg shadow-indigo-500/5"
             : "bg-transparent border-transparent py-6"
-        }`}
+          }`}
       >
         <div className="container mx-auto px-6 flex items-center justify-between">
           {/* LOGO */}

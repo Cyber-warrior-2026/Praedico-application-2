@@ -12,7 +12,7 @@ const stockDataSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['NIFTY50', 'ETF'],
+    enum: ['NIFTY50', 'NIFTY100', 'ETF'],
     required: true,
     index: true
   },

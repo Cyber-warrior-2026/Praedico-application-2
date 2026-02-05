@@ -22,6 +22,12 @@ export const stockApi = {
     return response.data;
   },
 
+  // Get Nifty 100 stocks only
+  getNifty100Stocks: async (): Promise<StockListResponse> => {
+    const response = await axiosInstance.get(API_ENDPOINTS.STOCK.NIFTY100);
+    return response.data;
+  },
+
   // Get ETF stocks only
   getETFStocks: async (): Promise<StockListResponse> => {
     const response = await axiosInstance.get(API_ENDPOINTS.STOCK.ETF);

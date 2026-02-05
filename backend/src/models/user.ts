@@ -67,7 +67,7 @@ lastActive: { type: Date, default: Date.now },
   
   // Subscription Fields (New)
   subscriptionId: { type: String },
-  subscriptionStatus: { type: String, default: 'active' }, // Defaulting to active for free tier logic if needed, or null
+  subscriptionStatus: { type: String }, // No default - only set when user has an actual subscription
   currentPlan: { type: String, default: 'Free' },
   subscriptionExpiry: { type: Date },
 

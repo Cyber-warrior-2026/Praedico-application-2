@@ -112,7 +112,7 @@ export const verifySubscription = async (req: AuthRequest, res: Response) => {
     // Prepare update object
     const updateData: any = {
         subscriptionId: razorpay_subscription_id,
-        subscriptionStatus: isTrial ? 'on_trial' : 'active',
+        subscriptionStatus: 'active', // Always set to 'active' - trial status tracked via isOnTrial flag
         currentPlan: planName || 'Pro',
         subscriptionExpiry: expiryDate
     };

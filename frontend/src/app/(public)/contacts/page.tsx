@@ -152,17 +152,17 @@ export default function ContactsPage() {
     },
     {
       id: 2,
-      name: "Arjun Singh Bhadoriya",
+      name: "Arjun Singh Bhadauriya",
       role: "Core Developer",
       title: "The Architect",
       description: "Master of clean code and scalable architecture. Arjun transforms complex problems into elegant solutions with precision.",
       image: "/team/arjun.jpg",
       skills: ["Full-Stack", "System Design", "Database", "DevOps"],
       social: {
-        email: "arjun@praedico.com",
-        linkedin: "https://linkedin.com",
-        twitter: "https://twitter.com",
-        github: "https://github.com",
+        email: "arjun22august@gmail.com",
+        linkedin: "https://www.linkedin.com/in/arjun-singh-bhadauriya/",
+        twitter: "https://x.com/ArjunSBhadoriya",
+        github: "https://github.com/22Arjun",
         website: "https://arjunbhadoriya.dev",
       },
       gradient: "from-blue-500 to-cyan-600",
@@ -210,10 +210,10 @@ export default function ContactsPage() {
       <section className="relative z-10 py-10 px-6 -mt-[40vh]">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {teamMembers.map((member, i) => (
-            <div key={member.id} className="h-[650px] w-full perspective-1000">
-              <TiltCard className="group">
+            <div key={member.id} className="h-[700px] w-full perspective-1000">
+              <TiltCard className="group overflow-hidden">
                 <div className={cn(
-                  "relative h-full w-full rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border p-8 flex flex-col items-center text-center transition-all duration-500 group-hover:bg-slate-900/60 shadow-2xl",
+                  "relative h-full w-full rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border p-8 flex flex-col items-center text-center transition-all duration-500 group-hover:bg-slate-900/60 shadow-2xl overflow-hidden",
                   member.border
                 )}>
                   {/* Background Glow */}
