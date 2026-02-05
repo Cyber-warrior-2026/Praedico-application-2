@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import axios from "axios";
 import {
   LayoutDashboard, Briefcase, BarChart2, Wallet,
-  ArrowRightLeft, LogOut, Bell, Search, User, Settings, ChevronDown
+  ArrowRightLeft, LogOut, Bell, Search, User, Settings, ChevronDown,
+  Newspaper
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -51,7 +52,7 @@ export function UserNavbar() {
     { label: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
     { label: "Portfolio", href: "/user/portfolio", icon: Briefcase },
     { label: "Trading", href: "/user/dashboard/trading", icon: BarChart2 },
-
+ { label: "News", href: "/user/news", icon: Newspaper }, // ✨ Added News Tab
     { label: "Premium", href: "/user/premium", icon: Wallet },
     { label: "Reports", href: "/user/reports", icon: ArrowRightLeft },
   ];

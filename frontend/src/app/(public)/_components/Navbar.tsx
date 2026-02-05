@@ -36,7 +36,7 @@ export default function Navbar() {
   const handleGetStarted = () => setIsRegisterModalOpen(true);
 
   // Define navigation items
-  const navItems = ["Home", "Product", "Solutions", "Markets", "Contacts", "Docs"];
+  const navItems = ["Home", "Product", "Solutions", "Markets","News","Contacts", "Docs"];
 
   return (
     <>
