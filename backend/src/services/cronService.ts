@@ -1,9 +1,9 @@
 import * as cron from 'node-cron';
 import stockScraperService from './stockScraper';
-
+import newsScraperService from './newsScraper'; 
 class CronService {
   private scraperJob: cron.ScheduledTask | null = null;
-
+    private newsScraperJob: cron.ScheduledTask | null = null; 
   // Check if current day is weekday (Monday-Friday)
   private isWeekday(): boolean {
     const day = new Date().getDay();
@@ -50,6 +50,35 @@ class CronService {
     this.scraperJob.start();
 
     console.log('Stock scraper cron job started (every 1 minutes on weekdays)');
+  }
+
+   // ✅ START NEWS SCRAPER JOB (ADD THIS METHOD)
+  startNewsScraperJob(): void {
+    // Run every 30 minutes, 24/7 (news is published anytime)
+    // Cron format: */30 * * * * means every 30 minutes
+    this.newsScraperJob = cron.schedule('*/30 * * * *', async () => {
+      console.log('Running news scraper...');
+      await newsScraperService.scrapeAllNews();
+    }, {
+      timezone: 'Asia/Kolkata'
+    });
+
+    this.newsScraperJob.start();
+    console.log('News scraper cron job started (every 30 minutes)');
+  }
+
+  // ✅ MANUAL TRIGGER FOR NEWS (ADD THIS METHOD)
+  async runNewsScraperNow(): Promise<void> {
+    console.log('Manual news scraper triggered');
+    await newsScraperService.scrapeAllNews();
+  }
+
+  // ✅ STOP NEWS SCRAPER (ADD THIS METHOD)
+  stopNewsScraperJob(): void {
+    if (this.newsScraperJob) {
+      this.newsScraperJob.stop();
+      console.log('News scraper cron job stopped');
+    }
   }
 
   // Manual trigger for testing

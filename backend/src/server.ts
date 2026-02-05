@@ -15,7 +15,9 @@ const startServer = async () => {
 
   // 3. Start Cron Job (MOVED HERE - After DB connection)
   cronService.startScraperJob();
+  cronService.startNewsScraperJob();
   console.log('📊 Stock scraper cron job started');
+  console.log('📊 News scraper cron job started');
 
   // Optional: Run scraper immediately on startup for testing
   // await cronService.runScraperNow();
