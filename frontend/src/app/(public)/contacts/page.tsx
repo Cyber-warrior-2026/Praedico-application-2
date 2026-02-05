@@ -25,14 +25,9 @@ import {
   useMotionTemplate,
   useMotionValue
 } from "framer-motion";
-import dynamicImport from "next/dynamic";
+import RegisterModal from "@/app/user/_components/RegisterModal";
+import LoginModal from "@/app/user/_components/LoginModal";
 import { cn } from "@/lib/utils";
-
-const RegisterModal = dynamicImport(() => import("@/app/user/_components/RegisterModal"), { ssr: false });
-const LoginModal = dynamicImport(() => import("@/app/user/_components/LoginModal"), { ssr: false });
-
-// Force dynamic rendering to handle potential search params search bailout issues in static build
-export const dynamic = "force-dynamic";
 
 // --- 3D TILT CARD COMPONENT ---
 function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
