@@ -60,7 +60,7 @@ export default function TradingPage() {
                          duration-700 delay-100">
             Stock Market Trading
           </h1>
-          
+
           <p className="text-gray-600 text-lg max-w-2xl mx-auto animate-in fade-in 
                        slide-in-from-bottom-2 duration-700 delay-200">
             Access real-time market data from NSE India • Updated every 2 minutes
@@ -108,7 +108,7 @@ export default function TradingPage() {
                                group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
                   <Icon className="w-10 h-10 text-white group-hover:scale-110 transition-transform 
                                   duration-300" />
-                  
+
                   {/* Pulse Ring Effect */}
                   <div className={`absolute inset-0 ${option.iconBg} rounded-2xl opacity-0 
                                  group-hover:opacity-20 group-hover:scale-150 transition-all 
@@ -121,7 +121,7 @@ export default function TradingPage() {
                                transition-colors duration-300`}>
                     {option.title}
                   </h3>
-                  
+
                   <p className="text-gray-600 mb-5 leading-relaxed text-base">
                     {option.description}
                   </p>
@@ -176,16 +176,6 @@ export default function TradingPage() {
         </div>
       </div>
 
-      {/* Add CSS for custom animations */}
-      <style jsx global>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 3s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
