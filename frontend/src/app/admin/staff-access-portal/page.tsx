@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import { Eye, EyeOff, ShieldCheck, Github, Linkedin, Facebook, Chrome } from "lucide-react"; 
-import axios, { AxiosError } from "axios"; 
+// REMOVE: import axios, { AxiosError } from "axios"; 
+import { authApi } from "@/lib/api"; // 👈 IMPORT CENTRALIZED API
 
 export default function HiddenAdminLogin() {
   const router = useRouter();
@@ -18,29 +19,31 @@ export default function HiddenAdminLogin() {
     setIsLoading(true);
 
     try {
-      // 1. Send Login Request (Cookie will be set by backend automatically)
-      const response = await axios.post("http://localhost:5001/api/users/login", {
+      // 1. Send Login Request using authApi (Uses Proxy automatically)
+      // authApi.login returns the unwrapped data { success: true, user: ... }
+      const data = await authApi.login({
         email,
         password
-      }, {
-        withCredentials: true
       });
 
-      const { user } = response.data;
-
       // 2. Role Check (Frontend Guard)
-      if (user.role !== 'admin' && user.role !== 'super_admin') {
+      // Note: 'data.user' works because authApi returns response.data
+      if (data.user.role !== 'admin' && data.user.role !== 'super_admin') {
         alert("Access Denied: You are not an Admin.");
+        
+        // Optional: Logout immediately if they are not admin
+        await authApi.logout(); 
         setIsLoading(false);
         return;
       }
       
-      // 3. Redirect (No need to save token manually)
+      // 3. Redirect
       router.push("/admin/dashboard");
 
-    } catch (err) { 
-      const error = err as AxiosError<{ message: string }>;
-      alert(error.response?.data?.message || "Invalid Credentials");
+    } catch (err: any) { 
+      // Handle Error (authApi/axios throws error with response)
+      const message = err.response?.data?.message || "Invalid Credentials";
+      alert(message);
       setIsLoading(false);
     }
   };
