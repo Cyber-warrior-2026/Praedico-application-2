@@ -19,20 +19,16 @@ import { ENV } from "./config/env";
 export const createApp = (): Application => {
   const app = express();
 
-  // 🟢 NEW: Trust Vercel Proxy (Critical for Secure Cookies)
-  app.set("trust proxy", 1); 
-
   // --- 1. Security Middleware Layer ---
   app.use(helmet());
   app.use(securityHeaders);
-  
-  app.use(
+app.use(
     cors({
       origin: [
-        "http://localhost:3000",                      
-        "https://praedico-frontend.vercel.app",       
-        "https://www.praedico-frontend.vercel.app",
-        ENV.FRONTEND_URL                              
+        "http://localhost:3000",                      // For Local Development
+        "https://praedico-frontend.vercel.app",       // 👈 YOUR VERCEL FRONTEND
+        "https://www.praedico-frontend.vercel.app",   // Optional 'www' subdomain
+        ENV.FRONTEND_URL                              // Keep env variable as backup
       ],
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
@@ -40,7 +36,7 @@ export const createApp = (): Application => {
   );
   app.use(hpp());
 
-  // Global Rate Limiting
+  // Global Rate Limiting (Basic DDoS Protection)
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -53,7 +49,7 @@ export const createApp = (): Application => {
   app.use(cookieParser());
   app.use(requestLogger);
 
-  // --- 3. Health Check ---
+  // --- 3. Health Check (Keep this fast) ---
   app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
@@ -70,6 +66,7 @@ export const createApp = (): Application => {
   app.use('/api/payments', paymentRoutes);
 
   // --- 5. Error Handling Layer ---
+  // 404 Handler for undefined routes
   app.use((req: Request, res: Response) => {
     res
       .status(404)
