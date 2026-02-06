@@ -268,9 +268,9 @@ export default function AIChatModal({ isOpen, onClose, theme = 'dark' }: Props) 
             <AnimatePresence mode='wait'>
                 {activeMode !== 'chat' && (
                     <motion.div 
-                        initial={{ height: 0, opacity: 0, marginBottom: 0 }} // FIXED: changed mb to marginBottom
-                        animate={{ height: 'auto', opacity: 1, marginBottom: 16 }} // FIXED: changed mb to marginBottom
-                        exit={{ height: 0, opacity: 0, marginBottom: 0 }} // FIXED: changed mb to marginBottom
+                        initial={{ height: 0, opacity: 0, marginBottom: 0 }} 
+                        animate={{ height: 'auto', opacity: 1, marginBottom: 16 }} 
+                        exit={{ height: 0, opacity: 0, marginBottom: 0 }} 
                         className="overflow-hidden"
                     >
                         <div className={`${styles.actionCardBg} border ${styles.headerBorder} rounded-xl p-4 relative`}>
