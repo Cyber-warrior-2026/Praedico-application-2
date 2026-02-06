@@ -1,7 +1,8 @@
-// API Base URL
-// If you are in Production (Vercel), use empty string.
-// This makes requests go to "https://praedico-frontend.vercel.app/api/..."
-// which the Rewrite rule above then forwards to the backend.
+// src/lib/types/constants.ts
+
+// 🟢 CRITICAL CHANGE: In production, this MUST be an empty string.
+// This forces all requests to go to the current domain (e.g., praedico-frontend.vercel.app),
+// which then triggers the Next.js Rewrite rule to talk to the backend.
 export const API_BASE_URL = process.env.NODE_ENV === "production" 
   ? "" 
   : "http://localhost:5001";
@@ -32,7 +33,7 @@ export const API_ENDPOINTS = {
     UPDATE: '/api/users/update',
   },
 
-    // ✨ NEW: Stock Market Data
+  // Stock Market Data
   STOCK: {
     ALL_LATEST: '/api/stocks/latest',
     NIFTY50: '/api/stocks/latest?category=NIFTY50',
@@ -44,7 +45,7 @@ export const API_ENDPOINTS = {
     MANUAL_SCRAPE: '/api/stocks/scrape',
   },
 
-   // ✨ NEW: News Data
+  // News Data
   NEWS: {
     LATEST: '/api/news/latest',
     ALL: '/api/news',
@@ -55,5 +56,4 @@ export const API_ENDPOINTS = {
     SCRAPER_STATUS: '/api/news/scraper/status',
     MANUAL_SCRAPE: '/api/news/scrape',
   },
-  
 } as const;
