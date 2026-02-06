@@ -104,8 +104,16 @@ export class UserController {
   });
 
   logout = asyncHandler(async (req: Request, res: Response) => {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    // Clear cookies with same settings to ensure they are actually removed
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" as const : "lax" as const,
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     res.status(200).json({ success: true, message: "Logged out" });
   });
 
@@ -121,6 +129,7 @@ export class UserController {
     res.status(200).json({ success: true, ...result });
   });
 
+  // --- CRITICAL FIX FOR VERCEL ---
   private setAuthCookies(
     res: Response,
     accessToken: string,
@@ -130,8 +139,8 @@ export class UserController {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction, // Must be true on Vercel
+      sameSite: isProduction ? "none" : "lax", // Must be 'none' for cross-site usage
       maxAge: 15 * 60 * 1000,
     });
 
@@ -142,74 +151,75 @@ export class UserController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
+
   // Get all users with pagination, search, and filter
-getAllUsers = asyncHandler(async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 10;
-  const search = req.query.search as string || '';
-  const role = req.query.role as string || '';
-  const status = req.query.status as string || '';
+  getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string || '';
+    const role = req.query.role as string || '';
+    const status = req.query.status as string || '';
 
-  const result = await userService.getAllUsers({ 
-    page, 
-    limit, 
-    search, 
-    role, 
-    status 
+    const result = await userService.getAllUsers({ 
+      page, 
+      limit, 
+      search, 
+      role, 
+      status 
+    });
+    
+    res.status(200).json({ success: true, ...result });
   });
-  
-  res.status(200).json({ success: true, ...result });
-});
 
-// Get user statistics
-getUserStats = asyncHandler(async (req: Request, res: Response) => {
-  const stats = await userService.getUserStats();
-  res.status(200).json({ success: true, stats });
-});
+  // Get user statistics
+  getUserStats = asyncHandler(async (req: Request, res: Response) => {
+    const stats = await userService.getUserStats();
+    res.status(200).json({ success: true, stats });
+  });
 
-// Get single user by ID
-getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  const user = await userService.getUserById(userId);
-  res.status(200).json({ success: true, user });
-});
+  // Get single user by ID
+  getUserById = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    const user = await userService.getUserById(userId);
+    res.status(200).json({ success: true, user });
+  });
 
-// Update user
-updateUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  const updateData = req.body;
-  const user = await userService.updateUser(userId, updateData);
-  res.status(200).json({ success: true, user, message: "User updated successfully" });
-});
+  // Update user
+  updateUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    const updateData = req.body;
+    const user = await userService.updateUser(userId, updateData);
+    res.status(200).json({ success: true, user, message: "User updated successfully" });
+  });
 
-softDeleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  await userService.softDeleteUser(userId);
-  res.status(200).json({ success: true, message: "User archived successfully" });
-});
+  softDeleteUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    await userService.softDeleteUser(userId);
+    res.status(200).json({ success: true, message: "User archived successfully" });
+  });
 
   // 2. Restore Handler
-restoreUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  await userService.restoreUser(userId);
-  res.status(200).json({ success: true, message: "User restored successfully" });
-});
-
-// Delete user
-deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  await userService.deleteUser(userId);
-  res.status(200).json({ success: true, message: "User deleted successfully" });
-});
-
-// Toggle user active status
-toggleUserActive = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.id as string;
-  const user = await userService.toggleUserActive(userId);
-  res.status(200).json({ 
-    success: true, 
-    user, 
-    message: `User ${user.isActive ? 'activated' : 'blocked'} successfully` 
+  restoreUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    await userService.restoreUser(userId);
+    res.status(200).json({ success: true, message: "User restored successfully" });
   });
-});
+
+  // Delete user
+  deleteUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    await userService.deleteUser(userId);
+    res.status(200).json({ success: true, message: "User deleted successfully" });
+  });
+
+  // Toggle user active status
+  toggleUserActive = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id as string;
+    const user = await userService.toggleUserActive(userId);
+    res.status(200).json({ 
+      success: true, 
+      user, 
+      message: `User ${user.isActive ? 'activated' : 'blocked'} successfully` 
+    });
+  });
 }
