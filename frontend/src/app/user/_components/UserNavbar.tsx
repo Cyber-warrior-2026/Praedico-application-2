@@ -177,7 +177,7 @@ export function UserNavbar() {
                   className="text-red-600 focus:text-red-700 focus:bg-red-50 rounded-xl py-2.5 font-bold cursor-pointer transition-colors"
                   onClick={async () => {
                     try {
-                      await axios.post("http://localhost:5001/api/users/logout", {}, { withCredentials: true });
+                      await authApi.logout();
                       window.location.href = "/";
                     } catch (e) { }
                   }}
