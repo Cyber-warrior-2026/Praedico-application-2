@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   X, Trash2, Loader2, Sparkles, MessageSquare, 
-  TrendingUp, PieChart, Bot, User, ArrowRight
+  TrendingUp, PieChart, BarChart, Bot, User, ArrowRight
 } from 'lucide-react';
 import { chatApi, ChatMessage as ChatMessageType } from '@/lib/api/chat.api';
 import ChatMessage from './ChatMessage';
