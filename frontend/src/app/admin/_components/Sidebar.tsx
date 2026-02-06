@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
+import { authApi } from "@/lib/api";
 
 // ==========================================
 // TYPES
@@ -146,7 +147,7 @@ export function Sidebar({
 
   const fetchUserProfile = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5001/api/users/me", { withCredentials: true });
+      const data = await authApi.getMe();
       if (data.success && data.user) {
         setUserData({
           name: data.user.name,
@@ -487,7 +488,7 @@ const UserProfileFooter = memo(({ isOpen, user }: { isOpen: boolean; user: any }
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5001/api/users/logout", {}, { withCredentials: true });
+      await authApi.logout();
       window.location.href = "/login";
     } catch (e) { console.error(e); }
   };
