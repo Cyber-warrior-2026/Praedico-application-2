@@ -55,5 +55,12 @@ export const API_ENDPOINTS = {
     SCRAPER_STATUS: '/api/news/scraper/status',
     MANUAL_SCRAPE: '/api/news/scrape',
   },
+
+  // ✨ NEW: Payment Endpoints
+  PAYMENT: {
+    SUBSCRIBE: '/api/payments/subscribe',
+    TRIAL: '/api/payments/trial',
+    VERIFY: '/api/payments/verify',
+  },
   
 } as const;
