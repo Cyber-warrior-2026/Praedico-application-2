@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import axios from "axios";
+import { authApi } from "@/lib/api";
 import {
   LayoutDashboard, Briefcase, BarChart2, Wallet,
   ArrowRightLeft, LogOut, Bell, Search, User, Settings, ChevronDown,
@@ -26,9 +26,7 @@ export function UserNavbar() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+        const data = await authApi.getMe();
 
         if (data.success && data.user) {
           // 👇 CHANGE THIS PART
