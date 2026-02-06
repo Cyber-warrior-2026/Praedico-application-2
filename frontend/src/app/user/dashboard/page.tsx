@@ -58,8 +58,8 @@ export default function UserDashboard() {
         // Alternative (Better): If authApi is configured with axiosInstance
         // const response = await authApi.getMe(); 
 
-        if (response.data.success) {
-          setUser(response.data.user);
+        if (response.success) {
+          setUser(response.user);
           setIsAuthorized(true);
         }
       } catch (error) {
