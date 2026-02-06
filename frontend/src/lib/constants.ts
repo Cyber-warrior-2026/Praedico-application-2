@@ -1,5 +1,10 @@
 // API Base URL
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+// If you are in Production (Vercel), use empty string.
+// This makes requests go to "https://praedico-frontend.vercel.app/api/..."
+// which the Rewrite rule above then forwards to the backend.
+export const API_BASE_URL = process.env.NODE_ENV === "production" 
+  ? "" 
+  : "http://localhost:5001";
 
 // API Endpoints
 export const API_ENDPOINTS = {
