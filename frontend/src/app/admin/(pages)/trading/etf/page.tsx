@@ -31,6 +31,7 @@ import {
   Area
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { stockApi } from "@/lib/api/stock.api"
 
 // ==========================================
 // TYPES
@@ -109,7 +110,7 @@ const ETFDetailModal = ({ etf, isOpen, onClose }: { etf: ETFData | null; isOpen:
       const fetchHistory = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5001/api/stocks`, {
+          const response = await axios.get(`/api/stocks`, { 
             params: { category: 'ETF', limit: 2000 },
             withCredentials: true
           });
@@ -291,7 +292,7 @@ export default function ETFPage() {
   const fetchETFs = async () => {
     if (etfs.length === 0) setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:5001/api/stocks/etf", { withCredentials: true });
+      const data = await stockApi.getETFStocks();
       if (data.success) {
         setEtfs(data.data);
         setLastUpdated(new Date().toLocaleTimeString());
