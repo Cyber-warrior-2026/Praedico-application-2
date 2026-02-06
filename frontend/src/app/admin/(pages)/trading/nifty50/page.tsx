@@ -33,6 +33,7 @@ import {
   Area
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { stockApi } from "@/lib/api/stock.api";
 
 // ==========================================
 // TYPES
@@ -132,7 +133,8 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
       const fetchHistory = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5001/api/stocks`, {
+
+          const response = await axios.get(`/api/stocks`, {
             params: { category: 'NIFTY50', limit: 2000 },
             withCredentials: true
           });
@@ -399,7 +401,7 @@ export default function Nifty50Page() {
   const fetchStocks = async () => {
     if (stocks.length === 0) setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:5001/api/stocks/nifty50", { withCredentials: true });
+      const data = await stockApi.getNifty50Stocks();
 
       if (data.success) {
         /**
@@ -460,7 +462,7 @@ export default function Nifty50Page() {
 
   const fetchScraperStatus = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5001/api/scraper/status", { withCredentials: true });
+      const data = await stockApi.getScraperStatus();
       if (data.success) setScraperStatus(data.status);
     } catch (error) {
       setScraperStatus("Unknown");
@@ -470,7 +472,7 @@ export default function Nifty50Page() {
   const handleManualScrape = async () => {
     setIsScraping(true);
     try {
-      const { data } = await axios.post("http://localhost:5001/api/stocks/scrape", {}, { withCredentials: true });
+      const data = await stockApi.triggerManualScrape();
       if (data.success) {
         alert("Market Data Update Triggered.");
         setTimeout(fetchStocks, 5000);
