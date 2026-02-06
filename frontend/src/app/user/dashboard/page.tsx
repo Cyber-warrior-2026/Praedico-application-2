@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import PriceRangeSlider from "@/app/user/_components/PriceRangeSlider";
 import {
   Briefcase,
-  BarChart2,
-  Wallet,
-  ArrowRightLeft,
-  BookOpen,
-  LayoutDashboard,
   TrendingUp,
   TrendingDown,
   ChevronRight,
@@ -18,7 +13,9 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
-import { authApi } from "@/lib/api";
+// Use your centralized API handler (ensure it points to /api or uses the proxy)
+import { authApi } from "@/lib/api"; 
+// OR if you want to use axios directly for now, ensure it points to relative path
 import axios from 'axios';
 
 // --- MOCK DATA ---
@@ -52,15 +49,21 @@ export default function UserDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+        // ✅ FIXED: Use relative path (Proxy will handle the rest)
+        // This works on Localhost AND Vercel automatically
+        const response = await authApi.getMe();
+
+
+
+        // Alternative (Better): If authApi is configured with axiosInstance
+        // const response = await authApi.getMe(); 
 
         if (response.data.success) {
           setUser(response.data.user);
           setIsAuthorized(true);
         }
       } catch (error) {
+        console.error("Auth check failed:", error);
         router.push("/");
       }
     };
@@ -68,13 +71,8 @@ export default function UserDashboard() {
     checkAuth();
   }, [router]);
 
-  if (!isAuthorized) return null;
+  if (!isAuthorized) return null; // Or a loading spinner
 
-  // =================================================================================
-  // FULL SCREEN & LAYOUT FIX:
-  // 1. No outer divs (Layout handles background)
-  // 2. Added <div className="h-28" /> Spacer at top for Navbar
-  // =================================================================================
   return (
     <div className="px-6 md:px-8 lg:px-10 pb-10">
       {/* SPACER: Pushes content down so Navbar floats above */}
