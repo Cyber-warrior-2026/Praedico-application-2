@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+// ❌ REMOVED: import axios from "axios";
 import { Check, Zap, Crown, Shield, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
 import Premium3DBackground from "../_components/Premium3DBackground";
+// ✅ ADDED: Centralized API imports
+import { authApi, paymentApi } from "@/lib/api"; 
 
 export default function PremiumPage() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -13,13 +15,14 @@ export default function PremiumPage() {
     const [expiryDate, setExpiryDate] = useState<string | null>(null);
     const [hasUsedTrial, setHasUsedTrial] = useState(false);
     const [isOnTrial, setIsOnTrial] = useState(false);
-    const [trialParams, setTrialParams] = useState<{ planName: string, price: string } | null>(null);
 
     // FETCH CURRENT PLAN
     useEffect(() => {
         const fetchSubscription = async () => {
             try {
-                const { data } = await axios.get("http://localhost:5001/api/users/me", { withCredentials: true });
+                // ✅ REFACTORED: Use authApi.getMe()
+                const data = await authApi.getMe();
+                
                 if (data.success && data.user) {
                     setCurrentPlan(data.user.currentPlan || "Free");
                     setHasUsedTrial(data.user.hasUsedTrial || false);
@@ -29,7 +32,7 @@ export default function PremiumPage() {
                     }
                 }
             } catch (e) {
-                console.error("Failed to fetch user plan");
+                console.error("Failed to fetch user plan", e);
             }
         };
         fetchSubscription();
@@ -56,7 +59,7 @@ export default function PremiumPage() {
             return;
         }
 
-        // Map Plans to Real Razorpay Plan IDs (Monthly & Yearly)
+        // Map Plans to Real Razorpay Plan IDs
         const planIdMapping: Record<string, Record<'monthly' | 'yearly', string>> = {
             'Pro': {
                 'monthly': 'plan_SC0iGjpyVbKuAA',
@@ -82,14 +85,13 @@ export default function PremiumPage() {
 
         try {
             // 1. Initiate Subscription (Regular or Trial)
-            const endpoint = isTrial
-                ? "http://localhost:5001/api/payments/trial"
-                : "http://localhost:5001/api/payments/subscribe";
-
-            const { data } = await axios.post(endpoint,
-                { planId: selectedPlanId },
-                { withCredentials: true }
-            );
+            // ✅ REFACTORED: Use paymentApi
+            let data;
+            if (isTrial) {
+                data = await paymentApi.trial(selectedPlanId);
+            } else {
+                data = await paymentApi.subscribe(selectedPlanId);
+            }
 
             if (!data.success) {
                 alert("Subscription creation failed: " + data.message);
@@ -107,26 +109,28 @@ export default function PremiumPage() {
                 handler: async function (response: any) {
                     // 3. Verify Payment
                     try {
-                        const verifyRes = await axios.post("http://localhost:5001/api/payments/verify", {
+                        // ✅ REFACTORED: Use paymentApi.verify()
+                        const verifyRes = await paymentApi.verify({
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_subscription_id: response.razorpay_subscription_id,
                             razorpay_signature: response.razorpay_signature,
                             planName: planName,
-                            isTrial: isTrial // Pass trial flag to verification
-                        }, { withCredentials: true });
+                            isTrial: isTrial
+                        });
 
-                        if (verifyRes.data.success) {
+                        if (verifyRes.success) {
                             alert(isTrial ? "Trial Activated! Enjoy 7 days free." : `Welcome to ${currentPlan}! Your plan has been upgraded.`);
                             window.location.reload();
                         } else {
                             alert("Payment verification failed.");
                         }
                     } catch (err) {
+                        console.error(err);
                         alert("Verification Failed");
                     }
                 },
                 prefill: {
-                    name: "Priyank Gupta",
+                    name: "Priyank Gupta", // Optional: You might want to pull this from authApi user data too
                     email: "guptapriyank@gmail.com",
                     contact: "9876543210"
                 },
@@ -147,17 +151,18 @@ export default function PremiumPage() {
         }
     };
 
+    // ... Return Statement remains exactly the same ...
     return (
         <div className="min-h-screen bg-[#F8F9FE] pt-28 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
-            {/* 1. 3D BACKGROUND LAYER */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
+             {/* ... Copy the rest of your JSX exactly as it was ... */}
+             {/* To save space I am not repeating the JSX here, but you can paste the Return block from your original code */}
+             <div className="absolute inset-0 z-0 pointer-events-none">
                 <Premium3DBackground />
             </div>
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-
-                {/* HEADING MOVED DOWN */}
-
+                {/* ... Keep all your JSX code here ... */}
+                
                 {/* TRIAL EXPIRED BANNER */}
                 {hasUsedTrial && !isOnTrial && currentPlan === 'Free' && (
                     <motion.div
@@ -165,12 +170,9 @@ export default function PremiumPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         className="max-w-2xl mx-auto mb-12 relative group"
                     >
-                        {/* Red Glow */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-
-                        {/* Red Gradient Card */}
-                        <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
-
+                         {/* ... JSX ... */}
+                         <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                         <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
                                     <Shield className="h-5 w-5 text-white fill-white" />
@@ -186,7 +188,6 @@ export default function PremiumPage() {
 
                             <button
                                 onClick={() => {
-                                    // Scroll to pricing cards
                                     document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' });
                                 }}
                                 className="bg-white text-rose-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-50 transition-colors shadow-sm"
@@ -204,10 +205,8 @@ export default function PremiumPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         className="max-w-2xl mx-auto mb-12 relative group"
                     >
-                        {/* Animated Glow Effect */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-
-                        {/* Card Content */}
+                         {/* ... JSX ... */}
+                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                         <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl shadow-2xl border border-indigo-400/30">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
@@ -231,8 +230,8 @@ export default function PremiumPage() {
                     </motion.div>
                 )}
 
-                {/* HEADER SECTION */}
-                <motion.div
+                 {/* HEADER SECTION */}
+                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -301,10 +300,8 @@ export default function PremiumPage() {
                 </motion.div>
 
                 {/* PRICING CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-                    {/* PRO PLAN */}
-                    <PricingCard
+                <div id="pricing-section" className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <PricingCard
                         title="Pro"
                         price={billingCycle === 'monthly' ? "99" : "999"}
                         billingCycle={billingCycle}
@@ -348,15 +345,13 @@ export default function PremiumPage() {
                         onSubscribe={() => handlePayment('Enterprise', billingCycle === 'monthly' ? "249" : "2599")}
                         onTrial={() => handlePayment('Enterprise', billingCycle === 'monthly' ? "249" : "2599", true)}
                     />
-
                 </div>
-
             </div>
         </div>
     );
 }
 
-// COMPONENT: PRICING CARD
+// Keep PricingCard exactly the same
 function PricingCard({ title, price, billingCycle, desc, features, icon: Icon, highlight, delay, currentPlan, hasUsedTrial, onSubscribe, onTrial }: any) {
     const isCurrent = currentPlan === title;
 
