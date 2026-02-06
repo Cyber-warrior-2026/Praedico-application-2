@@ -5,7 +5,8 @@ import {
   getStockBySymbol,
   getStockHistory,
   manualScrape,
-  getScraperStatus
+  getScraperStatus,
+  clearStockData
 } from '../controllers/stockData';
 
 const router = express.Router();
@@ -29,6 +30,7 @@ router.get('/stocks', getStockData);
 // Admin routes
 router.post('/stocks/scrape', manualScrape);
 router.get('/scraper/status', getScraperStatus);
+router.delete('/stocks/clear', clearStockData); // ✅ NEW: Clear stock data
 
 // ⚠️ CRITICAL: Dynamic :symbol route MUST BE LAST
 // Otherwise it catches /stocks/nifty50 and /stocks/etf as symbols

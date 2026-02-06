@@ -1,156 +1,246 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, TrendingUp, TrendingDown, RefreshCw, Activity, ArrowUpDown, LineChart, Layers, Zap, Sparkles } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { Search, TrendingUp, TrendingDown, RefreshCw, Activity, ArrowUpDown, LineChart, Layers, Zap, Sparkles, BarChart3 } from "lucide-react";
 import { stockApi } from "@/lib/api";
 import { Stock } from "@/lib/types/stock.types";
 import StockDetailModal from "@/app/user/_components/StockDetailModal";
-import Market3DBackground from "../_components/Market3DBackground";
 import { motion, AnimatePresence } from "framer-motion";
 
 type TabType = 'nifty50' | 'nifty100' | 'etf';
 
+// --- 1. MEMOIZED ROW (Glass & Glow Style) ---
+const StockRow = memo(({ stock, index, currentTabColor, onClick }: { stock: Stock, index: number, currentTabColor: string, onClick: (s: Stock) => void }) => {
+    const isPositive = stock.change >= 0;
+    
+    // CSS-only delay for performance
+    const animationDelay = `${Math.min(index * 0.03, 0.4)}s`;
+
+    return (
+        <div
+            onClick={() => onClick(stock)}
+            style={{ animationDelay }}
+            className="group grid grid-cols-12 gap-4 px-6 py-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-300 cursor-pointer animate-fade-in-up opacity-0 fill-mode-forwards relative overflow-hidden"
+        >
+            {/* Hover Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+
+            {/* Symbol */}
+            <div className="col-span-3 flex items-center gap-4 relative z-10">
+                <div className={`
+                    w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm 
+                    shadow-lg shadow-black/40 ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-300
+                    bg-gradient-to-br from-[#1a1f2e] to-[#0f1219]
+                `}>
+                    <span className={`bg-gradient-to-br from-${currentTabColor}-400 to-${currentTabColor}-600 bg-clip-text text-transparent`}>
+                        {stock.symbol[0]}
+                    </span>
+                </div>
+                <div>
+                    <h3 className="font-bold text-slate-100 group-hover:text-indigo-400 transition-colors tracking-tight text-sm mb-0.5">{stock.symbol}</h3>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest truncate max-w-[120px]">{stock.name}</p>
+                </div>
+            </div>
+
+            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.open.toFixed(2)}</div>
+            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.high.toFixed(2)}</div>
+            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.low.toFixed(2)}</div>
+
+            {/* Price with subtle glow */}
+            <div className="col-span-1 text-right font-bold text-white text-[15px] tabular-nums tracking-tight flex items-center justify-end drop-shadow-sm">
+                ₹{stock.price.toFixed(2)}
+            </div>
+
+            {/* Change Pill */}
+            <div className="col-span-2 flex justify-end relative z-10">
+                <span className={`
+                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold w-24 justify-center backdrop-blur-md transition-all duration-300
+                    ${isPositive 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_-3px_rgba(52,211,153,0.3)] group-hover:bg-emerald-500/20' 
+                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_-3px_rgba(251,113,133,0.3)] group-hover:bg-rose-500/20'}
+                `}>
+                    {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {Math.abs(stock.changePercent).toFixed(2)}%
+                </span>
+            </div>
+        </div>
+    );
+});
+StockRow.displayName = "StockRow";
+
+const currentTabConfig = (color: string) => ({
+    from: `${color}-600`,
+    to: `${color}-800`
+});
+
+// --- 2. SKELETON LOADER (Polished) ---
+const StockSkeleton = () => (
+    <div className="animate-pulse space-y-0">
+        {[...Array(8)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between border-b border-white/[0.02] px-6 py-5">
+                <div className="flex items-center gap-4 w-1/3">
+                    <div className="w-11 h-11 rounded-2xl bg-white/[0.05]" />
+                    <div className="space-y-2">
+                        <div className="h-4 w-24 bg-white/[0.05] rounded-full" />
+                        <div className="h-2 w-16 bg-white/[0.03] rounded-full" />
+                    </div>
+                </div>
+                <div className="h-6 w-24 bg-white/[0.05] rounded-full" />
+            </div>
+        ))}
+    </div>
+);
+
 export default function MarketsClient() {
     const [activeTab, setActiveTab] = useState<TabType>('nifty50');
     const [stocks, setStocks] = useState<Stock[]>([]);
-    const [filteredStocks, setFilteredStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<string>("");
+    
+    // Sort State
     const [sortBy, setSortBy] = useState<'symbol' | 'change'>('symbol');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [isMounted, setIsMounted] = useState(false);
-
-    // Hydration fix
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    // Fetch stocks based on active tab
-    const fetchStocks = async (tab: TabType) => {
+    
+    const fetchStocks = useCallback(async (tab: TabType) => {
         try {
-            setLoading(true);
+            if (stocks.length === 0) setLoading(true);
             let response;
-
             switch (tab) {
-                case 'nifty50':
-                    response = await stockApi.getNifty50Stocks();
-                    break;
-                case 'nifty100':
-                    response = await stockApi.getNifty100Stocks();
-                    break;
-                case 'etf':
-                    response = await stockApi.getETFStocks();
-                    break;
+                case 'nifty50': response = await stockApi.getNifty50Stocks(); break;
+                case 'nifty100': response = await stockApi.getNifty100Stocks(); break;
+                case 'etf': response = await stockApi.getETFStocks(); break;
             }
-
             setStocks(response.data);
-            setFilteredStocks(response.data);
             setLastUpdated(response.lastUpdated || new Date().toISOString());
             setError("");
         } catch (err: any) {
-            setError(err.response?.data?.message || `Failed to fetch ${tab.toUpperCase()} stocks`);
-            console.error(`Error fetching ${tab} stocks:`, err);
+            setError(err.response?.data?.message || `Failed to fetch data`);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    // Fetch on mount and when tab changes
     useEffect(() => {
-        if (isMounted) {
-            fetchStocks(activeTab);
-            setSearchQuery(""); // Reset search when changing tabs
-        }
-    }, [activeTab, isMounted]);
+        setStocks([]); 
+        setSearchQuery(""); 
+        fetchStocks(activeTab);
+    }, [activeTab, fetchStocks]);
 
-    // Auto-refresh every 2 minutes
     useEffect(() => {
-        if (!isMounted) return;
         const interval = setInterval(() => fetchStocks(activeTab), 120000);
         return () => clearInterval(interval);
-    }, [activeTab, isMounted]);
+    }, [activeTab, fetchStocks]);
 
-    // Filter and sort stocks
-    useEffect(() => {
-        if (!isMounted) return;
+    const processedStocks = useMemo(() => {
         let result = stocks.filter((stock) =>
             stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
             stock.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        result.sort((a, b) => {
+        return result.sort((a, b) => {
             let comparison = 0;
-            if (sortBy === 'symbol') {
-                comparison = a.symbol.localeCompare(b.symbol);
-            } else if (sortBy === 'change') {
-                comparison = a.changePercent - b.changePercent;
-            }
+            if (sortBy === 'symbol') comparison = a.symbol.localeCompare(b.symbol);
+            else if (sortBy === 'change') comparison = a.changePercent - b.changePercent;
             return sortOrder === 'asc' ? comparison : -comparison;
         });
+    }, [stocks, searchQuery, sortBy, sortOrder]);
 
-        setFilteredStocks(result);
-    }, [searchQuery, stocks, sortBy, sortOrder, isMounted]);
-
-    const handleStockClick = (stock: Stock) => {
+    const handleStockClick = useCallback((stock: Stock) => {
         setSelectedStock(stock);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const toggleSort = (field: 'symbol' | 'change') => {
-        if (sortBy === field) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortBy(field);
+    const toggleSort = useCallback((field: 'symbol' | 'change') => {
+        setSortBy(prev => {
+            if (prev === field) {
+                setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+                return prev;
+            }
             setSortOrder('desc');
-        }
-    };
+            return field;
+        });
+    }, []);
 
-    // Tab configuration
     const tabs = [
-        { id: 'nifty50' as TabType, name: 'Nifty 50', icon: LineChart, color: 'blue', desc: "Top 50 Blue Chip Companies" },
-        { id: 'nifty100' as TabType, name: 'Nifty 100', icon: Zap, color: 'indigo', desc: "India's Market Leaders" },
-        { id: 'etf' as TabType, name: 'ETF', icon: Layers, color: 'purple', desc: "Exchange Traded Funds" }
+        { id: 'nifty50' as TabType, name: 'Nifty 50', icon: LineChart, color: 'blue', description: 'Blue Chip Giants' },
+        { id: 'nifty100' as TabType, name: 'Nifty 100', icon: BarChart3, color: 'indigo', description: 'Market Movers' },
+        { id: 'etf' as TabType, name: 'ETF', icon: Layers, color: 'purple', description: 'Exchange Traded' }
     ];
 
-    const currentTabConfig = tabs.find(t => t.id === activeTab)!;
-
-    if (!isMounted) return null; // Prevent hydration mismatch
+    const currentTab = tabs.find(t => t.id === activeTab)!;
 
     return (
-        <div className="min-h-screen font-sans relative overflow-hidden text-white selection:bg-indigo-500/30">
+        <div className="min-h-screen font-sans relative overflow-hidden bg-[#030303] text-slate-200 selection:bg-indigo-500/30">
+            {/* INJECTED STYLES */}
+            <style jsx global>{`
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .animate-fade-in-up {
+                    animation-name: fadeInUp;
+                    animation-duration: 0.5s;
+                    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+                .fill-mode-forwards { animation-fill-mode: forwards; }
+                
+                /* Elegant Scrollbar */
+                .custom-scrollbar-dark::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar-dark::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar-dark::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 20px; }
+                .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+                
+                /* Noise Texture */
+                .bg-noise {
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+                }
+            `}</style>
 
-            {/* 3D BACKGROUND */}
-            <Market3DBackground />
+            {/* --- PREMIUM AMBIENT BACKGROUND --- */}
+            <div className="fixed inset-0 z-0">
+                <div className="absolute inset-0 bg-[#030303]" />
+                <div className="absolute inset-0 bg-noise opacity-[0.3] mix-blend-overlay pointer-events-none" />
+                
+                {/* Deep Ambient Glows */}
+                <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[500px] bg-indigo-900/20 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-purple-900/10 blur-[100px] rounded-full pointer-events-none" />
+            </div>
 
-            <div className="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto">
+            <div className="relative z-10 pt-28 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
+                
+                {/* --- HEADER --- */}
+                <div className="flex flex-col items-center justify-center mb-16 text-center">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-md shadow-2xl mb-6 group cursor-default hover:border-indigo-500/30 transition-colors"
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300 group-hover:text-white transition-colors">Market Intelligence</span>
+                    </motion.div>
 
-                {/* HERO SECTION */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="text-center mb-16"
-                >
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/60 backdrop-blur-md border border-slate-700 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-6 shadow-lg shadow-black/20 cursor-default">
-                        <Sparkles className="w-3 h-3 text-indigo-400 fill-indigo-400 animate-pulse" /> Live Market Intelligence
-                    </div>
-
-                    <h1 className="text-6xl md:text-7xl font-black text-white mb-6 tracking-tight drop-shadow-2xl">
-                        Market <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 bg-[length:200%_auto] animate-gradient">Pulse</span>
-                    </h1>
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-                        Real-time insights across India's most important indices. <br className="hidden md:block" />Beautifully visualized for the modern investor.
+                    <motion.h1 
+                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: "circOut" }}
+                        className="text-5xl md:text-7xl font-medium text-white mb-6 tracking-tight"
+                    >
+                        Market <span className="font-serif italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-indigo-300">Pulse.</span>
+                    </motion.h1>
+                    
+                    <p className="text-slate-400 max-w-lg text-lg leading-relaxed font-light">
+                        Real-time data visualization for <span className="text-white font-medium">India's leading indices</span>. Precision engineered for the modern investor.
                     </p>
-                </motion.div>
+                </div>
 
-
-                {/* TABS (Dark Glassmorphism) */}
-                <div className="flex justify-center mb-12">
-                    <div className="inline-flex bg-slate-900/60 backdrop-blur-xl p-1.5 rounded-2xl border border-slate-800 shadow-2xl shadow-indigo-900/20 ring-1 ring-white/5">
+                {/* --- GLASS TABS --- */}
+                <div className="flex justify-center mb-10">
+                    <div className="inline-flex p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] backdrop-blur-2xl shadow-2xl ring-1 ring-black/20">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -159,183 +249,135 @@ export default function MarketsClient() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`
-                    relative px-8 py-4 rounded-xl font-bold text-sm transition-all duration-300
-                    flex items-center gap-2 overflow-hidden
-                    ${isActive
-                                            ? 'text-white shadow-lg shadow-indigo-500/20 scale-105 z-10'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                                        }
-                  `}
+                                        relative px-8 py-3 rounded-xl text-sm font-medium transition-all duration-300
+                                        flex items-center gap-2.5 overflow-hidden group
+                                        ${isActive ? 'text-white shadow-lg' : 'text-slate-500 hover:text-slate-200'}
+                                    `}
                                 >
                                     {isActive && (
                                         <motion.div
                                             layoutId="activeTab"
-                                            className={`absolute inset-0 bg-gradient-to-r from-${tab.color}-600 to-${tab.color}-700`}
+                                            className="absolute inset-0 bg-white/[0.08] border border-white/[0.05] rounded-xl"
                                             initial={false}
-                                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
                                         />
                                     )}
-                                    <span className="relative z-10 flex items-center gap-2">
-                                        <Icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
-                                        {tab.name}
-                                    </span>
+                                    <Icon className={`w-4 h-4 relative z-10 transition-colors ${isActive ? `text-${tab.color}-400` : 'group-hover:text-white'}`} />
+                                    <span className="relative z-10">{tab.name}</span>
                                 </button>
                             );
                         })}
                     </div>
                 </div>
 
-                {/* CONTENT CARD */}
+                {/* --- MAIN GLASS CARD --- */}
                 <motion.div
                     layout
-                    className="bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-slate-700/50 ring-1 ring-white/10 overflow-hidden relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative bg-[#0A0A0A]/60 backdrop-blur-3xl rounded-[24px] border border-white/[0.06] shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/[0.02]"
                 >
-                    {/* TOP BAR */}
-                    <div className="p-8 border-b border-slate-800/50 flex flex-col md:flex-row gap-6 items-center justify-between bg-gradient-to-r from-slate-900/50 to-indigo-950/20">
+                    {/* TOP GLOW LINE */}
+                    <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-50" />
 
-                        {/* Search */}
-                        <div className="relative w-full md:w-96 group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                    {/* TOOLBAR */}
+                    <div className="p-5 md:p-6 flex flex-col md:flex-row gap-5 items-center justify-between border-b border-white/[0.03]">
+                        <div className="relative w-full md:w-80 group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-slate-600 group-focus-within:text-indigo-400 transition-colors" />
                             </div>
                             <input
                                 type="text"
-                                className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-950/50 border border-slate-700 placeholder-slate-500 text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner font-medium"
-                                placeholder={`Search ${currentTabConfig.name}...`}
+                                className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                placeholder={`Search ${currentTab.name}...`}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-4">
-                            {/* Stats Pill */}
-                            <div className="hidden md:flex flex-col items-end mr-4">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Last Updated</span>
+                        <div className="flex items-center gap-6">
+                             <div className="hidden md:flex flex-col items-end">
+                                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Last Sync</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                    </span>
-                                    <span className="text-sm font-bold text-slate-300 tabular-nums">
-                                        {lastUpdated ? new Date(lastUpdated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
+                                    <span className="text-xs font-mono font-medium text-slate-300">
+                                        {lastUpdated ? new Date(lastUpdated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--"}
                                     </span>
                                 </div>
                             </div>
-
+                            
                             <button
                                 onClick={() => fetchStocks(activeTab)}
                                 disabled={loading}
-                                className="px-6 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:transform-none flex items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400 border border-white/[0.05] hover:border-indigo-500/30 transition-all disabled:opacity-50"
                             >
-                                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : "group-hover:rotate-180"} transition-transform duration-500`} />
-                                <span>Refresh</span>
+                                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                             </button>
                         </div>
                     </div>
 
-                    {/* TABLE */}
-                    <div className="relative">
-                        {/* Loading Overlay */}
-                        <AnimatePresence>
-                            {loading && stocks.length === 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="absolute inset-0 z-20 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center flex-col gap-4"
-                                >
-                                    <Activity className="w-12 h-12 text-indigo-400 animate-bounce" />
-                                    <p className="font-bold text-indigo-300">Fetching live data...</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                    {/* TABLE HEADER (Sticky) */}
+                    <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/[0.05] text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] sticky top-0 z-20">
+                        <div className="col-span-3 hover:text-white cursor-pointer flex items-center gap-1.5 transition-colors" onClick={() => toggleSort('symbol')}>
+                            Symbol <ArrowUpDown className="w-2.5 h-2.5 opacity-50" />
+                        </div>
+                        <div className="col-span-2 text-right">Open</div>
+                        <div className="col-span-2 text-right">High</div>
+                        <div className="col-span-2 text-right">Low</div>
+                        <div className="col-span-1 text-right">Price</div>
+                        <div className="col-span-2 text-right hover:text-white cursor-pointer flex items-center justify-end gap-1.5 transition-colors" onClick={() => toggleSort('change')}>
+                            Change <ArrowUpDown className="w-2.5 h-2.5 opacity-50" />
+                        </div>
+                    </div>
 
-                        {/* Error Message */}
+                    {/* CONTENT AREA */}
+                    <div className="min-h-[400px] max-h-[650px] overflow-y-auto custom-scrollbar-dark relative">
                         {error && (
-                            <div className="p-8 text-center text-rose-400 bg-rose-950/30 border-b border-rose-900/50">
-                                <p className="font-bold">{error}</p>
+                            <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/50 backdrop-blur-sm">
+                                <div className="text-center bg-[#111] p-6 rounded-2xl border border-white/10 shadow-2xl">
+                                    <Activity className="w-8 h-8 mx-auto mb-3 text-rose-500" />
+                                    <p className="text-sm text-slate-300 mb-4">{error}</p>
+                                    <button onClick={() => fetchStocks(activeTab)} className="text-xs font-bold bg-white text-black px-4 py-2 rounded-full hover:scale-105 transition-transform">Retry</button>
+                                </div>
                             </div>
                         )}
 
-                        {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-slate-950/30 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800">
-                            <div className="col-span-3 hover:text-indigo-400 cursor-pointer flex items-center gap-1 transition-colors" onClick={() => toggleSort('symbol')}>Symbol <ArrowUpDown className="w-3 h-3" /></div>
-                            <div className="col-span-2 text-right">Open</div>
-                            <div className="col-span-2 text-right">High</div>
-                            <div className="col-span-2 text-right">Low</div>
-                            <div className="col-span-1 text-right">Price</div>
-                            <div className="col-span-2 text-right hover:text-indigo-400 cursor-pointer flex items-center justify-end gap-1 transition-colors" onClick={() => toggleSort('change')}>Change <ArrowUpDown className="w-3 h-3" /></div>
-                        </div>
-
-                        {/* Table Rows */}
-                        <div className="max-h-[600px] overflow-y-auto custom-scrollbar-dark">
-                            {filteredStocks.length === 0 && !loading ? (
-                                <div className="p-20 text-center text-slate-600">
-                                    <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                    <p>No stocks found for "{searchQuery}"</p>
-                                </div>
-                            ) : (
-                                filteredStocks.map((stock, i) => {
-                                    const isPositive = stock.change >= 0;
-                                    return (
-                                        <motion.div
-                                            key={stock.symbol}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{
-                                                // Fix visibility delay: cap delay at 0.5s or reduce multiplier
-                                                delay: Math.min(i * 0.01, 0.5),
-                                                duration: 0.3
-                                            }}
-                                            onClick={() => handleStockClick(stock)}
-                                            className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-slate-800/50 hover:bg-white/5 transition-colors cursor-pointer group items-center"
-                                        >
-                                            {/* Symbol */}
-                                            <div className="col-span-3 flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-black/20 transition-transform group-hover:scale-110 bg-gradient-to-br from-${currentTabConfig.color}-600 to-${currentTabConfig.color}-700`}>
-                                                    {stock.symbol[0]}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">{stock.symbol}</h3>
-                                                    <p className="text-xs text-slate-400 font-medium truncate max-w-[120px]">{stock.name}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="col-span-2 text-right font-medium text-slate-400">₹{stock.open.toFixed(2)}</div>
-                                            <div className="col-span-2 text-right font-medium text-emerald-400">₹{stock.high.toFixed(2)}</div>
-                                            <div className="col-span-2 text-right font-medium text-rose-400">₹{stock.low.toFixed(2)}</div>
-
-                                            <div className="col-span-1 text-right font-bold text-white text-base">₹{stock.price.toFixed(2)}</div>
-
-                                            <div className="col-span-2 flex justify-end">
-                                                <span className={`
-                                  inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-24 justify-center shadow-lg
-                                  ${isPositive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}
-                                `}>
-                                                    {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                                    {stock.changePercent.toFixed(2)}%
-                                                </span>
-                                            </div>
-
-                                        </motion.div>
-                                    )
-                                })
-                            )}
-                        </div>
-
+                        {loading && stocks.length === 0 ? (
+                            <StockSkeleton />
+                        ) : filteredStocksEmpty(processedStocks) ? (
+                            <div className="p-20 text-center text-slate-600 flex flex-col items-center justify-center h-full">
+                                <Search className="w-12 h-12 mb-4 opacity-10" />
+                                <p className="text-sm font-medium">No assets matching "<span className="text-slate-400">{searchQuery}</span>"</p>
+                            </div>
+                        ) : (
+                            processedStocks.map((stock, i) => (
+                                <StockRow 
+                                    key={stock.symbol} 
+                                    stock={stock} 
+                                    index={i} 
+                                    currentTabColor={currentTab.color}
+                                    onClick={handleStockClick}
+                                />
+                            ))
+                        )}
                     </div>
                 </motion.div>
+                
+                {/* FOOTER NOTE */}
+                <div className="text-center mt-8">
+                     <p className="text-[10px] text-slate-600 uppercase tracking-widest">
+                        Data provided for informational purposes only
+                     </p>
+                </div>
             </div>
 
             <StockDetailModal
                 isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setSelectedStock(null);
-                }}
+                onClose={() => { setIsModalOpen(false); setSelectedStock(null); }}
                 stock={selectedStock}
             />
         </div>
     );
 }
+
+const filteredStocksEmpty = (arr: Stock[]) => arr.length === 0;

@@ -77,9 +77,50 @@ class StockScraperService {
 
   // Extracted formatter for cleanliness
   private formatNiftyData(data: any[]) {
-      return data.map((stock: any) => ({
+      /**
+       * PROFESSIONAL DATA-DRIVEN FILTERING
+       * 
+       * Instead of hardcoding symbols, we filter based on NSE API metadata:
+       * 1. series === 'EQ' means it's an equity stock (not ETF, not index)
+       * 2. Exclude the index summary row (symbol === index name like "NIFTY 50")
+       * 3. Exclude any non-traded instruments
+       * 
+       * This approach automatically adapts when the Nifty 50 index changes.
+       */
+      const filteredData = data.filter((stock: any) => {
+        const symbol = (stock.symbol || '').trim();
+        const series = (stock.series || '').toUpperCase();
+        
+        // Skip the index summary row (NSE returns the index itself as a row)
+        if (symbol.includes('NIFTY') || symbol.includes('INDEX')) {
+          return false;
+        }
+        
+        // Only include equity stocks (series = 'EQ')
+        // NSE uses 'EQ' for regular equity, 'BE' for trade-to-trade, etc.
+        // If series is not provided, we check other indicators
+        if (series && series !== 'EQ') {
+          return false;
+        }
+        
+        // Exclude known non-stock instruments by pattern
+        // These are ETFs, funds, and other derivative products
+        const nonStockPatterns = ['ETF', 'BEES', 'LIQUID', 'GILT', 'GOLD', 'SILVER'];
+        if (nonStockPatterns.some(p => symbol.toUpperCase().includes(p))) {
+          return false;
+        }
+        
+        // Must have a valid price (real stocks have prices)
+        if (!stock.lastPrice || parseFloat(stock.lastPrice) <= 0) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      return filteredData.map((stock: any) => ({
         symbol: stock.symbol,
-        name: stock.symbol,
+        name: stock.companyName || stock.symbol,
         category: 'NIFTY50',
         price: parseFloat(stock.lastPrice) || 0,
         open: parseFloat(stock.open) || 0,

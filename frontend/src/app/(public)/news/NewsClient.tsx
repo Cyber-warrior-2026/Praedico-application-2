@@ -5,7 +5,6 @@ import { Search, RefreshCw, Filter, Newspaper, TrendingUp, Zap, Globe } from "lu
 import { newsApi } from "@/lib/api";
 import { NewsArticle } from "@/lib/types/news.types";
 import NewsCard from "./_components/NewsCard";
-import Market3DBackground from "../_components/Market3DBackground";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Filter Categories
@@ -77,7 +76,6 @@ export default function NewsClient() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden selection:bg-indigo-500/30">
-            <Market3DBackground />
 
             <div className="relative z-10 container mx-auto px-4 pt-32 pb-20">
 
