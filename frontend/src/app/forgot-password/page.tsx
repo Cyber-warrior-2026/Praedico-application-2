@@ -221,6 +221,7 @@ export default function ForgotPassword() {
       <LoginModal 
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)} 
+        onSwitchToRegister={() => {}}
       />
     </div>
   );

@@ -295,6 +295,7 @@ export default function ResetPasswordPage() {
       <LoginModal 
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)} 
+        onSwitchToRegister={() => {}}
       />
     </div>
   );
