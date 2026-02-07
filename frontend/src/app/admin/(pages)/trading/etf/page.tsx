@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // Kept for modal's specific query
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -14,14 +14,10 @@ import {
   DollarSign,
   BarChart2,
   Loader2,
-  Filter,
   Database, 
   Server,
-  Layers
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -31,7 +27,8 @@ import {
   Area
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { stockApi } from "@/lib/api/stock.api"
+// 👇 IMPORT YOUR CENTRALIZED API
+import { stockApi } from "@/lib/api/stock.api";
 
 // ==========================================
 // TYPES
@@ -110,6 +107,7 @@ const ETFDetailModal = ({ etf, isOpen, onClose }: { etf: ETFData | null; isOpen:
       const fetchHistory = async () => {
         setLoading(true);
         try {
+          // ✅ FIXED: Ensure this is a relative path (no localhost)
           const response = await axios.get(`/api/stocks`, { 
             params: { category: 'ETF', limit: 2000 },
             withCredentials: true
@@ -292,6 +290,7 @@ export default function ETFPage() {
   const fetchETFs = async () => {
     if (etfs.length === 0) setLoading(true);
     try {
+      // ✅ FIXED: Use stockApi
       const data = await stockApi.getETFStocks();
       if (data.success) {
         setEtfs(data.data);
@@ -306,7 +305,8 @@ export default function ETFPage() {
 
   const fetchScraperStatus = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5001/api/scraper/status", { withCredentials: true });
+      // ✅ FIXED: Use stockApi instead of localhost URL
+      const data = await stockApi.getScraperStatus();
       if (data.success) {
         setScraperStatus(data.status);
       }
@@ -318,7 +318,8 @@ export default function ETFPage() {
   const handleManualScrape = async () => {
     setIsScraping(true);
     try {
-      const { data } = await axios.post("http://localhost:5001/api/stocks/scrape", {}, { withCredentials: true });
+      // ✅ FIXED: Use stockApi instead of localhost URL
+      const data = await stockApi.triggerManualScrape();
       if (data.success) {
         alert("Scraping started successfully!");
         setTimeout(fetchETFs, 5000); 
