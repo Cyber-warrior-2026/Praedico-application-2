@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   // 1. Exclude public routes
   if (
     path === '/admin/staff-access-portal' || 
-    path.startsWith('/user/verify')
+    path.startsWith('/verify')
   ) {
     return NextResponse.next();
   }
