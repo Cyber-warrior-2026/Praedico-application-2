@@ -19,15 +19,17 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
   const [activeTab, setActiveTab] = useState<ModalTab>('overview');
   const [historyData, setHistoryData] = useState<Stock[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [chartLoaded, setChartLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isDark = theme === 'dark';
 
-  // Lock body scroll
+  // Lock body scroll & Reset tab on close
   useEffect(() => {
     if (isOpen) {
         document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = 'unset';
+        setActiveTab('overview');
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
@@ -41,12 +43,16 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
         .catch(console.error)
         .finally(() => setLoadingHistory(false));
     }
-  }, [activeTab, stock]);
+  }, [activeTab, stock, historyData.length]);
 
-  // Load TradingView Chart
+  // --- PEAK PERFORMANCE CHART LOADING ---
+  // 1. Dependency Update: We removed 'activeTab' from dependencies.
+  //    This runs immediately when 'stock.symbol' exists (on modal open).
   useEffect(() => {
-    if (activeTab === 'chart' && !chartLoaded && stock && containerRef.current) {
+    if (stock && containerRef.current) {
+      // Clear container to prevent duplicate charts
       containerRef.current.innerHTML = "";
+
       const script = document.createElement("script");
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
       script.type = "text/javascript";
@@ -67,15 +73,14 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
         "hide_volume": true,
         "support_host": "https://www.tradingview.com"
       });
+
       containerRef.current.appendChild(script);
-      setChartLoaded(true);
     }
-  }, [activeTab, chartLoaded, stock, isDark]);
+  }, [stock?.symbol, isDark]); // Only re-run if stock changes, not on tab switch
 
   if (!isOpen || !stock) return null;
 
   const isPositive = stock.change >= 0;
-  // Calculate percentage for the range bar
   const rangePercent = stock.high === stock.low 
     ? 50 
     : ((stock.price - stock.low) / (stock.high - stock.low)) * 100;
@@ -87,7 +92,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     { id: 'trading' as ModalTab, label: 'Trade', icon: Briefcase },
   ];
 
-  // --- STYLES ---
   const styles = {
     bg: isDark ? 'bg-[#0A0A0A]' : 'bg-white',
     text: isDark ? 'text-white' : 'text-slate-900',
@@ -101,15 +105,12 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-6">
-          
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Modal Content */}
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
@@ -119,19 +120,14 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                 ${styles.bg} border ${styles.border} shadow-2xl flex flex-col overflow-hidden
             `}
           >
-            {/* --- HEADER SECTION --- */}
+            {/* Header Section */}
             <div className={`p-5 sm:p-8 border-b ${styles.border} relative shrink-0`}>
-                
-                {/* Drag Handle (Mobile only) */}
                 <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 sm:hidden" />
-
-                {/* Close Button (Desktop) */}
                 <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/10 hidden sm:block text-slate-400">
                     <X className="w-5 h-5" />
                 </button>
 
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-                    {/* Left: Logo & Name */}
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-xl font-bold text-white shadow-lg ring-1 ring-white/10">
                             {stock.symbol[0]}
@@ -149,7 +145,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                         </div>
                     </div>
 
-                    {/* Right: Price */}
                     <div className="flex flex-row sm:flex-col items-end justify-between sm:justify-start">
                         <div className={`text-3xl sm:text-4xl font-bold ${styles.text} tabular-nums tracking-tight`}>
                             ₹{stock.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -162,7 +157,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                     </div>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex gap-2 mt-8 overflow-x-auto pb-1 no-scrollbar">
                     {tabs.map(tab => {
                         const Icon = tab.icon;
@@ -184,16 +178,16 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                 </div>
             </div>
 
-            {/* --- SCROLLABLE CONTENT AREA --- */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar-dark">
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar-dark relative">
                 
-                {/* 1. OVERVIEW TAB (Restored Full Info) */}
+                {/* 1. OVERVIEW TAB */}
                 {activeTab === 'overview' && (
                     <motion.div 
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                         className="space-y-4"
                     >
-                        {/* A. Top Stats Grid (4 Cards) */}
+                        {/* Stats Components... (kept same as before) */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                             <StatCard label="Open" value={stock.open} styles={styles} />
                             <StatCard label="Prev. Close" value={stock.previousClose} styles={styles} />
@@ -201,13 +195,11 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                             <StatCard label="Day Low" value={stock.low} color="text-rose-500" styles={styles} />
                         </div>
 
-                        {/* B. Day's Range Bar */}
                         <div className={`p-5 rounded-2xl border ${styles.border} ${styles.cardBg}`}>
                             <div className="flex justify-between text-xs font-medium text-slate-500 mb-3">
                                 <span className="uppercase tracking-wider font-bold">Day's Range</span>
                                 <span className={styles.text}>{rangePercent.toFixed(1)}%</span>
                             </div>
-                            {/* Gradient Bar */}
                             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden relative">
                                 <div 
                                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-full" 
@@ -220,7 +212,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                             </div>
                         </div>
 
-                        {/* C. Bottom Stats Grid (Volume & Value) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                              <DetailCard 
                                 label="Total Volume" 
@@ -240,12 +231,23 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                     </motion.div>
                 )}
 
-                {/* 2. CHART TAB */}
-                {activeTab === 'chart' && (
-                    <div className={`h-[400px] w-full rounded-2xl overflow-hidden border ${styles.border} ${isDark ? 'bg-[#111]' : 'bg-white'}`}>
-                        <div className="w-full h-full" ref={containerRef} />
-                    </div>
-                )}
+                {/* 2. CHART TAB (PEAK PERFORMANCE MODE)
+                   - Rendered ALWAYS (no conditional check).
+                   - Uses "off-screen" technique (absolute + invisible) when inactive.
+                   - This ensures the iframe has dimensions and loads fully in background.
+                */}
+                <div 
+                    className={`
+                        h-[400px] w-full rounded-2xl overflow-hidden border ${styles.border} 
+                        ${isDark ? 'bg-[#111]' : 'bg-white'}
+                        ${activeTab === 'chart' 
+                            ? 'block relative' 
+                            : 'absolute top-0 left-[-9999px] invisible' // Hide off-screen
+                        }
+                    `}
+                >
+                    <div className="w-full h-full" ref={containerRef} />
+                </div>
 
                 {/* 3. HISTORY TAB */}
                 {activeTab === 'history' && (
@@ -302,8 +304,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
   );
 }
 
-// --- SUB COMPONENTS (Restored) ---
-
+// ... Sub components (StatCard, DetailCard) remain same ...
 function StatCard({ label, value, color, styles }: { label: string, value: number, color?: string, styles: any }) {
     const textColor = color || styles.text;
     return (
