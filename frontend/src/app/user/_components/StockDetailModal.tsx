@@ -76,7 +76,6 @@ export default function StockDetailModal({ isOpen, onClose, stock }: StockDetail
         "locale": "in", // Changed to 'in' for better Indian market context
         "enable_publishing": false,
         "backgroundColor": isDark ? "rgba(10, 10, 10, 1)" : "rgba(255, 255, 255, 1)",
-        "hide_top_toolbar": true, 
         "backgroundColor": "rgba(15, 23, 42, 1)",
         "gridColor": "rgba(30, 41, 59, 0.5)",
         "hide_top_toolbar": false,
