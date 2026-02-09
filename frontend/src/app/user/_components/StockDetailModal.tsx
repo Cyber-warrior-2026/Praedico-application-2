@@ -71,18 +71,16 @@ export default function StockDetailModal({ isOpen, onClose, stock }: StockDetail
         "symbol": stock.symbol,
         "interval": "D",
         "timezone": "Asia/Kolkata",
-        "theme": isDark ? "dark" : "light",
+        "theme": "dark",
         "style": "1",
         "locale": "in", // Changed to 'in' for better Indian market context
         "enable_publishing": false,
-        "backgroundColor": isDark ? "rgba(10, 10, 10, 1)" : "rgba(255, 255, 255, 1)",
         "backgroundColor": "rgba(15, 23, 42, 1)",
         "gridColor": "rgba(30, 41, 59, 0.5)",
         "hide_top_toolbar": false,
         "hide_legend": false,
         "save_image": false,
         "calendar": false,
-        "hide_volume": true,
         "hide_volume": false,
         "support_host": "https://www.tradingview.com"
       });
