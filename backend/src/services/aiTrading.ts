@@ -19,7 +19,7 @@ class AITradingService {
 
   constructor() {
     // Your AI chatbot API endpoint from routes/aiChat.ts
-    this.aiChatbotEndpoint = process.env.AI_CHATBOT_URL || 'http://localhost:5001/api/ai/chat';
+    this.aiChatbotEndpoint = process.env.AI_CHATBOT_URL || 'http://localhost:5001/api/ai/chat/message';
   }
 
   // Get AI analysis for a stock before trading
