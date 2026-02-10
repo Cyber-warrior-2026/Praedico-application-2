@@ -14,7 +14,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
 } from 'recharts';
 // Use your centralized API handler (ensure it points to /api or uses the proxy)
-import { authApi } from "@/lib/api"; 
+import { authApi } from "@/lib/api";
 // OR if you want to use axios directly for now, ensure it points to relative path
 import axios from 'axios';
 
@@ -81,15 +81,15 @@ export default function UserDashboard() {
       {/* SECTION 1: MY STOCKS */}
       <section className="mb-8">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-slate-800">My Stocks</h2>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white">My Stocks</h2>
           <button className="text-xs font-bold text-[#6366F1] hover:underline">View All</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-          <StockCard symbol="NVDA" name="Nvidia" price="203.65" change="+5.63" bg="bg-[#D1FAE5]" text="text-[#065F46]" chartColor="#059669" />
-          <StockCard symbol="META" name="Meta" price="151.74" change="-4.44" bg="bg-[#E0E7FF]" text="text-[#3730A3]" isNegative chartColor="#4F46E5" />
-          <StockCard symbol="TSLA" name="Tesla Inc" price="177.90" change="+17.63" bg="bg-[#FEF3C7]" text="text-[#92400E]" chartColor="#D97706" />
-          <StockCard symbol="AAPL" name="Apple Inc" price="145.93" change="+23.41" bg="bg-[#DCFCE7]" text="text-[#166534]" chartColor="#16A34A" />
-          <StockCard symbol="AMD" name="AMD" price="75.40" change="+5.40" bg="bg-[#FCE7F3]" text="text-[#9D174D]" chartColor="#DB2777" />
+          <StockCard symbol="NVDA" name="Nvidia" price="203.65" change="+5.63" bg="bg-[#D1FAE5] dark:bg-emerald-900/30" text="text-[#065F46] dark:text-emerald-400" chartColor="#059669" />
+          <StockCard symbol="META" name="Meta" price="151.74" change="-4.44" bg="bg-[#E0E7FF] dark:bg-indigo-900/30" text="text-[#3730A3] dark:text-indigo-400" isNegative chartColor="#4F46E5" />
+          <StockCard symbol="TSLA" name="Tesla Inc" price="177.90" change="+17.63" bg="bg-[#FEF3C7] dark:bg-amber-900/30" text="text-[#92400E] dark:text-amber-400" chartColor="#D97706" />
+          <StockCard symbol="AAPL" name="Apple Inc" price="145.93" change="+23.41" bg="bg-[#DCFCE7] dark:bg-green-900/30" text="text-[#166534] dark:text-green-400" chartColor="#16A34A" />
+          <StockCard symbol="AMD" name="AMD" price="75.40" change="+5.40" bg="bg-[#FCE7F3] dark:bg-pink-900/30" text="text-[#9D174D] dark:text-pink-400" chartColor="#DB2777" />
         </div>
       </section>
 
@@ -98,8 +98,8 @@ export default function UserDashboard() {
 
         {/* COLUMN 1: STATS */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-          <div className="bg-[#6366F1] rounded-[24px] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+          <div className="bg-[#6366F1] rounded-[24px] p-6 text-white shadow-md relative overflow-hidden transition-all duration-300">
+
             <div className="relative z-10">
               <p className="text-indigo-100 text-xs font-semibold uppercase tracking-wider mb-2">Total Balance</p>
               <div className="flex items-end justify-between">
@@ -111,7 +111,7 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#1E293B] rounded-[24px] p-6 text-white shadow-xl shadow-slate-900/10 relative flex items-center justify-between group cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+          <div className="bg-[#1E293B] dark:bg-slate-800 rounded-[24px] p-6 text-white shadow-xl shadow-slate-900/10 relative flex items-center justify-between group cursor-pointer hover:scale-[1.02] transition-transform duration-300">
             <div>
               <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Invested Value</p>
               <h3 className="text-2xl font-bold tracking-tight">$7,532.21</h3>
@@ -121,15 +121,15 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex-1 flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-[24px] p-6 border border-slate-100 dark:border-white/10 shadow-sm flex-1 flex flex-col justify-between">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Top Performing Stock</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-black text-sm shadow-sm border border-red-100">T</div>
+                  <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center font-black text-sm shadow-sm border border-red-100 dark:border-red-800/50">T</div>
                   <div>
-                    <h3 className="font-bold text-slate-800 text-sm">Tesla Inc</h3>
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">TSLA</span>
+                    <h3 className="font-bold text-slate-800 dark:text-white text-sm">Tesla Inc</h3>
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">TSLA</span>
                   </div>
                 </div>
               </div>
@@ -138,13 +138,13 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-50 p-3 rounded-xl">
+              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
                 <p className="text-[10px] text-slate-400 mb-1">Invested Value</p>
-                <p className="font-bold text-slate-800">$29.34</p>
+                <p className="font-bold text-slate-800 dark:text-white">$29.34</p>
               </div>
-              <div className="bg-slate-50 p-3 rounded-xl">
+              <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
                 <p className="text-[10px] text-slate-400 mb-1">Current Price</p>
-                <p className="font-bold text-slate-800">$177.90</p>
+                <p className="font-bold text-slate-800 dark:text-white">$177.90</p>
               </div>
             </div>
             <div className="h-12 w-full mb-4">
@@ -167,16 +167,16 @@ export default function UserDashboard() {
         </div>
 
         {/* COLUMN 2: MAIN CHART */}
-        <div className="lg:col-span-6 bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col h-full">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-50">
+        <div className="lg:col-span-6 bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-[24px] p-6 border border-slate-100 dark:border-white/10 shadow-sm flex flex-col h-full">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-50 dark:border-white/10">
             <div className="flex gap-2">
               <button className="px-4 py-2 bg-[#6366F1] text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-transform active:scale-95">NASDAQ</button>
-              <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">SSE</button>
-              <button className="px-4 py-2 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-xl transition-colors">Euronext</button>
+              <button className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold rounded-xl transition-colors">SSE</button>
+              <button className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold rounded-xl transition-colors">Euronext</button>
             </div>
-            <div className="flex bg-slate-50 p-1 rounded-lg">
+            <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-lg">
               {['1D', '5D', '1M', '6M', '1Y'].map(time => (
-                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
+                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white dark:bg-slate-700 text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>{time}</button>
               ))}
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function UserDashboard() {
                     <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" className="dark:stroke-slate-800" />
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
                 <Tooltip
@@ -200,11 +200,11 @@ export default function UserDashboard() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-50">
-            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">High</p><p className="font-bold text-slate-800 text-sm">11,691.89</p></div>
-            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Low</p><p className="font-bold text-slate-800 text-sm">11,470.47</p></div>
-            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Prev Close</p><p className="font-bold text-slate-800 text-sm">11,512.41</p></div>
-            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Open</p><p className="font-bold text-slate-800 text-sm">11,690.11</p></div>
+          <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-50 dark:border-white/10">
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">High</p><p className="font-bold text-slate-800 dark:text-white text-sm">11,691.89</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Low</p><p className="font-bold text-slate-800 dark:text-white text-sm">11,470.47</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Prev Close</p><p className="font-bold text-slate-800 dark:text-white text-sm">11,512.41</p></div>
+            <div className="text-center md:text-left"><p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Open</p><p className="font-bold text-slate-800 dark:text-white text-sm">11,690.11</p></div>
           </div>
         </div>
 
@@ -218,19 +218,19 @@ export default function UserDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Analytics */}
-        <div className="lg:col-span-8 bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-[24px] p-6 border border-slate-100 dark:border-white/10 shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-800 text-lg">Portfolio Analytics</h3>
-            <div className="flex bg-slate-50 p-1 rounded-lg">
+            <h3 className="font-bold text-slate-800 dark:text-white text-lg">Portfolio Analytics</h3>
+            <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-lg">
               {['1D', '1W', '1M', '1Y'].map(time => (
-                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{time}</button>
+                <button key={time} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${time === '1D' ? 'bg-white dark:bg-slate-700 text-[#6366F1] shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>{time}</button>
               ))}
             </div>
           </div>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={portfolioData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" className="dark:stroke-slate-800" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94A3B8' }} />
                 <Tooltip
@@ -253,9 +253,9 @@ export default function UserDashboard() {
         </div>
 
         {/* Watchlist */}
-        <div className="lg:col-span-4 bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-[24px] p-6 border border-slate-100 dark:border-white/10 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-slate-800 text-lg">Watchlist</h3>
+            <h3 className="font-bold text-slate-800 dark:text-white text-lg">Watchlist</h3>
             <button className="w-8 h-8 bg-[#6366F1] rounded-lg text-white flex items-center justify-center hover:bg-[#4F46E5] shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5">
               <Plus size={16} />
             </button>
@@ -281,7 +281,7 @@ function StockCard({ symbol, name, price, change, bg, text, chartColor, isNegati
     <div className={`p-5 rounded-[24px] ${bg} transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg relative overflow-hidden group`}>
       <div className="flex justify-between items-start mb-3 relative z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-white/60 backdrop-blur-sm flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-white/60 dark:bg-black/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
             <span className={`text-[10px] font-bold ${text}`}>{symbol[0]}</span>
           </div>
           <span className={`text-sm font-bold ${text}`}>{name}</span>
@@ -306,18 +306,18 @@ function StockCard({ symbol, name, price, change, bg, text, chartColor, isNegati
 
 function WatchlistItem({ name, ticker, price, change, isNegative, logo }: any) {
   return (
-    <div className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group border border-transparent hover:border-slate-100">
+    <div className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer group border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center p-2 shadow-sm group-hover:scale-110 transition-transform">
-          <span className="font-bold text-xs text-slate-700">{ticker[0]}</span>
+        <div className="w-10 h-10 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full flex items-center justify-center p-2 shadow-sm group-hover:scale-110 transition-transform">
+          <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{ticker[0]}</span>
         </div>
         <div>
-          <p className="text-sm font-bold text-slate-800">{name}</p>
+          <p className="text-sm font-bold text-slate-800 dark:text-white">{name}</p>
           <p className="text-[10px] font-bold text-slate-400">{ticker}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-bold text-slate-800">${price}</p>
+        <p className="text-sm font-bold text-slate-800 dark:text-white">${price}</p>
         <p className={`text-xs font-bold ${isNegative ? 'text-red-500' : 'text-green-500'} flex items-center justify-end gap-0.5`}>
           {isNegative ? <TrendingDown size={10} /> : <TrendingUp size={10} />} {change}
         </p>

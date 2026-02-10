@@ -153,7 +153,7 @@ export default function PremiumPage() {
 
     // ... Return Statement remains exactly the same ...
     return (
-        <div className="min-h-screen bg-[#F8F9FE] pt-24 md:pt-28 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
+        <div className="min-h-screen bg-[#F8F9FE] dark:bg-background pt-24 md:pt-28 pb-20 font-sans text-slate-900 dark:text-slate-100 selection:bg-indigo-100 dark:selection:bg-indigo-900/30 relative overflow-hidden transition-colors duration-300">
             {/* ... Copy the rest of your JSX exactly as it was ... */}
             {/* To save space I am not repeating the JSX here, but you can paste the Return block from your original code */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -241,25 +241,25 @@ export default function PremiumPage() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2, duration: 0.5 }}
-                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-6 hover:bg-indigo-100 transition-colors cursor-default"
+                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-6 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors cursor-default"
                     >
-                        <Crown size={14} className="fill-indigo-600" /> Upgrade your experience
+                        <Crown size={14} className="fill-indigo-600 dark:fill-indigo-400" /> Upgrade your experience
                     </motion.div>
 
-                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-6 tracking-tight">
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
                         Simple, Transparent <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient">Pricing</span>
                     </h1>
 
-                    <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium">
+                    <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
                         Choose the plan that fits your trading style. Unlock advanced AI analytics, real-time data, and priority support.
                     </p>
 
                     {/* TOGGLE SWITCH */}
                     <div className="flex items-center justify-center mt-10 gap-4">
-                        <span className={`text-sm font-bold transition-colors ${billingCycle === 'monthly' ? 'text-slate-900' : 'text-slate-400'}`}>Monthly</span>
+                        <span className={`text-sm font-bold transition-colors ${billingCycle === 'monthly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>Monthly</span>
                         <button
                             onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                            className="w-14 h-8 rounded-full bg-slate-200 border border-slate-300 relative p-1 transition-colors hover:border-indigo-300 focus:outline-none"
+                            className="w-14 h-8 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 relative p-1 transition-colors hover:border-indigo-300 focus:outline-none"
                         >
                             <motion.div
                                 className="w-6 h-6 rounded-full bg-indigo-600 shadow-md"
@@ -267,8 +267,8 @@ export default function PremiumPage() {
                                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             />
                         </button>
-                        <span className={`text-sm font-bold transition-colors ${billingCycle === 'yearly' ? 'text-slate-900' : 'text-slate-400'}`}>
-                            Yearly <span className="text-emerald-600 text-xs bg-emerald-50 px-2 py-0.5 rounded-full ml-1 border border-emerald-100">Save 20%</span>
+                        <span className={`text-sm font-bold transition-colors ${billingCycle === 'yearly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                            Yearly <span className="text-emerald-600 text-xs bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full ml-1 border border-emerald-100 dark:border-emerald-800">Save 20%</span>
                         </span>
                     </div>
                 </motion.div>
@@ -280,20 +280,20 @@ export default function PremiumPage() {
                     transition={{ delay: 0.3, duration: 0.6 }}
                     className="max-w-4xl mx-auto mb-16"
                 >
-                    <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/50 shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row items-center justify-between gap-6 ring-1 ring-slate-900/5">
+                    <div className="bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-white/50 dark:border-white/10 shadow-xl shadow-indigo-500/5 flex flex-col md:flex-row items-center justify-between gap-6 ring-1 ring-slate-900/5 dark:ring-white/10">
                         <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${currentPlan === 'Free' ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${currentPlan === 'Free' ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'}`}>
                                 {currentPlan === 'Free' ? <Shield size={24} /> : <Crown size={24} className="fill-current" />}
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Plan</p>
-                                <h3 className="text-xl font-bold text-slate-900">{currentPlan} Membership {isOnTrial && <span className="text-indigo-600">(Trial)</span>}</h3>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{currentPlan} Membership {isOnTrial && <span className="text-indigo-600 dark:text-indigo-400">(Trial)</span>}</h3>
                             </div>
                         </div>
                         {expiryDate && currentPlan !== 'Free' && (
                             <div className="text-right">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Renews On</p>
-                                <p className="text-sm font-bold text-slate-800">{expiryDate}</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{expiryDate}</p>
                             </div>
                         )}
                     </div>
@@ -362,30 +362,30 @@ function PricingCard({ title, price, billingCycle, desc, features, icon: Icon, h
             transition={{ delay: delay, duration: 0.6, type: "spring", stiffness: 100 }}
             whileHover={{ y: -8, transition: { duration: 0.3 } }}
             className={`
-                relative bg-white/80 backdrop-blur-md rounded-[32px] p-8 border group flex flex-col justify-between
+                relative bg-white/80 dark:bg-slate-900/50 backdrop-blur-md rounded-[32px] p-8 border group flex flex-col justify-between
                 ${highlight
                     ? 'border-indigo-500 shadow-2xl shadow-indigo-500/20 z-10'
-                    : 'border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/60'
+                    : 'border-slate-100 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-none hover:shadow-2xl hover:shadow-slate-200/60 dark:hover:shadow-indigo-500/10'
                 }
             `}
         >
             <div>
                 {highlight && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 ring-4 ring-[#F8F9FE]">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 ring-4 ring-[#F8F9FE] dark:ring-slate-900">
                         Most Popular
                     </div>
                 )}
 
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ml-1 transition-colors duration-300 ${highlight ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600'
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ml-1 transition-colors duration-300 ${highlight ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
                     }`}>
                     <Icon size={24} />
                 </div>
 
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">{title}</h3>
-                <p className="text-slate-500 text-sm mb-6 h-10">{desc}</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 h-10">{desc}</p>
 
                 <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-4xl font-black text-slate-900 tracking-tight">₹{price}</span>
+                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">₹{price}</span>
                     <span className="text-slate-400 font-medium">{billingCycle === 'yearly' ? '/yr' : '/mo'}</span>
                 </div>
 
@@ -397,10 +397,10 @@ function PricingCard({ title, price, billingCycle, desc, features, icon: Icon, h
                     className={`
                         w-full py-4 rounded-xl font-bold text-sm mb-3 transition-all shadow-lg
                         ${isCurrent
-                            ? 'bg-slate-100 text-slate-400 cursor-default shadow-none'
+                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-default shadow-none'
                             : highlight
                                 ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-500/40 hover:brightness-110'
-                                : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-slate-500/20'
+                                : 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 dark:hover:bg-slate-600 hover:shadow-slate-500/20'
                         }
                     `}
                 >
@@ -412,23 +412,23 @@ function PricingCard({ title, price, billingCycle, desc, features, icon: Icon, h
                     <motion.button
                         onClick={onTrial}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full py-3 rounded-xl font-bold text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 mb-6 transition-colors border border-indigo-200"
+                        className="w-full py-3 rounded-xl font-bold text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 mb-6 transition-colors border border-indigo-200 dark:border-indigo-800"
                     >
                         Start 7-Day Free Trial
                     </motion.button>
                 )}
             </div>
 
-            <div className="space-y-4 mt-6 border-t border-slate-100 pt-6">
+            <div className="space-y-4 mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
                 {features.map((feat: string, i: number) => (
                     <motion.div
                         key={i}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: delay + (i * 0.1) + 0.3 }}
-                        className="flex items-start gap-3 text-sm text-slate-600"
+                        className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
                     >
-                        <div className="mt-0.5 p-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                        <div className="mt-0.5 p-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
                             <Check size={12} strokeWidth={3} />
                         </div>
                         {feat}

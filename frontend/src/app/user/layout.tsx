@@ -5,14 +5,14 @@ import Footer from "@/shared-components/Footer";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8F9FE] font-sans text-slate-800 selection:bg-indigo-500/30 relative">
+    <div className="flex flex-col min-h-screen bg-[#F8F9FE] dark:bg-background font-sans text-slate-800 dark:text-slate-100 selection:bg-indigo-500/30 relative transition-colors duration-300">
 
       {/* 1. DYNAMIC BACKGROUND LAYER (Fixed) */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-200/40 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-200/40 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "2s" }} />
-        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-blue-100/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "4s" }} />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light"></div>
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden text-slate-900/50 dark:text-slate-100/10">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-200/40 dark:bg-indigo-500/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-200/40 dark:bg-purple-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-blue-100/30 dark:bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "4s" }} />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 dark:opacity-10 mix-blend-soft-light"></div>
       </div>
 
       {/* 2. NAVIGATION LAYER (Fixed on Top) */}
@@ -28,7 +28,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       </main>
 
       {/* 4. FOOTER */}
-      <div className="relative z-10 mt-auto border-t border-slate-200/60 bg-white/50 backdrop-blur-md">
+      <div className="relative z-10 mt-auto border-t border-slate-200/60 dark:border-white/5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md transition-colors duration-300">
         <Footer />
       </div>
 

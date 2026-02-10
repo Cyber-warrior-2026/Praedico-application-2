@@ -32,7 +32,7 @@ export default function PremiumFeatureModal({ isOpen, onClose }: Props) {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             transition={{ type: "spring", duration: 0.5 }}
-                            className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden pointer-events-auto relative border border-white/20"
+                            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto relative border border-white/20"
                         >
                             {/* Decorative Background */}
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 z-0" />
@@ -40,7 +40,7 @@ export default function PremiumFeatureModal({ isOpen, onClose }: Props) {
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-4 right-4 p-2 rounded-full bg-white/50 hover:bg-white text-slate-400 hover:text-slate-600 transition-colors z-20 backdrop-blur-sm"
+                                className="absolute top-4 right-4 p-2 rounded-full bg-white dark:bg-slate-900/50 hover:bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-colors z-20 backdrop-blur-sm"
                             >
                                 <X size={20} />
                             </button>
@@ -55,23 +55,23 @@ export default function PremiumFeatureModal({ isOpen, onClose }: Props) {
                                     </div>
                                 </div>
 
-                                <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
                                     Premium Feature
                                 </h2>
 
-                                <p className="text-slate-600 mb-8 leading-relaxed">
+                                <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
                                     The <span className="font-semibold text-indigo-600">AI Stock Assistant</span> is exclusive to Premium members. Upgrade to unlock chart analysis, portfolio advice, and real-time insights.
                                 </p>
 
                                 {/* Features List */}
-                                <div className="bg-white/60 rounded-xl p-4 mb-8 text-left space-y-3 border border-indigo-100/50">
+                                <div className="bg-white dark:bg-slate-900/60 rounded-xl p-4 mb-8 text-left space-y-3 border border-indigo-100/50 dark:border-slate-700/50">
                                     {[
                                         "Unlimited AI Chat Queries",
                                         "Real-time Stock Analysis",
                                         "Custom Portfolio Recommendations",
                                         "Risk Assessment"
                                     ].map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-3 text-sm text-slate-700">
+                                        <div key={i} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
                                             <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                                             <span>{feature}</span>
                                         </div>
@@ -89,7 +89,7 @@ export default function PremiumFeatureModal({ isOpen, onClose }: Props) {
 
                                     <button
                                         onClick={onClose}
-                                        className="w-full py-3 rounded-xl text-slate-500 font-semibold hover:bg-slate-50 transition-colors text-sm"
+                                        className="w-full py-3 rounded-xl text-slate-500 dark:text-slate-400 font-semibold hover:bg-slate-50 transition-colors text-sm"
                                     >
                                         Maybe Later
                                     </button>

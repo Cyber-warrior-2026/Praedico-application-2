@@ -5,24 +5,25 @@ import { Stock } from "@/lib/types/stock.types";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { stockApi } from "@/lib/api";
+import { useTheme } from "next-themes";
 
 interface StockDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   stock: Stock | null;
-  theme?: 'light' | 'dark'; // <--- NEW PROP ADDED
 }
 
 type ModalTab = 'overview' | 'history' | 'chart' | 'trading';
 
-export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark' }: StockDetailModalProps) {
+export default function StockDetailModal({ isOpen, onClose, stock }: StockDetailModalProps) {
+  const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<ModalTab>('overview');
   const [historyData, setHistoryData] = useState<Stock[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [chartLoaded, setChartLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isDark = theme === 'dark'; // Helper to switch styles
+  const isDark = resolvedTheme === 'dark'; // Helper to switch styles
 
   // Close modal on ESC key
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
       window.removeEventListener("keydown", handleEsc);
       document.body.style.overflow = 'unset';
       setActiveTab('overview');
-      setChartLoaded(false); 
+      setChartLoaded(false);
     };
   }, [isOpen, onClose]);
 
@@ -139,7 +140,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
           />
 
           {/* Modal Container */}
-         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -148,22 +149,22 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
               className={`relative ${styles.bg} rounded-[24px] border ${styles.border} shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col pointer-events-auto overflow-hidden ring-1 ring-black/5`}
               onClick={(e) => e.stopPropagation()}
             >
-               {/* Noise Texture (Dark Mode Only) */}
-               {isDark && <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none mix-blend-overlay" />}
+              {/* Noise Texture (Dark Mode Only) */}
+              {isDark && <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none mix-blend-overlay" />}
 
               {/* --- HEADER --- */}
               <div className={`shrink-0 p-6 sm:p-8 border-b ${styles.headerBorder} ${styles.bg} relative overflow-hidden z-10`}>
                 {/* Header Glow (Dark Mode Only) */}
                 {isDark && <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />}
-                
+
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
                   <div className="flex items-center gap-5">
                     {/* Stock Logo */}
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-xl bg-gradient-to-br from-indigo-600 to-purple-600 ring-1 ring-white/10 relative overflow-hidden group">
-                       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                       {stock.symbol[0]}
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      {stock.symbol[0]}
                     </div>
-                    
+
                     <div>
                       <div className="flex items-center gap-3">
                         <h2 className={`text-3xl font-bold ${styles.text} tracking-tight`}>{stock.symbol}</h2>
@@ -172,8 +173,8 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                         </span>
                       </div>
                       <p className={`${styles.textMuted} text-sm font-medium mt-1 flex items-center gap-2`}>
-                        {stock.name} 
-                        <span className="opacity-30">•</span> 
+                        {stock.name}
+                        <span className="opacity-30">•</span>
                         <span className="text-xs opacity-70">NSE</span>
                       </p>
                     </div>
@@ -223,7 +224,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 
               {/* --- CONTENT AREA --- */}
               <div className={`flex-1 overflow-y-auto custom-scrollbar-dark ${styles.bg} relative`}>
-                
+
                 {/* 1. OVERVIEW TAB */}
                 {activeTab === 'overview' && (
                   <motion.div
@@ -260,17 +261,17 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 
                     {/* Volume & Market Cap */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <DetailCard 
-                        label="Total Volume" 
-                        value={stock.volume.toLocaleString()} 
-                        icon={Activity} 
+                      <DetailCard
+                        label="Total Volume"
+                        value={stock.volume.toLocaleString()}
+                        icon={Activity}
                         subtext="Shares Traded"
                         styles={styles}
                       />
-                      <DetailCard 
-                        label="Traded Value" 
-                        value={`₹${(stock.marketCap / 10000000).toFixed(2)} Cr`} 
-                        icon={BarChart3} 
+                      <DetailCard
+                        label="Traded Value"
+                        value={`₹${(stock.marketCap / 10000000).toFixed(2)} Cr`}
+                        icon={BarChart3}
                         subtext="Estimated Turnover"
                         styles={styles}
                       />
@@ -331,9 +332,9 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 
                 {/* 3. CHART TAB (Persistent) */}
                 <div className={`h-full w-full flex flex-col ${activeTab === 'chart' ? 'block' : 'hidden'}`}>
-                    <div className={`flex-1 min-h-[500px] h-full ${isDark ? 'bg-black' : 'bg-white'}`}>
-                       <div className="w-full h-full" ref={containerRef} />
-                    </div>
+                  <div className={`flex-1 min-h-[500px] h-full ${isDark ? 'bg-black' : 'bg-white'}`}>
+                    <div className="w-full h-full" ref={containerRef} />
+                  </div>
                 </div>
 
                 {/* 4. TRADING TAB */}
@@ -346,21 +347,21 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                     {!isLoggedIn ? (
                       <div className={`max-w-md w-full p-8 ${styles.cardBg} rounded-3xl border ${styles.border} relative overflow-hidden group`}>
                         {isDark && <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />}
-                        
+
                         <div className={`w-16 h-16 ${isDark ? 'bg-slate-900' : 'bg-white shadow-md'} rounded-2xl flex items-center justify-center mb-6 border ${styles.border} mx-auto shadow-2xl`}>
                           <Lock className="w-8 h-8 text-indigo-500" />
                         </div>
                         <h3 className={`text-2xl font-bold ${styles.text} mb-2`}>Login Required</h3>
                         <p className={`${styles.textMuted} mb-8 text-sm leading-relaxed`}>
-                            Access to the live trading terminal is restricted to verified members.
+                          Access to the live trading terminal is restricted to verified members.
                         </p>
                         <a href="/" className="block w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25">
-                            Connect Account
+                          Connect Account
                         </a>
                       </div>
                     ) : (
                       <div className={`max-w-md w-full p-10 ${styles.cardBg} rounded-3xl border ${styles.border} relative`}>
-                         {isDark && <div className="absolute -top-10 -left-10 w-32 h-32 bg-emerald-500/20 blur-[50px] rounded-full pointer-events-none" />}
+                        {isDark && <div className="absolute -top-10 -left-10 w-32 h-32 bg-emerald-500/20 blur-[50px] rounded-full pointer-events-none" />}
                         <div className={`w-16 h-16 ${isDark ? 'bg-slate-900' : 'bg-white shadow-md'} rounded-2xl flex items-center justify-center mb-6 border ${styles.border} mx-auto transform -rotate-6`}>
                           <Briefcase className="w-8 h-8 text-emerald-500" />
                         </div>
@@ -378,11 +379,11 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
               {/* Footer */}
               <div className={`p-4 border-t ${styles.footerBorder} ${styles.bg} flex justify-between items-center text-[10px] ${styles.textMuted} z-10`}>
                 <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3" />
-                    Last update: {new Date(stock.timestamp).toLocaleTimeString()}
+                  <Clock className="w-3 h-3" />
+                  Last update: {new Date(stock.timestamp).toLocaleTimeString()}
                 </div>
                 <div className="flex items-center gap-1">
-                    Data provided by <span className={`${styles.text} font-bold`}>NSE</span>
+                  Data provided by <span className={`${styles.text} font-bold`}>NSE</span>
                 </div>
               </div>
 
@@ -397,26 +398,26 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 // --- SUB COMPONENTS ---
 
 function StatCard({ label, value, color, styles }: { label: string, value: number, color?: string, styles: any }) {
-    const textColor = color || styles.text;
-    return (
-        <div className={`${styles.cardBg} p-5 rounded-2xl border ${styles.border} ${styles.cardHover} transition-colors group`}>
-            <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-2 group-hover:opacity-80 transition-opacity`}>{label}</div>
-            <div className={`text-xl font-bold ${textColor} tabular-nums`}>₹{value.toFixed(2)}</div>
-        </div>
-    )
+  const textColor = color || styles.text;
+  return (
+    <div className={`${styles.cardBg} p-5 rounded-2xl border ${styles.border} ${styles.cardHover} transition-colors group`}>
+      <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-2 group-hover:opacity-80 transition-opacity`}>{label}</div>
+      <div className={`text-xl font-bold ${textColor} tabular-nums`}>₹{value.toFixed(2)}</div>
+    </div>
+  )
 }
 
 function DetailCard({ label, value, icon: Icon, subtext, styles }: { label: string, value: string, icon: any, subtext: string, styles: any }) {
-    return (
-        <div className={`${styles.cardBg} p-6 rounded-2xl border ${styles.border} flex items-center justify-between ${styles.cardHover} transition-colors`}>
-            <div>
-                <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-1`}>{label}</div>
-                <div className={`text-2xl font-bold ${styles.text} tabular-nums tracking-tight mb-1`}>{value}</div>
-                <div className={`text-xs ${styles.textMuted} font-medium`}>{subtext}</div>
-            </div>
-            <div className={`w-12 h-12 rounded-full ${styles.inputBg} flex items-center justify-center`}>
-                <Icon className="w-6 h-6 text-indigo-500/80" />
-            </div>
-        </div>
-    )
+  return (
+    <div className={`${styles.cardBg} p-6 rounded-2xl border ${styles.border} flex items-center justify-between ${styles.cardHover} transition-colors`}>
+      <div>
+        <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-1`}>{label}</div>
+        <div className={`text-2xl font-bold ${styles.text} tabular-nums tracking-tight mb-1`}>{value}</div>
+        <div className={`text-xs ${styles.textMuted} font-medium`}>{subtext}</div>
+      </div>
+      <div className={`w-12 h-12 rounded-full ${styles.inputBg} flex items-center justify-center`}>
+        <Icon className="w-6 h-6 text-indigo-500/80" />
+      </div>
+    </div>
+  )
 }
