@@ -146,7 +146,7 @@ export default function ProductClient() {
 
             {/* --- HERO SECTION --- */}
             {/* Increased padding-top to pt-48 to account for global Fixed Navbar */}
-            <section className="relative z-10 pt-48 pb-32 overflow-hidden">
+            <section className="relative z-10 pt-32 md:pt-48 pb-32 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 text-center">
 
                     <motion.div

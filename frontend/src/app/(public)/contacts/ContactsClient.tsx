@@ -206,7 +206,7 @@ export default function ContactsClient() {
             </div>
 
             {/* --- TEAM GRID (3D TILT CARDS) --- */}
-            <section className="relative z-10 py-10 px-6 -mt-[40vh]">
+            <section className="relative z-10 py-10 px-6 -mt-20 md:-mt-[40vh]">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
                     {teamMembers.map((member, i) => (
                         <div key={member.id} className="h-[700px] w-full perspective-1000">
