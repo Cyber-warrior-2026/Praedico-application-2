@@ -115,27 +115,42 @@ interface SceneProps {
 
 export default function Scene({ children }: SceneProps) {
     return (
-        <div className="h-screen w-full relative">
-            <Canvas gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
-                <ambientLight intensity={0.5} />
-                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} color="#818cf8" />
-                <pointLight position={[-10, -10, -10]} intensity={1} color="#c084fc" />
+        <>
+            {/* MOBILE: Static Background */}
+            <div className="md:hidden min-h-screen w-full relative bg-[#020617] overflow-x-hidden">
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light"></div>
+                    <div className="absolute top-[-20%] left-[-10%] w-[300px] h-[300px] bg-indigo-600/20 rounded-full blur-[80px]" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[300px] h-[300px] bg-purple-600/20 rounded-full blur-[80px]" />
+                </div>
+                <div className="relative z-10 pt-20">
+                    {children}
+                </div>
+            </div>
 
-                <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-                <Sparkles count={50} scale={10} size={4} speed={0.4} opacity={0.5} color="#6366f1" />
+            {/* DESKTOP: 3D Canvas */}
+            <div className="hidden md:block h-screen w-full relative">
+                <Canvas gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
+                    <ambientLight intensity={0.5} />
+                    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} color="#818cf8" />
+                    <pointLight position={[-10, -10, -10]} intensity={1} color="#c084fc" />
 
-                <ScrollControls pages={6} damping={0.2}>
-                    {/* 3D Content Layers */}
-                    <Particles />
-                    <AbstractShape />
+                    <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+                    <Sparkles count={50} scale={10} size={4} speed={0.4} opacity={0.5} color="#6366f1" />
 
-                    {/* HTML Overlay */}
-                    <Scroll html style={{ width: '100vw', height: '100vh' }}>
-                        {children}
-                    </Scroll>
-                </ScrollControls>
+                    <ScrollControls pages={6} damping={0.2}>
+                        {/* 3D Content Layers */}
+                        <Particles />
+                        <AbstractShape />
 
-            </Canvas>
-        </div>
+                        {/* HTML Overlay */}
+                        <Scroll html style={{ width: '100vw', height: '100vh' }}>
+                            {children}
+                        </Scroll>
+                    </ScrollControls>
+
+                </Canvas>
+            </div>
+        </>
     );
 }

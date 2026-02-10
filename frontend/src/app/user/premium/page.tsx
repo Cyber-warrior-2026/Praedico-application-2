@@ -6,7 +6,7 @@ import { Check, Zap, Crown, Shield, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
 import Premium3DBackground from "../_components/Premium3DBackground";
 // ✅ ADDED: Centralized API imports
-import { authApi, paymentApi } from "@/lib/api"; 
+import { authApi, paymentApi } from "@/lib/api";
 
 export default function PremiumPage() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -22,7 +22,7 @@ export default function PremiumPage() {
             try {
                 // ✅ REFACTORED: Use authApi.getMe()
                 const data = await authApi.getMe();
-                
+
                 if (data.success && data.user) {
                     setCurrentPlan(data.user.currentPlan || "Free");
                     setHasUsedTrial(data.user.hasUsedTrial || false);
@@ -153,16 +153,16 @@ export default function PremiumPage() {
 
     // ... Return Statement remains exactly the same ...
     return (
-        <div className="min-h-screen bg-[#F8F9FE] pt-28 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
-             {/* ... Copy the rest of your JSX exactly as it was ... */}
-             {/* To save space I am not repeating the JSX here, but you can paste the Return block from your original code */}
-             <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="min-h-screen bg-[#F8F9FE] pt-24 md:pt-28 pb-20 font-sans text-slate-900 selection:bg-indigo-100 relative overflow-hidden">
+            {/* ... Copy the rest of your JSX exactly as it was ... */}
+            {/* To save space I am not repeating the JSX here, but you can paste the Return block from your original code */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
                 <Premium3DBackground />
             </div>
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 {/* ... Keep all your JSX code here ... */}
-                
+
                 {/* TRIAL EXPIRED BANNER */}
                 {hasUsedTrial && !isOnTrial && currentPlan === 'Free' && (
                     <motion.div
@@ -170,9 +170,9 @@ export default function PremiumPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         className="max-w-2xl mx-auto mb-12 relative group"
                     >
-                         {/* ... JSX ... */}
-                         <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                         <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
+                        {/* ... JSX ... */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                        <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-orange-500 to-rose-600 rounded-xl shadow-2xl border border-rose-400/30">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
                                     <Shield className="h-5 w-5 text-white fill-white" />
@@ -205,8 +205,8 @@ export default function PremiumPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         className="max-w-2xl mx-auto mb-12 relative group"
                     >
-                         {/* ... JSX ... */}
-                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                        {/* ... JSX ... */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                         <div className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl shadow-2xl border border-indigo-400/30">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-inner">
@@ -230,8 +230,8 @@ export default function PremiumPage() {
                     </motion.div>
                 )}
 
-                 {/* HEADER SECTION */}
-                 <motion.div
+                {/* HEADER SECTION */}
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -246,7 +246,7 @@ export default function PremiumPage() {
                         <Crown size={14} className="fill-indigo-600" /> Upgrade your experience
                     </motion.div>
 
-                    <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-6 tracking-tight">
                         Simple, Transparent <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient">Pricing</span>
                     </h1>
 
@@ -301,7 +301,7 @@ export default function PremiumPage() {
 
                 {/* PRICING CARDS */}
                 <div id="pricing-section" className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     <PricingCard
+                    <PricingCard
                         title="Pro"
                         price={billingCycle === 'monthly' ? "99" : "999"}
                         billingCycle={billingCycle}

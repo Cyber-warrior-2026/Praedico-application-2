@@ -42,8 +42,8 @@ export default function UserNewsPage() {
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(n => 
-        n.title.toLowerCase().includes(q) || 
+      result = result.filter(n =>
+        n.title.toLowerCase().includes(q) ||
         n.description.toLowerCase().includes(q)
       );
     }
@@ -63,29 +63,30 @@ export default function UserNewsPage() {
   ];
 
   return (
-<div className="min-h-screen bg-slate-50/50 p-6 md:p-8 pt-32 lg:pt-36">
+    <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 pt-24 md:pt-28">
       <div className="max-w-7xl mx-auto">
-        
+
+        {/* HEADER */}
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Market News</h1>
             <p className="text-slate-500 mt-1">Real-time insights tailored for your portfolio</p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative group">
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative group flex-1 md:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search markets..." 
+              <input
+                type="text"
+                placeholder="Search markets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 w-64 shadow-sm transition-all"
+                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 w-full md:w-64 shadow-sm transition-all"
               />
             </div>
-            
-            <button 
+
+            <button
               onClick={handleRefresh}
               className={`p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 shadow-sm transition-all ${isRefreshing ? 'animate-spin text-indigo-500' : ''}`}
             >
@@ -102,8 +103,8 @@ export default function UserNewsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`
                 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap
-                ${activeTab === tab.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                ${activeTab === tab.id
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
                   : 'bg-white text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 shadow-sm'}
               `}
             >

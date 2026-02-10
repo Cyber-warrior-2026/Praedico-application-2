@@ -20,23 +20,23 @@ export default function Nifty50Page() {
   const [sortBy, setSortBy] = useState<'symbol' | 'change'>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-const fetchStocks = async () => {
-  try {
-    setLoading(true);
-    const response = await stockApi.getNifty50Stocks();
-    
-    // ✅ FIX: Access response.data
-    setStocks(response.data);
-    setFilteredStocks(response.data);
-    setLastUpdated(response.lastUpdated || new Date().toISOString());
-    setError("");
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Failed to fetch Nifty 50 stocks");
-    console.error("Error fetching Nifty 50 stocks:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchStocks = async () => {
+    try {
+      setLoading(true);
+      const response = await stockApi.getNifty50Stocks();
+
+      // ✅ FIX: Access response.data
+      setStocks(response.data);
+      setFilteredStocks(response.data);
+      setLastUpdated(response.lastUpdated || new Date().toISOString());
+      setError("");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch Nifty 50 stocks");
+      console.error("Error fetching Nifty 50 stocks:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -79,11 +79,11 @@ const fetchStocks = async () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-24 pb-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-24 pb-12 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Animated Header */}
         <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div>
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 
@@ -91,20 +91,20 @@ const fetchStocks = async () => {
                 <TrendingUp className="w-4 h-4 text-blue-600" />
                 <span className="text-xs font-semibold text-blue-700">NIFTY 50</span>
               </div>
-              
-              <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+
+              <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                 Nifty 50 Market Data
-                <Zap className="w-8 h-8 text-yellow-500 animate-bounce" />
+                <Zap className="w-6 h-6 md:w-8 md:h-8 text-yellow-500 animate-bounce" />
               </h1>
-              <p className="text-gray-600 text-lg">Real-time data from NSE India</p>
+              <p className="text-gray-600 text-sm md:text-lg">Real-time data from NSE India</p>
             </div>
 
             <button
               onClick={fetchStocks}
               disabled={loading}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 
+              className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 
                        hover:from-blue-600 hover:to-blue-700 text-white font-semibold
-                       transition-all duration-300 flex items-center gap-2 shadow-lg 
+                       transition-all duration-300 flex items-center justify-center gap-2 shadow-lg 
                        hover:shadow-xl hover:scale-105 disabled:opacity-50 
                        disabled:cursor-not-allowed group"
             >
@@ -134,15 +134,15 @@ const fetchStocks = async () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="flex items-center gap-3">
-              <div className="px-5 py-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 
-                             border border-gray-200 shadow-sm hover:shadow-md transition-all">
+            <div className="w-full md:w-auto flex flex-row items-center justify-between md:justify-end gap-3">
+              <div className="flex-1 md:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 
+                             border border-gray-200 shadow-sm hover:shadow-md transition-all text-center md:text-left">
                 <span className="text-sm text-gray-600">Total: </span>
                 <span className="text-sm font-bold text-gray-900">{filteredStocks.length}</span>
               </div>
 
               {lastUpdated && (
-                <div className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r 
+                <div className="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 px-5 py-3 rounded-xl bg-gradient-to-r 
                                from-green-50 to-emerald-50 border border-green-200 shadow-sm 
                                hover:shadow-md transition-all animate-pulse">
                   <div className="relative">
@@ -179,101 +179,107 @@ const fetchStocks = async () => {
           <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden 
                          animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 
                          hover:shadow-2xl transition-shadow">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 
-                           border-b-2 border-gray-200 text-sm font-bold text-gray-700">
-              <div className="col-span-3 flex items-center gap-2 cursor-pointer hover:text-blue-600 
-                             transition-colors" onClick={() => toggleSort('symbol')}>
-                SYMBOL
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-              <div className="col-span-2 text-right">OPEN</div>
-              <div className="col-span-2 text-right">HIGH</div>
-              <div className="col-span-2 text-right">LOW</div>
-              <div className="col-span-1 text-right">PRICE</div>
-              <div className="col-span-2 text-right flex items-center justify-end gap-2 
-                             cursor-pointer hover:text-green-600 transition-colors"
-                   onClick={() => toggleSort('change')}>
-                CHANGE
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-            </div>
 
-            {/* Table Body */}
-            <div className="divide-y divide-gray-100">
-              {filteredStocks.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  No stocks found matching "{searchQuery}"
+            {/* Scrollable Container */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[800px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 
+                                border-b-2 border-gray-200 text-sm font-bold text-gray-700">
+                  <div className="col-span-3 flex items-center gap-2 cursor-pointer hover:text-blue-600 
+                                    transition-colors" onClick={() => toggleSort('symbol')}>
+                    SYMBOL
+                    <ArrowUpDown className="w-4 h-4" />
+                  </div>
+                  <div className="col-span-2 text-right">OPEN</div>
+                  <div className="col-span-2 text-right">HIGH</div>
+                  <div className="col-span-2 text-right">LOW</div>
+                  <div className="col-span-1 text-right">PRICE</div>
+                  <div className="col-span-2 text-right flex items-center justify-end gap-2 
+                                    cursor-pointer hover:text-green-600 transition-colors"
+                    onClick={() => toggleSort('change')}>
+                    CHANGE
+                    <ArrowUpDown className="w-4 h-4" />
+                  </div>
                 </div>
-              ) : (
-                filteredStocks.map((stock, index) => {
-                  const isPositive = stock.change >= 0;
-                  const changeColor = isPositive ? "text-green-600" : "text-red-600";
-                  const bgColor = isPositive ? "bg-green-50" : "bg-red-50";
 
-                  return (
-                    <div
-                      key={stock._id}
-                      onClick={() => handleStockClick(stock)}
-                      className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gradient-to-r 
-                               hover:from-blue-50 hover:to-purple-50 transition-all duration-300 
-                               cursor-pointer group animate-in fade-in slide-in-from-left 
-                               duration-500 hover:scale-[1.02]"
-                      style={{ animationDelay: `${index * 30}ms` }}
-                    >
-                      {/* Symbol */}
-                      <div className="col-span-3 flex items-center gap-3">
-                        <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 
-                                       to-blue-500 flex items-center justify-center font-bold 
-                                       text-white text-sm shadow-md group-hover:scale-110 
-                                       group-hover:rotate-6 transition-all duration-300">
-                          {stock.symbol.charAt(0)}
-                          <div className="absolute inset-0 bg-blue-300 rounded-xl opacity-0 
-                                         group-hover:opacity-30 group-hover:scale-150 
-                                         transition-all duration-500" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-gray-900 group-hover:text-blue-600 
-                                         transition-colors">
-                            {stock.symbol}
-                          </div>
-                          <div className="text-xs text-gray-500">{stock.name}</div>
-                        </div>
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-end text-gray-700 font-medium">
-                        ₹{stock.open.toFixed(2)}
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-end text-green-600 font-bold">
-                        ₹{stock.high.toFixed(2)}
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-end text-red-600 font-bold">
-                        ₹{stock.low.toFixed(2)}
-                      </div>
-
-                      <div className="col-span-1 flex items-center justify-end text-gray-900 font-bold 
-                                     text-lg">
-                        ₹{stock.price.toFixed(2)}
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-end">
-                        <div className={`px-4 py-2 rounded-xl ${bgColor} ${changeColor} font-bold 
-                                       text-sm flex items-center gap-1.5 shadow-sm 
-                                       group-hover:scale-110 transition-transform`}>
-                          {isPositive ? (
-                            <TrendingUp className="w-4 h-4 animate-bounce" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 animate-bounce" />
-                          )}
-                          <span>{stock.changePercent.toFixed(2)}%</span>
-                        </div>
-                      </div>
+                {/* Table Body */}
+                <div className="divide-y divide-gray-100">
+                  {filteredStocks.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      No stocks found matching "{searchQuery}"
                     </div>
-                  );
-                })
-              )}
+                  ) : (
+                    filteredStocks.map((stock, index) => {
+                      const isPositive = stock.change >= 0;
+                      const changeColor = isPositive ? "text-green-600" : "text-red-600";
+                      const bgColor = isPositive ? "bg-green-50" : "bg-red-50";
+
+                      return (
+                        <div
+                          key={stock._id}
+                          onClick={() => handleStockClick(stock)}
+                          className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gradient-to-r 
+                                    hover:from-blue-50 hover:to-purple-50 transition-all duration-300 
+                                    cursor-pointer group animate-in fade-in slide-in-from-left 
+                                    duration-500 hover:scale-[1.02]"
+                          style={{ animationDelay: `${index * 30}ms` }}
+                        >
+                          {/* Symbol */}
+                          <div className="col-span-3 flex items-center gap-3">
+                            <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 
+                                            to-blue-500 flex items-center justify-center font-bold 
+                                            text-white text-sm shadow-md group-hover:scale-110 
+                                            group-hover:rotate-6 transition-all duration-300">
+                              {stock.symbol.charAt(0)}
+                              <div className="absolute inset-0 bg-blue-300 rounded-xl opacity-0 
+                                                group-hover:opacity-30 group-hover:scale-150 
+                                                transition-all duration-500" />
+                            </div>
+                            <div>
+                              <div className="font-bold text-gray-900 group-hover:text-blue-600 
+                                                transition-colors">
+                                {stock.symbol}
+                              </div>
+                              <div className="text-xs text-gray-500">{stock.name}</div>
+                            </div>
+                          </div>
+
+                          <div className="col-span-2 flex items-center justify-end text-gray-700 font-medium">
+                            ₹{stock.open.toFixed(2)}
+                          </div>
+
+                          <div className="col-span-2 flex items-center justify-end text-green-600 font-bold">
+                            ₹{stock.high.toFixed(2)}
+                          </div>
+
+                          <div className="col-span-2 flex items-center justify-end text-red-600 font-bold">
+                            ₹{stock.low.toFixed(2)}
+                          </div>
+
+                          <div className="col-span-1 flex items-center justify-end text-gray-900 font-bold 
+                                            text-lg">
+                            ₹{stock.price.toFixed(2)}
+                          </div>
+
+                          <div className="col-span-2 flex items-center justify-end">
+                            <div className={`px-4 py-2 rounded-xl ${bgColor} ${changeColor} font-bold 
+                                            text-sm flex items-center gap-1.5 shadow-sm 
+                                            group-hover:scale-110 transition-transform`}>
+                              {isPositive ? (
+                                <TrendingUp className="w-4 h-4 animate-bounce" />
+                              ) : (
+                                <TrendingDown className="w-4 h-4 animate-bounce" />
+                              )}
+                              <span>{stock.changePercent.toFixed(2)}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -288,7 +294,7 @@ const fetchStocks = async () => {
         stock={selectedStock}
         theme="light"
       />
-         {/* AI Chatbot */}
+      {/* AI Chatbot */}
       <AIChatButton />
     </div>
   );

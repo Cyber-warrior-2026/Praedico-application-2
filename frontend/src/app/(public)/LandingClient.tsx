@@ -145,7 +145,7 @@ export default function LandingClient() {
                         <ArrowRight className="w-3 h-3" />
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 animate-reveal" style={{ animationDelay: '0.1s' }}>
+                    <h1 className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 animate-reveal" style={{ animationDelay: '0.1s' }}>
                         The Future of <br className="hidden md:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-white to-fuchsia-400 drop-shadow-[0_0_30px_rgba(79,70,229,0.3)]">Digital Protection</span>
                     </h1>

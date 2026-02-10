@@ -22,9 +22,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* 3. MAIN CONTENT */}
-      {/* Removed default padding so pages can be full-screen. Pages must handle their own padding. */}
-      {/* Also removed pt-20 (80px) so background colors can go to the very top behind the navbar */}
-      <main className="relative z-10 flex-1 w-full animate-in fade-in slide-in-from-bottom-2 duration-700">
+      {/* Added pt-24 (96px) to push content below fixed navbar on all devices. */}
+      <main className="relative z-10 flex-1 w-full pb-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
         {children}
       </main>
 

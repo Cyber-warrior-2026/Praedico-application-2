@@ -12,7 +12,7 @@ type TabType = 'nifty50' | 'nifty100' | 'etf';
 // --- 1. MEMOIZED ROW (Glass & Glow Style) ---
 const StockRow = memo(({ stock, index, currentTabColor, onClick }: { stock: Stock, index: number, currentTabColor: string, onClick: (s: Stock) => void }) => {
     const isPositive = stock.change >= 0;
-    
+
     // CSS-only delay for performance
     const animationDelay = `${Math.min(index * 0.03, 0.4)}s`;
 
@@ -26,7 +26,7 @@ const StockRow = memo(({ stock, index, currentTabColor, onClick }: { stock: Stoc
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
 
             {/* Symbol */}
-            <div className="col-span-3 flex items-center gap-4 relative z-10">
+            <div className="col-span-6 md:col-span-3 flex items-center gap-4 relative z-10">
                 <div className={`
                     w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm 
                     shadow-lg shadow-black/40 ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-300
@@ -42,21 +42,21 @@ const StockRow = memo(({ stock, index, currentTabColor, onClick }: { stock: Stoc
                 </div>
             </div>
 
-            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.open.toFixed(2)}</div>
-            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.high.toFixed(2)}</div>
-            <div className="col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight flex items-center justify-end">₹{stock.low.toFixed(2)}</div>
+            <div className="hidden md:flex md:col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight items-center justify-end">₹{stock.open.toFixed(2)}</div>
+            <div className="hidden md:flex md:col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight items-center justify-end">₹{stock.high.toFixed(2)}</div>
+            <div className="hidden md:flex md:col-span-2 text-right font-medium text-slate-400 tabular-nums text-sm tracking-tight items-center justify-end">₹{stock.low.toFixed(2)}</div>
 
             {/* Price with subtle glow */}
-            <div className="col-span-1 text-right font-bold text-white text-[15px] tabular-nums tracking-tight flex items-center justify-end drop-shadow-sm">
+            <div className="col-span-3 md:col-span-1 text-right font-bold text-white text-[15px] tabular-nums tracking-tight flex items-center justify-end drop-shadow-sm">
                 ₹{stock.price.toFixed(2)}
             </div>
 
             {/* Change Pill */}
-            <div className="col-span-2 flex justify-end relative z-10">
+            <div className="col-span-3 md:col-span-2 flex justify-end relative z-10">
                 <span className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold w-24 justify-center backdrop-blur-md transition-all duration-300
-                    ${isPositive 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_-3px_rgba(52,211,153,0.3)] group-hover:bg-emerald-500/20' 
+                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold w-full md:w-24 justify-center backdrop-blur-md transition-all duration-300
+                    ${isPositive
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_-3px_rgba(52,211,153,0.3)] group-hover:bg-emerald-500/20'
                         : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_-3px_rgba(251,113,133,0.3)] group-hover:bg-rose-500/20'}
                 `}>
                     {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -100,11 +100,11 @@ export default function MarketsClient() {
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<string>("");
-    
+
     // Sort State
     const [sortBy, setSortBy] = useState<'symbol' | 'change'>('symbol');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-    
+
     const fetchStocks = useCallback(async (tab: TabType) => {
         try {
             if (stocks.length === 0) setLoading(true);
@@ -125,8 +125,8 @@ export default function MarketsClient() {
     }, []);
 
     useEffect(() => {
-        setStocks([]); 
-        setSearchQuery(""); 
+        setStocks([]);
+        setSearchQuery("");
         fetchStocks(activeTab);
     }, [activeTab, fetchStocks]);
 
@@ -204,7 +204,7 @@ export default function MarketsClient() {
             <div className="fixed inset-0 z-0">
                 <div className="absolute inset-0 bg-[#030303]" />
                 <div className="absolute inset-0 bg-noise opacity-[0.3] mix-blend-overlay pointer-events-none" />
-                
+
                 {/* Deep Ambient Glows */}
                 <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80vw] h-[500px] bg-indigo-900/20 blur-[120px] rounded-full pointer-events-none" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
@@ -212,10 +212,10 @@ export default function MarketsClient() {
             </div>
 
             <div className="relative z-10 pt-28 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-                
+
                 {/* --- HEADER --- */}
                 <div className="flex flex-col items-center justify-center mb-16 text-center">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
                         className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-md shadow-2xl mb-6 group cursor-default hover:border-indigo-500/30 transition-colors"
                     >
@@ -226,13 +226,13 @@ export default function MarketsClient() {
                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300 group-hover:text-white transition-colors">Market Intelligence</span>
                     </motion.div>
 
-                    <motion.h1 
+                    <motion.h1
                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: "circOut" }}
                         className="text-5xl md:text-7xl font-medium text-white mb-6 tracking-tight"
                     >
                         Market <span className="font-serif italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-indigo-300">Pulse.</span>
                     </motion.h1>
-                    
+
                     <p className="text-slate-400 max-w-lg text-lg leading-relaxed font-light">
                         Real-time data visualization for <span className="text-white font-medium">India's leading indices</span>. Precision engineered for the modern investor.
                     </p>
@@ -297,7 +297,7 @@ export default function MarketsClient() {
                         </div>
 
                         <div className="flex items-center gap-6">
-                             <div className="hidden md:flex flex-col items-end">
+                            <div className="hidden md:flex flex-col items-end">
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Last Sync</span>
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-mono font-medium text-slate-300">
@@ -305,7 +305,7 @@ export default function MarketsClient() {
                                     </span>
                                 </div>
                             </div>
-                            
+
                             <button
                                 onClick={() => fetchStocks(activeTab)}
                                 disabled={loading}
@@ -318,14 +318,14 @@ export default function MarketsClient() {
 
                     {/* TABLE HEADER (Sticky) */}
                     <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/[0.05] text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] sticky top-0 z-20">
-                        <div className="col-span-3 hover:text-white cursor-pointer flex items-center gap-1.5 transition-colors" onClick={() => toggleSort('symbol')}>
+                        <div className="col-span-6 md:col-span-3 hover:text-white cursor-pointer flex items-center gap-1.5 transition-colors" onClick={() => toggleSort('symbol')}>
                             Symbol <ArrowUpDown className="w-2.5 h-2.5 opacity-50" />
                         </div>
-                        <div className="col-span-2 text-right">Open</div>
-                        <div className="col-span-2 text-right">High</div>
-                        <div className="col-span-2 text-right">Low</div>
-                        <div className="col-span-1 text-right">Price</div>
-                        <div className="col-span-2 text-right hover:text-white cursor-pointer flex items-center justify-end gap-1.5 transition-colors" onClick={() => toggleSort('change')}>
+                        <div className="hidden md:block md:col-span-2 text-right">Open</div>
+                        <div className="hidden md:block md:col-span-2 text-right">High</div>
+                        <div className="hidden md:block md:col-span-2 text-right">Low</div>
+                        <div className="col-span-3 md:col-span-1 text-right">Price</div>
+                        <div className="col-span-3 md:col-span-2 text-right hover:text-white cursor-pointer flex items-center justify-end gap-1.5 transition-colors" onClick={() => toggleSort('change')}>
                             Change <ArrowUpDown className="w-2.5 h-2.5 opacity-50" />
                         </div>
                     </div>
@@ -351,10 +351,10 @@ export default function MarketsClient() {
                             </div>
                         ) : (
                             processedStocks.map((stock, i) => (
-                                <StockRow 
-                                    key={stock.symbol} 
-                                    stock={stock} 
-                                    index={i} 
+                                <StockRow
+                                    key={stock.symbol}
+                                    stock={stock}
+                                    index={i}
                                     currentTabColor={currentTab.color}
                                     onClick={handleStockClick}
                                 />
@@ -362,12 +362,12 @@ export default function MarketsClient() {
                         )}
                     </div>
                 </motion.div>
-                
+
                 {/* FOOTER NOTE */}
                 <div className="text-center mt-8">
-                     <p className="text-[10px] text-slate-600 uppercase tracking-widest">
+                    <p className="text-[10px] text-slate-600 uppercase tracking-widest">
                         Data provided for informational purposes only
-                     </p>
+                    </p>
                 </div>
             </div>
 
