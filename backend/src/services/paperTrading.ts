@@ -240,6 +240,10 @@ class PaperTradingService {
   // Get user's portfolio
   async getPortfolio(userId: string) {
     try {
+      // 1. Fetch the user to get the real-time balance
+      const user = await UserModel.findById(userId).select('virtualBalance').lean();
+      
+      // 2. Fetch holdings
       const holdings = await PortfolioHolding.find({ userId })
         .sort({ currentValue: -1 })
         .lean();
@@ -293,7 +297,11 @@ class PaperTradingService {
       const totalPL = currentValue - totalInvested;
       const totalPLPercent = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
 
+      // 3. Return combined data (Balance + Holdings)
       return {
+        // Add the retrieved balance here. Default to 100000 if user not found/balance missing.
+        availableBalance: user?.virtualBalance ?? 100000, 
+        
         holdings: updatedHoldings,
         summary: {
           totalHoldings: updatedHoldings.length,
@@ -303,7 +311,9 @@ class PaperTradingService {
           totalPLPercent,
           profitableStocks: updatedHoldings.filter(h => h.unrealizedPL > 0).length,
           losingStocks: updatedHoldings.filter(h => h.unrealizedPL < 0).length
-        }
+        },
+        // Also useful to return total Account Value (Cash + Stock Value)
+        totalValue: (user?.virtualBalance ?? 100000) + currentValue
       };
     } catch (error: any) {
       console.error('Error in getPortfolio:', error);

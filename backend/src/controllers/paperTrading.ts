@@ -10,6 +10,21 @@ const getUserId = (req: Request): string => {
   return userId || '';
 };
 
+// ✨ Helper to extract auth token from cookies or Authorization header
+const getAuthToken = (req: Request): string => {
+  // 1. Try cookie first (how the frontend sends it)
+  let token = req.cookies?.accessToken;
+  // 2. Fallback to Authorization header
+  if (!token && req.headers.authorization) {
+    token = req.headers.authorization.startsWith('Bearer ')
+      ? req.headers.authorization
+      : `Bearer ${req.headers.authorization}`;
+  } else if (token) {
+    token = `Bearer ${token}`;
+  }
+  return token || '';
+};
+
 // Execute a paper trade
 export const executePaperTrade = async (req: Request, res: Response) => {
   try {
@@ -55,7 +70,8 @@ export const executePaperTrade = async (req: Request, res: Response) => {
     // Get AI recommendation before trade (optional)
     let aiAnalysis = null;
     try {
-      aiAnalysis = await aiTradingService.getStockAnalysis(symbol, userId);
+      const authToken = getAuthToken(req);
+      aiAnalysis = await aiTradingService.getStockAnalysis(symbol, userId, authToken);
     } catch (error) {
       console.log('AI analysis failed, proceeding with trade');
     }
@@ -212,9 +228,11 @@ export const getAIStockAnalysis = async (req: Request, res: Response) => {
     // ✅ normalize
     const symbol = Array.isArray(rawSymbol) ? rawSymbol[0] : rawSymbol;
 
+    const authToken = getAuthToken(req);
     const analysis = await aiTradingService.getStockAnalysis(
       symbol.toUpperCase(),
-      userId
+      userId,
+      authToken
     );
 
     res.status(200).json({
@@ -242,7 +260,8 @@ export const getAIPortfolioAnalysis = async (req: Request, res: Response) => {
       });
     }
 
-    const analysis = await aiTradingService.getPortfolioAnalysis(userId);
+    const authToken = getAuthToken(req);
+    const analysis = await aiTradingService.getPortfolioAnalysis(userId, authToken);
 
     res.status(200).json({
       success: true,
@@ -269,7 +288,8 @@ export const getTradingInsights = async (req: Request, res: Response) => {
       });
     }
 
-    const insights = await aiTradingService.getTradingInsights(userId);
+    const authToken = getAuthToken(req);
+    const insights = await aiTradingService.getTradingInsights(userId, authToken);
 
     res.status(200).json({
       success: true,

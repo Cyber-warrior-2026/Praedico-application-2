@@ -1,6 +1,6 @@
 import axios from 'axios';
 import StockData from '../models/stockData';
-import  PortfolioHolding  from '../models/portfolio';
+import PortfolioHolding from '../models/portfolio';
 import { PaperTradeModel } from '../models/paperTrade';
 
 interface AIAnalysisResult {
@@ -18,17 +18,27 @@ class AITradingService {
   private aiChatbotEndpoint: string;
 
   constructor() {
-    // Your AI chatbot API endpoint from routes/aiChat.ts
     this.aiChatbotEndpoint = process.env.AI_CHATBOT_URL || 'http://localhost:5001/api/ai/chat/message';
   }
 
-  // Get AI analysis for a stock before trading
-  async getStockAnalysis(symbol: string, userId?: string): Promise<AIAnalysisResult> {
+  // ✅ 1. ADD THIS HELPER METHOD
+  private async callAI(prompt: string, userId: string, context: string, token: string) {
+    return await axios.post(this.aiChatbotEndpoint, {
+      userId,
+      message: prompt,
+      context
+    }, {
+      headers: { 'Authorization': token }, // This fixes the 401 error
+      timeout: 20000
+    });
+  }
+
+  // ✅ 2. UPDATE SIGNATURE: Add 'token' parameter
+  async getStockAnalysis(symbol: string, userId: string, token: string): Promise<AIAnalysisResult> {
     try {
-      // Fetch historical stock data
       const stockHistory = await StockData.find({ symbol })
         .sort({ timestamp: -1 })
-        .limit(30) // Last 30 data points
+        .limit(30)
         .lean();
 
       if (stockHistory.length === 0) {
@@ -37,14 +47,12 @@ class AITradingService {
 
       const latestStock = stockHistory[0];
       
-      // Calculate technical indicators
       const prices = stockHistory.map(s => s.price);
       const sma5 = this.calculateSMA(prices, 5);
       const sma10 = this.calculateSMA(prices, 10);
       const rsi = this.calculateRSI(prices, 14);
       const volatility = this.calculateVolatility(prices);
 
-      // Prepare AI prompt
       const prompt = `
 You are an expert stock analyst. Analyze the following stock and provide trading recommendation:
 
@@ -59,7 +67,6 @@ Recent Performance:
 - Previous Close: ₹${latestStock.previousClose}
 - Change: ₹${latestStock.change} (${latestStock.changePercent}%)
 - Volume: ${latestStock.volume ? latestStock.volume.toLocaleString() : "N/A"}
-
 
 Technical Indicators:
 - 5-day SMA: ₹${sma5.toFixed(2)}
@@ -82,17 +89,11 @@ Based on this data, provide:
 Format your response as JSON.
 `;
 
-      // Call AI chatbot API
-      const aiResponse = await axios.post(this.aiChatbotEndpoint, {
-        userId,
-        message: prompt,
-        context: 'stock_analysis'
-      }, {
-        timeout: 10000
-      });
+      // ✅ 3. REFACTOR: Use the helper method
+      const aiResponse = await this.callAI(prompt, userId, 'stock_analysis', token);
 
-      // Parse AI response
-      const aiAnalysis = this.parseAIResponse(aiResponse.data.response);
+      const aiText = aiResponse.data?.data?.message || aiResponse.data?.response || '';
+      const aiAnalysis = this.parseAIResponse(aiText);
 
       return {
         recommendation: aiAnalysis.recommendation || 'HOLD',
@@ -107,13 +108,12 @@ Format your response as JSON.
 
     } catch (error: any) {
       console.error('AI Analysis Error:', error.message);
-      // Return neutral analysis if AI fails
       return this.getFallbackAnalysis(symbol);
     }
   }
 
-  // Get portfolio analysis from AI
-  async getPortfolioAnalysis(userId: string): Promise<string> {
+  // ✅ 2. UPDATE SIGNATURE: Add 'token' parameter
+  async getPortfolioAnalysis(userId: string, token: string): Promise<string> {
     try {
       const portfolio = await PortfolioHolding.find({ userId }).lean();
       
@@ -148,15 +148,10 @@ Provide:
 Keep the response concise and actionable (max 300 words).
 `;
 
-      const aiResponse = await axios.post(this.aiChatbotEndpoint, {
-        userId,
-        message: prompt,
-        context: 'portfolio_analysis'
-      }, {
-        timeout: 15000
-      });
+      // ✅ 3. REFACTOR: Use the helper method
+      const aiResponse = await this.callAI(prompt, userId, 'portfolio_analysis', token);
 
-      return aiResponse.data.response || 'Portfolio analysis unavailable';
+      return aiResponse.data?.data?.message || aiResponse.data?.response || 'Portfolio analysis unavailable';
 
     } catch (error: any) {
       console.error('Portfolio Analysis Error:', error.message);
@@ -164,8 +159,8 @@ Keep the response concise and actionable (max 300 words).
     }
   }
 
-  // Get personalized trading insights
-  async getTradingInsights(userId: string): Promise<any> {
+  // ✅ 2. UPDATE SIGNATURE: Add 'token' parameter
+  async getTradingInsights(userId: string, token: string): Promise<any> {
     try {
       const recentTrades = await PaperTradeModel.find({ userId })
         .sort({ createdAt: -1 })
@@ -196,14 +191,11 @@ Provide:
 Keep response under 200 words.
 `;
 
-      const aiResponse = await axios.post(this.aiChatbotEndpoint, {
-        userId,
-        message: prompt,
-        context: 'trading_insights'
-      });
+      // ✅ 3. REFACTOR: Use the helper method
+      const aiResponse = await this.callAI(prompt, userId, 'trading_insights', token);
 
       return {
-        insights: aiResponse.data.response,
+        insights: aiResponse.data?.data?.message || aiResponse.data?.response || 'Trading insights unavailable',
         tradingSummary: tradesSummary
       };
 
@@ -216,7 +208,8 @@ Keep response under 200 words.
     }
   }
 
-  // Technical indicator calculations
+  // --- Helper Methods ---
+
   private calculateSMA(prices: number[], period: number): number {
     if (prices.length < period) return prices[0] || 0;
     const sum = prices.slice(0, period).reduce((a, b) => a + b, 0);
@@ -258,7 +251,6 @@ Keep response under 200 words.
 
   private parseAIResponse(response: string): any {
     try {
-      // Try to extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -274,7 +266,7 @@ Keep response under 200 words.
       recommendation: 'HOLD',
       confidenceScore: 50,
       riskLevel: 'MEDIUM',
-      reasoning: 'Technical analysis indicates neutral market conditions. Consider waiting for clearer signals.',
+      reasoning: 'Technical analysis indicates neutral market conditions.',
       keyFactors: ['Market volatility', 'Volume analysis', 'Price trends'],
       suggestedPrice: undefined,
       stopLoss: undefined,

@@ -1,16 +1,26 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Activity, BarChart3, History, LayoutDashboard, LineChart, Briefcase, Lock, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, BarChart3, History, LayoutDashboard, LineChart, Briefcase, Lock, Clock, Loader2, Wallet, BrainCircuit, ArrowRightLeft } from "lucide-react";
 import { Stock } from "@/lib/types/stock.types";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { stockApi } from "@/lib/api";
+import { tradingApi } from "@/lib/api/trading.api";
+import { useTradingWebSocket } from "@/hooks/useTradingWebSocket";
+import { AIAnalysisCard } from "@/shared-components/trading/AIAnalysisCard";
+import { TradingPanel } from "@/shared-components/trading/TradingPanel";
+import { HoldingsCard } from "@/shared-components/trading/HoldingsCard";
+import {
+  AIAnalysis,
+  PortfolioHolding,
+  Portfolio,
+} from "@/lib/types/trading.types";
 
 interface StockDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   stock: Stock | null;
-  theme?: 'light' | 'dark'; // <--- NEW PROP ADDED
+  theme?: 'light' | 'dark';
 }
 
 type ModalTab = 'overview' | 'history' | 'chart' | 'trading';
@@ -22,9 +32,119 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
   const [chartLoaded, setChartLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isDark = theme === 'dark'; // Helper to switch styles
+  // Trading state
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [userHolding, setUserHolding] = useState<PortfolioHolding | null>(null);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [realtimePrice, setRealtimePrice] = useState<number | null>(null);
 
-  // Close modal on ESC key
+  const isDark = theme === 'dark';
+
+  // Check if user is authenticated
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!isOpen) return;
+
+      setAuthChecking(true);
+      try {
+        const response = await fetch('/api/users/me', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsLoggedIn(!!data.success);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        setIsLoggedIn(false);
+      } finally {
+        setAuthChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, [isOpen]);
+
+  // Fetch Portfolio - Memoized to prevent stale closures and ensure reliable updates
+  const fetchPortfolio = useCallback(async () => {
+    if (!isLoggedIn) return;
+    // Don't set loading to true on background updates to avoid UI flickering
+    // setPortfolioLoading(true); 
+    try {
+      const response = await tradingApi.getPortfolio();
+      if (response.success) {
+        console.log("Portfolio updated:", response.data); // Debugging log
+        setPortfolio(response.data);
+        const holding = response.data.holdings.find((h: PortfolioHolding) => h.symbol === stock?.symbol);
+        setUserHolding(holding || null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch portfolio:", error);
+      // Only reset if it's a hard error, otherwise keep stale data
+      // setPortfolio(null); 
+      // setUserHolding(null);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, [isLoggedIn, stock?.symbol]);
+
+  // WebSocket connection
+  const { isConnected, subscribeToStock, unsubscribeFromStock, subscribeToPortfolio } = useTradingWebSocket({
+    autoConnect: isLoggedIn,
+    onPriceUpdate: (data) => {
+      if (data.symbol === stock?.symbol) {
+        setRealtimePrice(data.price);
+      }
+    },
+    onPortfolioUpdate: () => {
+      fetchPortfolio();
+    },
+    onTradeExecuted: () => {
+      fetchPortfolio();
+    },
+  });
+
+  // Fetch AI Analysis
+  const fetchAIAnalysis = async () => {
+    if (!stock || !isLoggedIn) return;
+    setAiLoading(true);
+    try {
+      const response = await tradingApi.getAIAnalysis(stock.symbol);
+      if (response.success) {
+        setAiAnalysis(response.data);
+      }
+    } catch (error) {
+      setAiAnalysis(null);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Initial Portfolio Fetch on Mount/Login
+  useEffect(() => {
+    if (isLoggedIn) {
+        setPortfolioLoading(true);
+        fetchPortfolio().then(() => setPortfolioLoading(false));
+    }
+  }, [isLoggedIn, fetchPortfolio]);
+
+
+  const handleTradeExecuted = () => {
+    console.log("Trade executed, refreshing portfolio...");
+    fetchPortfolio();
+  };
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -37,11 +157,13 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
       window.removeEventListener("keydown", handleEsc);
       document.body.style.overflow = 'unset';
       setActiveTab('overview');
-      setChartLoaded(false); 
+      setChartLoaded(false);
+      if (stock) {
+        unsubscribeFromStock(stock.symbol);
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, stock, unsubscribeFromStock]);
 
-  // Fetch history logic
   useEffect(() => {
     if (activeTab === 'history' && stock && historyData.length === 0) {
       const fetchHistory = async () => {
@@ -59,7 +181,18 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     }
   }, [activeTab, stock, historyData.length]);
 
-  // TradingView Logic
+  useEffect(() => {
+    if (activeTab === 'trading' && isLoggedIn && stock) {
+      fetchPortfolio();
+      fetchAIAnalysis();
+
+      if (isConnected) {
+        subscribeToStock(stock.symbol);
+        subscribeToPortfolio();
+      }
+    }
+  }, [activeTab, isLoggedIn, stock, isConnected, fetchPortfolio]);
+
   useEffect(() => {
     if (activeTab === 'chart' && !chartLoaded && stock && containerRef.current) {
       containerRef.current.innerHTML = "";
@@ -72,11 +205,11 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
         "symbol": stock.symbol,
         "interval": "D",
         "timezone": "Asia/Kolkata",
-        "theme": isDark ? "dark" : "light", // <--- DYNAMIC THEME
+        "theme": isDark ? "dark" : "light",
         "style": "1",
         "locale": "in",
         "enable_publishing": false,
-        "backgroundColor": isDark ? "rgba(10, 10, 10, 1)" : "rgba(255, 255, 255, 1)", // <--- DYNAMIC BG
+        "backgroundColor": isDark ? "rgba(10, 10, 10, 1)" : "rgba(255, 255, 255, 1)",
         "gridColor": isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
         "hide_top_toolbar": false,
         "hide_legend": false,
@@ -90,18 +223,11 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     }
   }, [activeTab, chartLoaded, stock, isDark]);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
-      setIsLoggedIn(!!token);
-    }
-  }, []);
-
   if (!isOpen || !stock) return null;
 
   const isPositive = stock.change >= 0;
   const priceRangePercent = ((stock.price - stock.low) / (stock.high - stock.low)) * 100;
+  const displayPrice = realtimePrice || stock.price;
 
   const tabs = [
     { id: 'overview' as ModalTab, label: 'Overview', icon: LayoutDashboard },
@@ -110,7 +236,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     { id: 'trading' as ModalTab, label: 'Trade', icon: Briefcase },
   ];
 
-  // --- STYLE VARIABLES ---
   const styles = {
     bg: isDark ? 'bg-[#0A0A0A]' : 'bg-white',
     backdrop: isDark ? 'bg-[#050505]/80' : 'bg-slate-200/60',
@@ -118,7 +243,8 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     text: isDark ? 'text-white' : 'text-slate-900',
     textMuted: isDark ? 'text-slate-500' : 'text-slate-500',
     cardBg: isDark ? 'bg-white/[0.02]' : 'bg-slate-50',
-    cardHover: isDark ? 'hover:bg-white/[0.04]' : 'hover:bg-slate-100',
+    // Removed hover effect that was causing the vanishing issue
+    cardHover: '', 
     inputBg: isDark ? 'bg-white/[0.03]' : 'bg-white',
     divider: isDark ? 'divide-white/[0.05]' : 'divide-slate-200',
     headerBorder: isDark ? 'border-white/[0.06]' : 'border-slate-100',
@@ -131,15 +257,13 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop (Click to Close) */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className={`fixed inset-0 backdrop-blur-md z-[9998] ${styles.backdrop}`}
             onClick={onClose}
           />
 
-          {/* Modal Container */}
-         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -148,22 +272,19 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
               className={`relative ${styles.bg} rounded-[24px] border ${styles.border} shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col pointer-events-auto overflow-hidden ring-1 ring-black/5`}
               onClick={(e) => e.stopPropagation()}
             >
-               {/* Noise Texture (Dark Mode Only) */}
-               {isDark && <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none mix-blend-overlay" />}
+              {isDark && <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none mix-blend-overlay" />}
 
               {/* --- HEADER --- */}
               <div className={`shrink-0 p-6 sm:p-8 border-b ${styles.headerBorder} ${styles.bg} relative overflow-hidden z-10`}>
-                {/* Header Glow (Dark Mode Only) */}
                 {isDark && <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />}
-                
+
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
                   <div className="flex items-center gap-5">
-                    {/* Stock Logo */}
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-xl bg-gradient-to-br from-indigo-600 to-purple-600 ring-1 ring-white/10 relative overflow-hidden group">
-                       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                       {stock.symbol[0]}
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      {stock.symbol[0]}
                     </div>
-                    
+
                     <div>
                       <div className="flex items-center gap-3">
                         <h2 className={`text-3xl font-bold ${styles.text} tracking-tight`}>{stock.symbol}</h2>
@@ -172,8 +293,8 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                         </span>
                       </div>
                       <p className={`${styles.textMuted} text-sm font-medium mt-1 flex items-center gap-2`}>
-                        {stock.name} 
-                        <span className="opacity-30">•</span> 
+                        {stock.name}
+                        <span className="opacity-30">•</span>
                         <span className="text-xs opacity-70">NSE</span>
                       </p>
                     </div>
@@ -191,7 +312,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                   </div>
                 </div>
 
-                {/* Tabs Navigation */}
                 <div className="flex gap-1 mt-8 overflow-x-auto pb-1 custom-scrollbar-dark mask-linear-fade">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -223,8 +343,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 
               {/* --- CONTENT AREA --- */}
               <div className={`flex-1 overflow-y-auto custom-scrollbar-dark ${styles.bg} relative`}>
-                
-                {/* 1. OVERVIEW TAB */}
+
                 {activeTab === 'overview' && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -232,7 +351,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                     transition={{ duration: 0.4 }}
                     className="p-6 sm:p-8 space-y-6"
                   >
-                    {/* Key Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <StatCard label="Open" value={stock.open} styles={styles} />
                       <StatCard label="Prev. Close" value={stock.previousClose} styles={styles} />
@@ -240,7 +358,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                       <StatCard label="Day Low" value={stock.low} color="text-rose-500" styles={styles} />
                     </div>
 
-                    {/* Range Bar */}
                     <div className={`${styles.cardBg} p-6 rounded-2xl border ${styles.border}`}>
                       <div className={`flex justify-between text-sm font-medium ${styles.textMuted} mb-4`}>
                         <span>Day's Range</span>
@@ -258,19 +375,18 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                       </div>
                     </div>
 
-                    {/* Volume & Market Cap */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <DetailCard 
-                        label="Total Volume" 
-                        value={stock.volume.toLocaleString()} 
-                        icon={Activity} 
+                      <DetailCard
+                        label="Total Volume"
+                        value={stock.volume.toLocaleString()}
+                        icon={Activity}
                         subtext="Shares Traded"
                         styles={styles}
                       />
-                      <DetailCard 
-                        label="Traded Value" 
-                        value={`₹${(stock.marketCap / 10000000).toFixed(2)} Cr`} 
-                        icon={BarChart3} 
+                      <DetailCard
+                        label="Traded Value"
+                        value={`₹${(stock.marketCap / 10000000).toFixed(2)} Cr`}
+                        icon={BarChart3}
                         subtext="Estimated Turnover"
                         styles={styles}
                       />
@@ -278,7 +394,6 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                   </motion.div>
                 )}
 
-                {/* 2. HISTORY TAB */}
                 {activeTab === 'history' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 sm:p-8">
                     {loadingHistory ? (
@@ -329,45 +444,93 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                   </motion.div>
                 )}
 
-                {/* 3. CHART TAB (Persistent) */}
                 <div className={`h-full w-full flex flex-col ${activeTab === 'chart' ? 'block' : 'hidden'}`}>
-                    <div className={`flex-1 min-h-[500px] h-full ${isDark ? 'bg-black' : 'bg-white'}`}>
-                       <div className="w-full h-full" ref={containerRef} />
-                    </div>
+                  <div className={`flex-1 min-h-[500px] h-full ${isDark ? 'bg-black' : 'bg-white'}`}>
+                    <div className="w-full h-full" ref={containerRef} />
+                  </div>
                 </div>
 
                 {/* 4. TRADING TAB */}
                 {activeTab === 'trading' && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8"
+                    className="p-6 sm:p-8 h-full"
                   >
-                    {!isLoggedIn ? (
-                      <div className={`max-w-md w-full p-8 ${styles.cardBg} rounded-3xl border ${styles.border} relative overflow-hidden group`}>
-                        {isDark && <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />}
-                        
-                        <div className={`w-16 h-16 ${isDark ? 'bg-slate-900' : 'bg-white shadow-md'} rounded-2xl flex items-center justify-center mb-6 border ${styles.border} mx-auto shadow-2xl`}>
-                          <Lock className="w-8 h-8 text-indigo-500" />
-                        </div>
-                        <h3 className={`text-2xl font-bold ${styles.text} mb-2`}>Login Required</h3>
-                        <p className={`${styles.textMuted} mb-8 text-sm leading-relaxed`}>
+                    {authChecking ? (
+                      <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+                        <Loader2 className="h-10 w-10 animate-spin text-cyan-500 mb-4" />
+                        <p className={`${styles.textMuted} text-sm`}>Verifying authentication...</p>
+                      </div>
+                    ) : !isLoggedIn ? (
+                      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                        <div className={`max-w-md w-full p-8 ${styles.cardBg} rounded-3xl border ${styles.border} relative overflow-hidden group`}>
+                          {isDark && <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />}
+
+                          <div className={`w-16 h-16 ${isDark ? 'bg-slate-900' : 'bg-white shadow-md'} rounded-2xl flex items-center justify-center mb-6 border ${styles.border} mx-auto shadow-2xl`}>
+                            <Lock className="w-8 h-8 text-indigo-500" />
+                          </div>
+                          <h3 className={`text-2xl font-bold ${styles.text} mb-2`}>Login Required</h3>
+                          <p className={`${styles.textMuted} mb-8 text-sm leading-relaxed`}>
                             Access to the live trading terminal is restricted to verified members.
-                        </p>
-                        <a href="/" className="block w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25">
+                          </p>
+                          <a href="/" className="block w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25">
                             Connect Account
-                        </a>
+                          </a>
+                        </div>
                       </div>
                     ) : (
-                      <div className={`max-w-md w-full p-10 ${styles.cardBg} rounded-3xl border ${styles.border} relative`}>
-                         {isDark && <div className="absolute -top-10 -left-10 w-32 h-32 bg-emerald-500/20 blur-[50px] rounded-full pointer-events-none" />}
-                        <div className={`w-16 h-16 ${isDark ? 'bg-slate-900' : 'bg-white shadow-md'} rounded-2xl flex items-center justify-center mb-6 border ${styles.border} mx-auto transform -rotate-6`}>
-                          <Briefcase className="w-8 h-8 text-emerald-500" />
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                        {/* LEFT COLUMN: Analysis & Holdings (7/12) */}
+                        <div className="lg:col-span-7 space-y-6 flex flex-col">
+                          {/* AI Analysis Card */}
+                          <div className={`flex-1 rounded-2xl border ${styles.border} ${styles.cardBg} overflow-hidden flex flex-col`}>
+                             <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-indigo-950/10' : 'bg-indigo-50'}`}>
+                                <BrainCircuit className="w-5 h-5 text-indigo-500" />
+                                <h3 className={`font-semibold ${styles.text}`}>AI Market Analysis</h3>
+                             </div>
+                             <div className="p-4 flex-1">
+                                <AIAnalysisCard analysis={aiAnalysis} loading={aiLoading} />
+                             </div>
+                          </div>
+
+                          {/* Holdings Card */}
+                          <div className={`rounded-2xl border ${styles.border} ${styles.cardBg} overflow-hidden`}>
+                             <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-emerald-950/10' : 'bg-emerald-50'}`}>
+                                <Wallet className="w-5 h-5 text-emerald-500" />
+                                <h3 className={`font-semibold ${styles.text}`}>Your Position</h3>
+                             </div>
+                             <div className="p-4">
+                                <HoldingsCard holding={userHolding} loading={portfolioLoading} />
+                             </div>
+                          </div>
                         </div>
-                        <h3 className={`text-xl font-bold ${styles.text} mb-2`}>Terminal Offline</h3>
-                        <p className={`${styles.textMuted} text-sm`}>
-                          The Praedico Trading Engine is currently undergoing scheduled maintenance for the V2 upgrade.
-                        </p>
+
+                        {/* RIGHT COLUMN: Execution (5/12) */}
+                        <div className="lg:col-span-5 flex flex-col h-full">
+                          <div className={`flex-1 ${styles.cardBg} border ${styles.border} rounded-2xl p-0 overflow-hidden flex flex-col shadow-xl`}>
+                            <div className={`p-5 border-b ${styles.border} ${isDark ? 'bg-gradient-to-r from-indigo-600/10 to-transparent' : 'bg-slate-50'}`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
+                                    <h3 className={`font-bold text-lg ${styles.text}`}>Execute Trade</h3>
+                                </div>
+                                <p className={`text-xs ${styles.textMuted}`}>
+                                    Place instant market orders at realtime price.
+                                </p>
+                            </div>
+                            
+                            <div className="p-6 flex-1 flex flex-col justify-center">
+                              <TradingPanel
+                                symbol={stock.symbol}
+                                stockName={stock.name}
+                                currentPrice={displayPrice}
+                                userHolding={userHolding}
+                                availableBalance={portfolio?.availableBalance || 100000}
+                                onTradeExecuted={handleTradeExecuted}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </motion.div>
@@ -375,14 +538,13 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 
               </div>
 
-              {/* Footer */}
               <div className={`p-4 border-t ${styles.footerBorder} ${styles.bg} flex justify-between items-center text-[10px] ${styles.textMuted} z-10`}>
                 <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3" />
-                    Last update: {new Date(stock.timestamp).toLocaleTimeString()}
+                  <Clock className="w-3 h-3" />
+                  Last update: {new Date(stock.timestamp).toLocaleTimeString()}
                 </div>
                 <div className="flex items-center gap-1">
-                    Data provided by <span className={`${styles.text} font-bold`}>NSE</span>
+                  Data provided by <span className={`${styles.text} font-bold`}>NSE</span>
                 </div>
               </div>
 
@@ -397,26 +559,26 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
 // --- SUB COMPONENTS ---
 
 function StatCard({ label, value, color, styles }: { label: string, value: number, color?: string, styles: any }) {
-    const textColor = color || styles.text;
-    return (
-        <div className={`${styles.cardBg} p-5 rounded-2xl border ${styles.border} ${styles.cardHover} transition-colors group`}>
-            <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-2 group-hover:opacity-80 transition-opacity`}>{label}</div>
-            <div className={`text-xl font-bold ${textColor} tabular-nums`}>₹{value.toFixed(2)}</div>
-        </div>
-    )
+  const textColor = color || styles.text;
+  return (
+    <div className={`${styles.cardBg} p-5 rounded-2xl border ${styles.border} ${styles.cardHover} transition-colors group`}>
+      <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-2 group-hover:opacity-80 transition-opacity`}>{label}</div>
+      <div className={`text-xl font-bold ${textColor} tabular-nums`}>₹{value.toFixed(2)}</div>
+    </div>
+  )
 }
 
 function DetailCard({ label, value, icon: Icon, subtext, styles }: { label: string, value: string, icon: any, subtext: string, styles: any }) {
-    return (
-        <div className={`${styles.cardBg} p-6 rounded-2xl border ${styles.border} flex items-center justify-between ${styles.cardHover} transition-colors`}>
-            <div>
-                <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-1`}>{label}</div>
-                <div className={`text-2xl font-bold ${styles.text} tabular-nums tracking-tight mb-1`}>{value}</div>
-                <div className={`text-xs ${styles.textMuted} font-medium`}>{subtext}</div>
-            </div>
-            <div className={`w-12 h-12 rounded-full ${styles.inputBg} flex items-center justify-center`}>
-                <Icon className="w-6 h-6 text-indigo-500/80" />
-            </div>
-        </div>
-    )
+  return (
+    <div className={`${styles.cardBg} p-6 rounded-2xl border ${styles.border} flex items-center justify-between ${styles.cardHover} transition-colors`}>
+      <div>
+        <div className={`${styles.textMuted} text-[10px] font-bold uppercase tracking-wider mb-1`}>{label}</div>
+        <div className={`text-2xl font-bold ${styles.text} tabular-nums tracking-tight mb-1`}>{value}</div>
+        <div className={`text-xs ${styles.textMuted} font-medium`}>{subtext}</div>
+      </div>
+      <div className={`w-12 h-12 rounded-full ${styles.inputBg} flex items-center justify-center`}>
+        <Icon className="w-6 h-6 text-indigo-500/80" />
+      </div>
+    </div>
+  )
 }

@@ -64,7 +64,7 @@ app.use(
   app.use("/api/users", userRoutes);
   app.use('/api', stockDataRoutes);
   app.use('/api', newsDataRoutes); 
-  app.use('/api', aiChatRoutes);
+  app.use('/api/ai', aiChatRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/paper-trading', paperTradingRoutes);
 

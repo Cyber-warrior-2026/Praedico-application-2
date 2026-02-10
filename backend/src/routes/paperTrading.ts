@@ -1,4 +1,5 @@
 import express from 'express';
+// ✅ Import all controllers by name to ensure they are defined
 import {
   executePaperTrade,
   getTradeHistory,
@@ -9,7 +10,9 @@ import {
   getTradingInsights,
   resetVirtualBalance
 } from '../controllers/paperTrading';
-import { authorize } from '../common/guards/role.guard'; // Your auth guard
+
+// ✅ Import Guards & Middleware
+import { authorize } from '../common/guards/role.guard'; 
 import { 
   stockRecommendationLimiter, 
   portfolioLimiter 
@@ -21,16 +24,14 @@ const router = express.Router();
 // PAPER TRADING ROUTES
 // ============================================
 
-// All routes require authentication (user, admin, or super_admin)
-// Using your authorize guard with allowed roles
-
-// Core Trading Endpoints
+// 1. Trade Execution
 router.post(
   '/trade',
   authorize(['user', 'admin', 'super_admin']),
   executePaperTrade
 );
 
+// 2. History & Portfolio
 router.get(
   '/trades',
   authorize(['user', 'admin', 'super_admin']),
@@ -49,17 +50,7 @@ router.get(
   getTradingStats
 );
 
-router.post(
-  '/reset-balance',
-  authorize(['user', 'admin', 'super_admin']),
-  resetVirtualBalance
-);
-
-// ============================================
-// AI-POWERED TRADING ENDPOINTS
-// ============================================
-
-// Get AI analysis for a specific stock (with rate limiting)
+// 3. AI Endpoints
 router.get(
   '/ai/analysis/:symbol',
   authorize(['user', 'admin', 'super_admin']),
@@ -67,7 +58,6 @@ router.get(
   getAIStockAnalysis
 );
 
-// Get AI portfolio analysis (with stricter rate limiting)
 router.get(
   '/ai/portfolio-analysis',
   authorize(['user', 'admin', 'super_admin']),
@@ -75,11 +65,17 @@ router.get(
   getAIPortfolioAnalysis
 );
 
-// Get personalized trading insights
 router.get(
   '/ai/insights',
   authorize(['user', 'admin', 'super_admin']),
   getTradingInsights
+);
+
+// 4. Settings
+router.post(
+  '/reset-balance',
+  authorize(['user', 'admin', 'super_admin']),
+  resetVirtualBalance
 );
 
 export default router;
