@@ -14,6 +14,7 @@ import cronService from './services/cronService';
 import aiChatRoutes from './routes/aiChat'; 
 import paymentRoutes from './routes/payment';
 import paperTradingRoutes from './routes/paperTrading';
+import instituteRoutes from "./routes/institute";
 
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
@@ -67,6 +68,7 @@ app.use(
   app.use('/api/ai', aiChatRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/paper-trading', paperTradingRoutes);
+app.use('/api/institute', instituteRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes

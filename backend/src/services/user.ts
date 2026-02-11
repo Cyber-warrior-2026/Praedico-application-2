@@ -2,9 +2,12 @@ import { UserModel } from "../models/user";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { Types } from "mongoose";
+
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
+    sendStudentApprovalNotificationToInstitutes,  
 } from "./email";
 import { ENV } from "../config/env";
 
@@ -13,38 +16,54 @@ export class UserService {
   // =================================================================
   // 1. REGISTER
   // =================================================================
-  async register(email: string, name?: string) {
-    const existingUser = await UserModel.findOne({ email });
-
-    if (existingUser && existingUser.isVerified) {
-      throw new Error("Email already registered");
-    }
-
-    // Smart Name Logic: Use provided name or fallback to email prefix
-    const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    if (existingUser && !existingUser.isVerified) {
-      // Scenario: User tried to register before but never verified. 
-      // Resend token and update details.
-      existingUser.verificationToken = verificationToken;
-      existingUser.name = nameToSave;
-      await existingUser.save();
-    } else {
-      // Scenario: New User
-      await UserModel.create({
-        email,
-        name: nameToSave,
-        isVerified: false,
-        verificationToken,
-        isActive: true, // <--- Explicitly set to TRUE for new users
-      });
-    }
-
-    await sendVerificationEmail(email, verificationToken);
-
-    return { message: "Verification email sent. Check your inbox." };
+async register(email: string, name?: string, instituteId?: string) {
+  const existingUser = await UserModel.findOne({ email });
+  if (existingUser && existingUser.isVerified) {
+    throw new Error("Email already registered");
   }
+
+  // Smart Name Logic: Use provided name or fallback to email prefix
+  const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
+  if (existingUser && !existingUser.isVerified) {
+    // Scenario: User tried to register before but never verified.
+    // Resend token and update details.
+    existingUser.verificationToken = verificationToken;
+    existingUser.name = nameToSave;
+    
+    // NEW: Update institute if provided
+    if (instituteId) {
+      existingUser.institute = instituteId as any;
+      existingUser.instituteApprovalStatus = 'pending';
+    }
+    
+    await existingUser.save();
+  } else {
+    // Scenario: New User
+    await UserModel.create({
+      email,
+      name: nameToSave,
+      isVerified: false,
+      verificationToken,
+      isActive: true,
+      // NEW: Add institute fields
+institute: instituteId ? new Types.ObjectId(instituteId) : undefined,
+      instituteApprovalStatus: instituteId ? 'pending' : undefined,
+    });
+  }
+
+  await sendVerificationEmail(email, verificationToken);
+  
+  // NEW: Notify institute if student registered with institute
+  if (instituteId) {
+    // Import this function at the top
+    await sendStudentApprovalNotificationToInstitutes(instituteId, email, nameToSave);
+  }
+
+  return { message: "Verification email sent. Check your inbox." };
+}
+
 
   // =================================================================
   // 2. VERIFY EMAIL
@@ -76,26 +95,52 @@ export class UserService {
   // =================================================================
   // 3. LOGIN (The "Gatekeeper")
   // =================================================================
-  async login(email: string, plainPass: string) {
-    const user = await UserModel.findOne({ email }).select("+passwordHash");
+// =================================================================
+// 3. LOGIN (The "Gatekeeper")
+// =================================================================
+async login(email: string, plainPass: string) {
+  const user = await UserModel.findOne({ email }).select("+passwordHash");
+  
+  if (!user) throw new Error("Invalid credentials");
+  
+  if (!user.isVerified) throw new Error("Please verify your email first");
 
-    if (!user) throw new Error("Invalid credentials");
-    if (!user.isVerified) throw new Error("Please verify your email first");
-
-    // 🛑 SECURITY GATE: Check if Deleted OR Inactive
-    if (user.isDeleted) {
-      throw new Error("This account has been deleted. Contact support to restore it.");
-    }
-    if (user.isActive === false) {
-      throw new Error("Your account has been deactivated. Please contact support.");
-    }
-
-    const isValid = await argon2.verify(user.passwordHash!, plainPass);
-    if (!isValid) throw new Error("Invalid credentials");
-
-    const { accessToken, refreshToken } = this.generateTokens(user);
-    return { user, accessToken, refreshToken };
+  // 🛑 SECURITY GATE: Check if Deleted OR Inactive
+  if (user.isDeleted) {
+    throw new Error("This account has been deleted. Contact support to restore it.");
   }
+
+  if (user.isActive === false) {
+    throw new Error("Your account has been deactivated. Please contact support.");
+  }
+
+  // 🆕 NEW: Check Institute Approval Status
+  if (user.institute) {
+    // Student is linked to an institute - check approval status
+    if (user.instituteApprovalStatus === 'pending') {
+      throw new Error("Your registration is pending approval from your institute. Please wait for institute admin to approve.");
+    }
+    
+    if (user.instituteApprovalStatus === 'rejected') {
+      const reason = user.instituteRejectedReason || 'No reason provided';
+      throw new Error(`Your registration was rejected by the institute. Reason: ${reason}. Please contact your institute admin.`);
+    }
+    
+    // Only 'approved' status can proceed
+    if (user.instituteApprovalStatus !== 'approved') {
+      throw new Error("Access denied. Please contact your institute admin.");
+    }
+  }
+  // If user.institute is null/undefined, it means no institute selected - allow normal login
+
+  const isValid = await argon2.verify(user.passwordHash!, plainPass);
+  if (!isValid) throw new Error("Invalid credentials");
+
+  const { accessToken, refreshToken } = this.generateTokens(user);
+  
+  return { user, accessToken, refreshToken };
+}
+
 
   // =================================================================
   // 4. FORGOT PASSWORD

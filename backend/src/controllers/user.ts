@@ -10,6 +10,7 @@ const userService = new UserService();
 const registerSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
+   instituteId: z.string().optional(),
 });
 
 const verifySchema = z.object({
@@ -28,11 +29,11 @@ const resetPasswordSchema = z.object({
 
 export class UserController {
   register = asyncHandler(async (req: Request, res: Response) => {
-    // 2. UPDATE: Parse 'name' from request body
-    const { email, name } = registerSchema.parse(req.body);
+    // 2. UPDATE: Parse 'name' and 'instituteId' from request body
+     const { email, name, instituteId } = registerSchema.parse(req.body);  
 
-    // 3. UPDATE: Pass 'name' to the service
-    const result = await userService.register(email, name);
+    // 3. UPDATE: Pass 'name' and 'instituteId' to the service
+    const result = await userService.register(email, name, instituteId);
 
     res.status(200).json({ success: true, ...result });
   });
