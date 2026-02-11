@@ -7,6 +7,8 @@ import AIChatModal from './AIChatModal';
 import PremiumFeatureModal from '../PremiumFeatureModal';
 import axiosInstance from '@/lib/axios';
 
+import { useTheme } from 'next-themes';
+
 export default function AIChatButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -14,7 +16,11 @@ export default function AIChatButton() {
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     checkAccess();
   }, []);
 
@@ -43,6 +49,8 @@ export default function AIChatButton() {
     }
   };
 
+  const isDark = mounted && resolvedTheme === 'dark';
+
   // --- LOADING SKELETON (Prevents layout shift) ---
   if (loading) {
     return (
@@ -55,7 +63,7 @@ export default function AIChatButton() {
   return (
     <>
       <div className="fixed bottom-8 right-8 z-40 flex items-center justify-end">
-        
+
         {/* HOVER LABEL (Slides out) */}
         <AnimatePresence>
           {isHovered && (
@@ -63,7 +71,7 @@ export default function AIChatButton() {
               initial={{ opacity: 0, x: 20, scale: 0.9 }}
               animate={{ opacity: 1, x: -16, scale: 1 }}
               exit={{ opacity: 0, x: 10, scale: 0.9 }}
-              className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold text-sm shadow-2xl border border-slate-100 hidden md:block"
+              className={`${isDark ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-slate-900 border-slate-100'} px-4 py-2 rounded-xl font-bold text-sm shadow-2xl border hidden md:block`}
             >
               Ask AI Assistant
             </motion.div>
@@ -84,10 +92,10 @@ export default function AIChatButton() {
         >
           {/* 1. Animated Glow Background */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 animate-gradient-xy opacity-90 group-hover:opacity-100 transition-opacity" />
-          
+
           {/* 2. Glass Shine Effect */}
           <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
-          
+
           {/* 3. Inner Ring */}
           <div className="absolute inset-0 rounded-full border border-white/10" />
 
@@ -96,7 +104,7 @@ export default function AIChatButton() {
             {hasAccess ? (
               <div className="relative">
                 <MessageSquare className="w-7 h-7" />
-                <motion.div 
+                <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   className="absolute -top-1 -right-1"
@@ -115,8 +123,8 @@ export default function AIChatButton() {
       </div>
 
       {/* CHAT INTERFACE */}
-      {/* Passing theme="light" as requested for dashboard context */}
-      <AIChatModal isOpen={isOpen} onClose={() => setIsOpen(false)} theme="light" />
+      {/* Dynamic Theme derived from parent context */}
+      <AIChatModal isOpen={isOpen} onClose={() => setIsOpen(false)} theme={mounted ? (resolvedTheme as 'light' | 'dark') : 'dark'} />
 
       {/* PREMIUM UPGRADE MODAL */}
       <PremiumFeatureModal isOpen={showPremiumModal} onClose={() => setShowPremiumModal(false)} />
