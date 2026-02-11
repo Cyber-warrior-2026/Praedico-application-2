@@ -2,469 +2,416 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { 
-  X, Send, Trash2, Loader2, Sparkles, MessageSquare, 
-  TrendingUp, PieChart, BarChart 
+  X, Trash2, Loader2, Sparkles, MessageSquare, 
+  TrendingUp, PieChart, BarChart, Bot, User, ArrowRight
 } from 'lucide-react';
 import { chatApi, ChatMessage as ChatMessageType } from '@/lib/api/chat.api';
 import ChatMessage from './ChatMessage';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  theme?: 'light' | 'dark';
 }
 
-export default function AIChatModal({ isOpen, onClose }: Props) {
+export default function AIChatModal({ isOpen, onClose, theme = 'dark' }: Props) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   
-  const [showStockAnalysis, setShowStockAnalysis] = useState(false);
-  const [showPortfolio, setShowPortfolio] = useState(false);
+  // Action Center State
+  const [activeMode, setActiveMode] = useState<'chat' | 'stock' | 'portfolio'>('chat');
   const [stockSymbol, setStockSymbol] = useState('');
   const [portfolioBudget, setPortfolioBudget] = useState('');
   const [portfolioRisk, setPortfolioRisk] = useState<'low' | 'medium' | 'high'>('medium');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  const isDark = theme === 'dark';
 
+  // --- THEME ENGINE ---
+  const styles = {
+    // Containers
+    backdrop: isDark ? 'bg-black/60' : 'bg-slate-900/20',
+    modalBg: isDark ? 'bg-[#050505]' : 'bg-white',
+    modalBorder: isDark ? 'border-white/[0.08]' : 'border-slate-200',
+    
+    // Header
+    headerBg: isDark ? 'bg-[#0A0A0A]/80' : 'bg-white/80',
+    headerBorder: isDark ? 'border-white/[0.06]' : 'border-slate-100',
+    headerText: isDark ? 'text-white' : 'text-slate-900',
+    headerSubText: isDark ? 'text-slate-400' : 'text-slate-500',
+    
+    // Chat Area
+    chatBg: isDark ? 'bg-gradient-to-b from-[#050505] to-[#080808]' : 'bg-slate-50/50',
+    noiseOpacity: isDark ? 'opacity-[0.02]' : 'opacity-[0.4]',
+    
+    // Message Bubbles
+    userBubble: isDark ? 'bg-white text-slate-900' : 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20',
+    botBubble: isDark ? 'bg-white/[0.04] text-slate-200 border-white/[0.05]' : 'bg-white text-slate-800 border-slate-100 shadow-sm',
+    
+    // Input Area
+    inputSectionBg: isDark ? 'bg-[#0A0A0A]' : 'bg-white',
+    inputBg: isDark ? 'bg-white/[0.03]' : 'bg-slate-100',
+    inputBorder: isDark ? 'border-white/[0.08]' : 'border-slate-200',
+    inputText: isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400',
+    inputFocus: isDark ? 'focus-within:bg-white/[0.05]' : 'focus-within:bg-white',
+    
+    // Buttons & Icons
+    iconButton: isDark ? 'hover:bg-white/[0.05] text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900',
+    sendButton: isDark ? 'bg-indigo-600 text-white' : 'bg-indigo-600 text-white',
+    actionCardBg: isDark ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-slate-50 border-slate-200',
+  };
+
+  // --- LIFECYCLE ---
   useEffect(() => {
     if (isOpen) {
       fetchHistory();
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
+    return () => { document.body.style.overflow = 'unset'; }
   }, [isOpen]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, activeMode, loading]);
 
+  // --- API ---
   const fetchHistory = async () => {
     try {
       setLoadingHistory(true);
       const response = await chatApi.getChatHistory(50);
       setMessages(response.data);
     } catch (error) {
-      console.error('Failed to fetch chat history:', error);
+      console.error('Failed to fetch history:', error);
     } finally {
       setLoadingHistory(false);
     }
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
   };
 
-  const handleSend = async (messageText?: string) => {
-    const textToSend = messageText || input.trim();
-    
-    if (!textToSend || loading) return;
+  const handleSend = async (overrideText?: string) => {
+    const text = overrideText || input.trim();
+    if (!text || loading) return;
 
-    if (!messageText) {
-      setInput('');
-    }
+    if (!overrideText) setInput('');
+    setActiveMode('chat'); 
     setLoading(true);
 
-    const tempUserMessage: ChatMessageType = {
-      _id: Date.now().toString(),
-      userId: 'temp',
-      role: 'user',
-      content: textToSend,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, tempUserMessage]);
+    addMessage({ _id: Date.now().toString(), role: 'user', content: text, userId: 'me', timestamp: new Date().toISOString() });
 
     try {
-      const response = await chatApi.sendMessage(textToSend);
-
-      const aiMessage: ChatMessageType = {
+      const response = await chatApi.sendMessage(text);
+      addMessage({
         _id: (Date.now() + 1).toString(),
-        userId: 'temp',
         role: 'assistant',
         content: response.data.message,
-        timestamp: response.data.timestamp,
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error: any) {
-      console.error('Failed to send message:', error);
-      
-      const errorMessage: ChatMessageType = {
-        _id: (Date.now() + 1).toString(),
-        userId: 'temp',
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+        userId: 'bot',
+        timestamp: response.data.timestamp
+      });
+    } catch (error) {
+      addMessage({ _id: (Date.now() + 1).toString(), role: 'assistant', content: "Connection error. Please try again.", userId: 'bot', timestamp: new Date().toISOString() });
     } finally {
       setLoading(false);
     }
   };
 
   const handleStockAnalysis = async () => {
-    if (!stockSymbol.trim()) {
-      alert('Please enter a stock symbol');
-      return;
-    }
-
+    if (!stockSymbol.trim()) return;
     setLoading(true);
-    setShowStockAnalysis(false);
-
-    const userMessage: ChatMessageType = {
-      _id: Date.now().toString(),
-      userId: 'temp',
-      role: 'user',
-      content: `Analyze ${stockSymbol.toUpperCase()} stock`,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    setActiveMode('chat');
+    setStockSymbol('');
+    addMessage({ _id: Date.now().toString(), role: 'user', content: `Analyze ${stockSymbol.toUpperCase()}`, userId: 'me', timestamp: new Date().toISOString() });
 
     try {
       const response = await chatApi.analyzeStock(stockSymbol.toUpperCase());
-
-      const aiMessage: ChatMessageType = {
+      addMessage({
         _id: (Date.now() + 1).toString(),
-        userId: 'temp',
         role: 'assistant',
         content: response.data.analysis,
+        userId: 'bot',
         timestamp: response.data.timestamp,
-        metadata: {
-          queryType: 'stock_analysis',
-          stockSymbol: stockSymbol.toUpperCase(),
-        },
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setStockSymbol('');
-    } catch (error: any) {
-      console.error('Failed to analyze stock:', error);
-      const errorMessage: ChatMessageType = {
-        _id: (Date.now() + 1).toString(),
-        userId: 'temp',
-        role: 'assistant',
-        content: `Failed to analyze ${stockSymbol.toUpperCase()}. ${error.response?.data?.message || 'Please check the symbol and try again.'}`,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+        metadata: { queryType: 'stock_analysis', stockSymbol: stockSymbol.toUpperCase() }
+      });
+    } catch (error) {
+        addMessage({ _id: Date.now().toString(), role: 'assistant', content: "Analysis failed.", userId: 'bot', timestamp: new Date().toISOString() });
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePortfolioRecommendation = async () => {
+  const handlePortfolio = async () => {
     const budget = parseFloat(portfolioBudget);
-    
-    if (!budget || budget <= 0) {
-      alert('Please enter a valid budget amount');
-      return;
-    }
-
+    if (!budget) return;
     setLoading(true);
-    setShowPortfolio(false);
-
-    const userMessage: ChatMessageType = {
-      _id: Date.now().toString(),
-      userId: 'temp',
-      role: 'user',
-      content: `Recommend portfolio for ₹${budget.toLocaleString('en-IN')} with ${portfolioRisk} risk`,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    setActiveMode('chat');
+    setPortfolioBudget('');
+    addMessage({ _id: Date.now().toString(), role: 'user', content: `Build a ${portfolioRisk} risk portfolio for ₹${budget.toLocaleString()}`, userId: 'me', timestamp: new Date().toISOString() });
 
     try {
       const response = await chatApi.recommendPortfolio(budget, portfolioRisk);
-
-      const aiMessage: ChatMessageType = {
+      addMessage({
         _id: (Date.now() + 1).toString(),
-        userId: 'temp',
         role: 'assistant',
         content: response.data.recommendation,
+        userId: 'bot',
         timestamp: response.data.timestamp,
-        metadata: {
-          queryType: 'portfolio_recommendation',
-        },
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setPortfolioBudget('');
-      setPortfolioRisk('medium');
-    } catch (error: any) {
-      console.error('Failed to get portfolio recommendation:', error);
-      const errorMessage: ChatMessageType = {
-        _id: (Date.now() + 1).toString(),
-        userId: 'temp',
-        role: 'assistant',
-        content: `Failed to generate portfolio recommendation. ${error.response?.data?.message || 'Please try again.'}`,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearChat = async () => {
-    if (!confirm('Are you sure you want to clear your chat history?')) return;
-
-    try {
-      await chatApi.clearChatHistory();
-      setMessages([]);
+        metadata: { queryType: 'portfolio_recommendation' }
+      });
     } catch (error) {
-      console.error('Failed to clear chat:', error);
-      alert('Failed to clear chat history');
+        addMessage({ _id: Date.now().toString(), role: 'assistant', content: "Portfolio generation failed.", userId: 'bot', timestamp: new Date().toISOString() });
+    } finally {
+        setLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleClear = async () => {
+    if(!confirm("Clear history?")) return;
+    setMessages([]);
+    await chatApi.clearChatHistory();
   };
 
-  // ✅ NEW: Quick action handler for instant message sending
-  const handleQuickAction = (message: string) => {
-    handleSend(message);
-  };
+  const addMessage = (msg: ChatMessageType) => setMessages(prev => [...prev, msg]);
 
+  // --- RENDER ---
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] animate-in fade-in duration-200"
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className={`fixed inset-0 backdrop-blur-sm z-[100] ${styles.backdrop}`}
         onClick={onClose}
       />
 
-      {/* ✅ FIXED: Modal with proper spacing from navbar */}
-      <div className="fixed top-20 left-0 right-0 bottom-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-5xl h-full max-h-[calc(100vh-6rem)] bg-white rounded-2xl shadow-2xl flex flex-col pointer-events-auto animate-in zoom-in duration-300">
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
+          className={`w-full max-w-5xl h-[85vh] ${styles.modalBg} rounded-[24px] shadow-2xl border ${styles.modalBorder} flex flex-col pointer-events-auto overflow-hidden relative ring-1 ring-black/5`}
+        >
           
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-2xl flex-shrink-0">
+          {/* HEADER */}
+          <div className={`h-16 border-b ${styles.headerBorder} ${styles.headerBg} backdrop-blur-xl flex items-center justify-between px-6 relative z-20`}>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                <Sparkles className="w-6 h-6" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">AI Stock Assistant</h3>
-                <p className="text-sm text-white/80">Ask me anything about Indian stock markets</p>
+                <h3 className={`text-sm font-bold ${styles.headerText} tracking-wide`}>PRAEDICO AI</h3>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className={`text-[10px] font-medium uppercase tracking-wider ${styles.headerSubText}`}>Online</span>
+                </div>
               </div>
             </div>
             
-            <div className="flex gap-2">
-              <button
-                onClick={handleClearChat}
-                className="p-2.5 hover:bg-white/20 rounded-lg transition-colors"
-                title="Clear chat"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2.5 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex items-center gap-2">
+                <button onClick={handleClear} className={`p-2 rounded-lg transition-colors ${styles.iconButton}`} title="Clear">
+                    <Trash2 className="w-4 h-4" />
+                </button>
+                <div className={`w-[1px] h-4 mx-1 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
+                <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${styles.iconButton}`}>
+                    <X className="w-5 h-5" />
+                </button>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+          {/* CHAT AREA */}
+          <div className={`flex-1 overflow-y-auto custom-scrollbar-dark p-6 space-y-6 relative ${styles.chatBg}`}>
+            {/* Texture */}
+            <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-overlay ${styles.noiseOpacity}`} />
+
             {loadingHistory ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
+               <div className="h-full flex flex-col items-center justify-center gap-3 text-slate-500">
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                  <span className="text-xs uppercase tracking-widest font-medium">Loading Memory...</span>
+               </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-10 h-10 text-blue-500" />
-                </div>
-                <h4 className="text-xl font-semibold text-gray-700 mb-2">Start a Conversation</h4>
-                <p className="text-gray-500 max-w-md mb-6">
-                  Ask me about stocks, get AI analysis, or portfolio recommendations!
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleQuickAction('What is Nifty 50?')}
-                    className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm transition-colors"
-                  >
-                    What is Nifty 50?
-                  </button>
-                  <button
-                    onClick={() => handleQuickAction('Tell me about TCS')}
-                    className="px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-sm transition-colors"
-                  >
-                    About TCS
-                  </button>
-                  <button
-                    onClick={() => setShowStockAnalysis(true)}
-                    className="px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-sm transition-colors"
-                  >
-                    Analyze a Stock
-                  </button>
-                  <button
-                    onClick={() => setShowPortfolio(true)}
-                    className="px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-sm transition-colors"
-                  >
-                    Portfolio Advice
-                  </button>
-                </div>
-              </div>
+               <EmptyState onAction={handleSend} isDark={isDark} />
             ) : (
-              <>
-                {messages.map((message) => (
-                  <ChatMessage key={message._id} message={message} />
-                ))}
-                {loading && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    </div>
-                    <div className="px-4 py-2.5 bg-gray-200 rounded-2xl rounded-tl-sm">
-                      <p className="text-sm text-gray-600">Analyzing...</p>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </>
+                <>
+                    {messages.map((msg, idx) => (
+                        <MessageItem key={msg._id || idx} message={msg} styles={styles} isDark={isDark} />
+                    ))}
+                    
+                    {loading && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4">
+                            <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${isDark ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
+                                <Bot className="w-4 h-4 text-indigo-500" />
+                            </div>
+                            <div className="flex items-center gap-1 h-10 px-3">
+                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" />
+                            </div>
+                        </motion.div>
+                    )}
+                    <div ref={messagesEndRef} className="h-4" />
+                </>
             )}
           </div>
 
-          {/* Special Actions Bar */}
-          <div className="border-t bg-white px-5 py-3 flex-shrink-0">
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <button
-                onClick={() => setShowStockAnalysis(!showStockAnalysis)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm transition-colors whitespace-nowrap"
-              >
-                <TrendingUp className="w-4 h-4" />
-                Analyze Stock
-              </button>
-              <button
-                onClick={() => setShowPortfolio(!showPortfolio)}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-sm transition-colors whitespace-nowrap"
-              >
-                <PieChart className="w-4 h-4" />
-                Portfolio Advice
-              </button>
-              {/* ✅ FIXED: Top Gainers now directly sends message */}
-              <button
-                onClick={() => handleQuickAction('What are the top Nifty 50 gainers today?')}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-sm transition-colors whitespace-nowrap disabled:opacity-50"
-              >
-                <BarChart className="w-4 h-4" />
-                Top Gainers
-              </button>
-            </div>
+          {/* INPUT AREA */}
+          <div className={`${styles.inputSectionBg} border-t ${styles.headerBorder} p-5 relative z-30`}>
+            
+            {/* Action Center */}
+            <AnimatePresence mode='wait'>
+                {activeMode !== 'chat' && (
+                    <motion.div 
+                        initial={{ height: 0, opacity: 0, marginBottom: 0 }} 
+                        animate={{ height: 'auto', opacity: 1, marginBottom: 16 }} 
+                        exit={{ height: 0, opacity: 0, marginBottom: 0 }} 
+                        className="overflow-hidden"
+                    >
+                        <div className={`${styles.actionCardBg} border ${styles.headerBorder} rounded-xl p-4 relative`}>
+                            <button onClick={() => setActiveMode('chat')} className={`absolute top-2 right-2 p-1 rounded-lg ${styles.iconButton}`}><X className="w-4 h-4" /></button>
 
-            {/* Stock Analysis Form */}
-            {showStockAnalysis && (
-              <div className="mt-3 p-4 bg-blue-50 rounded-lg animate-in slide-in-from-top duration-200">
-                <h4 className="font-semibold text-blue-900 mb-3">Stock Analysis</h4>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={stockSymbol}
-                    onChange={(e) => setStockSymbol(e.target.value.toUpperCase())}
-                    placeholder="Enter stock symbol (e.g., RELIANCE, TCS)"
-                    className="flex-1 px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    onKeyPress={(e) => e.key === 'Enter' && handleStockAnalysis()}
-                  />
-                  <button
-                    onClick={handleStockAnalysis}
-                    disabled={loading || !stockSymbol.trim()}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Analyze
-                  </button>
-                </div>
-                <p className="text-xs text-blue-600 mt-2">
-                  Get AI-powered analysis including risk level, performance, and investment suitability
-                </p>
-              </div>
-            )}
+                            {activeMode === 'stock' && (
+                                <div className="flex gap-3 items-end">
+                                    <div className="flex-1 space-y-2">
+                                        <label className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Analyze Asset</label>
+                                        <input 
+                                            autoFocus
+                                            value={stockSymbol}
+                                            onChange={(e) => setStockSymbol(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleStockAnalysis()}
+                                            placeholder="Enter Symbol (e.g. RELIANCE)"
+                                            className={`w-full ${isDark ? 'bg-black/40' : 'bg-white'} border ${styles.headerBorder} rounded-lg px-3 py-2 text-sm ${styles.headerText} focus:outline-none focus:border-indigo-500 transition-colors`}
+                                        />
+                                    </div>
+                                    <button onClick={handleStockAnalysis} disabled={!stockSymbol} className="h-10 px-5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-indigo-500/20">Analyze</button>
+                                </div>
+                            )}
 
-            {/* Portfolio Recommendation Form */}
-            {showPortfolio && (
-              <div className="mt-3 p-4 bg-purple-50 rounded-lg animate-in slide-in-from-top duration-200">
-                <h4 className="font-semibold text-purple-900 mb-3">Portfolio Recommendation</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-1">
-                      Investment Budget (₹)
-                    </label>
-                    <input
-                      type="number"
-                      value={portfolioBudget}
-                      onChange={(e) => setPortfolioBudget(e.target.value)}
-                      placeholder="e.g., 50000"
-                      className="w-full px-4 py-2 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            {activeMode === 'portfolio' && (
+                                <div className="space-y-4">
+                                    <label className="text-[10px] uppercase font-bold text-purple-500 tracking-wider">Portfolio Builder</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <input 
+                                            type="number" 
+                                            placeholder="Budget (₹)"
+                                            value={portfolioBudget}
+                                            onChange={(e) => setPortfolioBudget(e.target.value)}
+                                            className={`col-span-1 ${isDark ? 'bg-black/40' : 'bg-white'} border ${styles.headerBorder} rounded-lg px-3 py-2 text-sm ${styles.headerText} focus:outline-none focus:border-purple-500`}
+                                        />
+                                        <div className="col-span-2 flex gap-2">
+                                            {(['low', 'medium', 'high'] as const).map(risk => (
+                                                <button 
+                                                    key={risk}
+                                                    onClick={() => setPortfolioRisk(risk)}
+                                                    className={`flex-1 text-xs font-bold uppercase rounded-lg border transition-all ${portfolioRisk === risk ? 'bg-purple-600 border-purple-500 text-white' : `${isDark ? 'bg-transparent border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-500'} hover:border-purple-500/50`}`}
+                                                >
+                                                    {risk}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <button onClick={handlePortfolio} disabled={!portfolioBudget} className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-purple-500/20">Generate Strategy</button>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Input Bar */}
+            <div className="flex items-end gap-3">
+                {activeMode === 'chat' && (
+                    <div className="flex gap-2 pb-1">
+                        <ModeButton icon={TrendingUp} onClick={() => setActiveMode('stock')} color="text-indigo-500" isDark={isDark} />
+                        <ModeButton icon={PieChart} onClick={() => setActiveMode('portfolio')} color="text-purple-500" isDark={isDark} />
+                    </div>
+                )}
+
+                <div className={`flex-1 relative ${styles.inputBg} border ${styles.inputBorder} rounded-2xl ${styles.inputFocus} focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all duration-300`}>
+                    <textarea
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
+                        placeholder="Ask Praedico..."
+                        className={`w-full bg-transparent ${styles.inputText} text-sm px-4 py-3.5 pr-12 focus:outline-none resize-none custom-scrollbar-dark min-h-[50px] max-h-32`}
+                        rows={1}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-1">
-                      Risk Tolerance
-                    </label>
-                    <div className="flex gap-2">
-                      {(['low', 'medium', 'high'] as const).map((risk) => (
-                        <button
-                          key={risk}
-                          onClick={() => setPortfolioRisk(risk)}
-                          className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            portfolioRisk === risk
-                              ? 'bg-purple-500 text-white'
-                              : 'bg-white text-purple-700 hover:bg-purple-100'
-                          }`}
-                        >
-                          {risk.charAt(0).toUpperCase() + risk.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handlePortfolioRecommendation}
-                    disabled={loading || !portfolioBudget}
-                    className="w-full px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Get Recommendation
-                  </button>
+                    <button 
+                        onClick={() => handleSend()}
+                        disabled={!input.trim() || loading}
+                        className={`absolute right-2 bottom-2 p-2 ${styles.sendButton} rounded-xl transition-all disabled:opacity-0 disabled:scale-75 shadow-lg shadow-indigo-500/20`}
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                    </button>
                 </div>
-                <p className="text-xs text-purple-600 mt-2">
-                  Get diversified portfolio suggestions based on your budget and risk profile
-                </p>
-              </div>
-            )}
+            </div>
           </div>
 
-          {/* Input */}
-          <div className="border-t bg-white p-5 rounded-b-2xl flex-shrink-0">
-            <div className="flex gap-3">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Ask about stocks, markets, or investment concepts..."
-                className="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                rows={2}
-                disabled={loading}
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || loading}
-                className="px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Press Enter to send • Shift + Enter for new line
-            </p>
-          </div>
-        </div>
+        </motion.div>
       </div>
-    </>
+    </AnimatePresence>
   );
 }
+
+// --- SUB-COMPONENTS ---
+
+const MessageItem = ({ message, styles, isDark }: { message: ChatMessageType, styles: any, isDark: boolean }) => {
+    const isUser = message.role === 'user';
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex gap-4 ${isUser ? 'flex-row-reverse' : ''}`}
+        >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${isUser ? (isDark ? 'bg-white text-black border-white' : 'bg-indigo-600 text-white border-indigo-600') : (isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-white text-indigo-600 border-slate-200')}`}>
+                {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+            </div>
+            <div className={`max-w-[85%] space-y-1 ${isUser ? 'items-end flex flex-col' : ''}`}>
+                <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed border ${isUser ? `${styles.userBubble} border-transparent rounded-tr-sm` : `${styles.botBubble} rounded-tl-sm`}`}>
+                    <ChatMessage message={message} theme={isDark ? "dark" : "light"}/>
+                </div>
+                <span className={`text-[10px] px-1 opacity-60 ${styles.headerSubText}`}>
+                    {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </span>
+            </div>
+        </motion.div>
+    )
+}
+
+const EmptyState = ({ onAction, isDark }: { onAction: (text: string) => void, isDark: boolean }) => (
+    <div className="h-full flex flex-col items-center justify-center text-center p-8">
+        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center border mb-6 rotate-3 ${isDark ? 'bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-white/5' : 'bg-white border-slate-100 shadow-xl shadow-slate-200/50'}`}>
+            <MessageSquare className="w-8 h-8 text-indigo-500" />
+        </div>
+        <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Welcome to Praedico</h2>
+        <p className={`max-w-md text-sm mb-8 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            Your personal financial analyst. Ask me to analyze stocks, plan investments, or explain complex market trends.
+        </p>
+        <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+            <QuickAction onClick={() => onAction('Market trend today?')} icon={TrendingUp} label="Market Trend" isDark={isDark} />
+            <QuickAction onClick={() => onAction('Top 5 gainers')} icon={BarChart} label="Top Gainers" isDark={isDark} />
+        </div>
+    </div>
+)
+
+const QuickAction = ({ onClick, icon: Icon, label, isDark }: any) => (
+    <button onClick={onClick} className={`flex items-center gap-3 p-4 border rounded-xl transition-all group text-left ${isDark ? 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.05] hover:border-white/[0.1]' : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-indigo-200 shadow-sm'}`}>
+        <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5 text-slate-400' : 'bg-indigo-50 text-indigo-500'} group-hover:text-indigo-500 transition-colors`}>
+            <Icon className="w-4 h-4" />
+        </div>
+        <span className={`text-sm font-medium ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-600 group-hover:text-slate-900'}`}>{label}</span>
+    </button>
+)
+
+const ModeButton = ({ icon: Icon, onClick, color, isDark }: any) => (
+    <button onClick={onClick} className={`h-[52px] w-[52px] flex items-center justify-center rounded-xl border transition-all group ${isDark ? 'bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] hover:border-white/[0.2]' : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-500'}`}>
+        <Icon className={`w-5 h-5 ${color} opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all`} />
+    </button>
+)

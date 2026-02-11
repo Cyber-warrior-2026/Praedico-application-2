@@ -181,10 +181,16 @@ Remember: Your goal is to EDUCATE thoroughly, not just answer briefly. Be helpfu
       const history = await this.getConversationHistory(userId, maxHistory);
       const marketContext = includeMarketContext ? await this.getMarketContext() : '';
 
-      const geminiHistory = history.map((msg) => ({
+      // ✅ FIX: Convert to Gemini format and ensure history starts with 'user' role
+      let geminiHistory = history.map((msg) => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: msg.content }]
       }));
+
+      // ✅ CRITICAL: Remove any leading 'model' messages (Gemini requires first message to be 'user')
+      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+        geminiHistory.shift();
+      }
 
       const chat = this.model.startChat({
         history: geminiHistory,

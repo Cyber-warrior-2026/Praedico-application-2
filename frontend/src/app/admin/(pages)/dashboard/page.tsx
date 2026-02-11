@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, Activity, Clock, MoreVertical, DollarSign, ArrowUpRight, ArrowDownRight, Mail, MousePointer2, Eye, Calendar, MessageSquare, Paperclip, Search, Star, Filter, ChevronRight, PanelLeftClose, PanelLeft, LayoutDashboard, BarChart2, ShoppingCart, FileText, Inbox, Layers, Archive } from "lucide-react";
 import axios from 'axios';
+import { authApi } from "@/lib/api";
 // import UserManagementModal from "../_components/UserManagementModal";
 
 
@@ -24,9 +25,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+        const data = await authApi.getMe();
 
         if (data.success && data.user) {
           setAdminName(data.user.name || "Admin");

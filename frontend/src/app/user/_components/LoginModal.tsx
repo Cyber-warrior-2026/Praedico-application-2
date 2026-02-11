@@ -185,7 +185,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                   </span>
                 </label>
                 <Link
-                  href="/user/forgot-password"
+                  href="/forgot-password"
                   className="text-sm font-semibold text-green-600 hover:text-green-700 transition-colors relative group"
                   onClick={onClose}
                 >

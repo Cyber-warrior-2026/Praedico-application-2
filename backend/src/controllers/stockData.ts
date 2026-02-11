@@ -177,3 +177,30 @@ export const getScraperStatus = async (req: Request, res: Response) => {
     });
   }
 };
+
+// ✅ NEW: Clear all stock data (useful for debugging/resetting)
+export const clearStockData = async (req: Request, res: Response) => {
+  try {
+    const { category } = req.query;
+    
+    const query: any = {};
+    if (category) {
+      query.category = category;
+    }
+    
+    const result = await StockData.deleteMany(query);
+    
+    res.status(200).json({
+      success: true,
+      message: `Cleared ${result.deletedCount} stock records`,
+      deletedCount: result.deletedCount
+    });
+    
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error clearing stock data',
+      error: error.message
+    });
+  }
+};

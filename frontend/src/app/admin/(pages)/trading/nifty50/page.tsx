@@ -33,6 +33,7 @@ import {
   Area
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { stockApi } from "@/lib/api/stock.api";
 
 // ==========================================
 // TYPES
@@ -71,12 +72,12 @@ const listContainerVariants = {
 
 const rowVariants = {
   hidden: { x: -20, opacity: 0 },
-  visible: { 
-    x: 0, 
-    opacity: 1, 
+  visible: {
+    x: 0,
+    opacity: 1,
     transition: { type: "spring" as const, stiffness: 100, damping: 15 }
   },
-  hover: { 
+  hover: {
     scale: 1.01,
     backgroundColor: "rgba(255, 255, 255, 0.03)",
     transition: { duration: 0.2 }
@@ -89,8 +90,8 @@ const rowVariants = {
 const MiniSparkline = ({ isPositive }: { isPositive: boolean }) => {
   const color = isPositive ? "#10b981" : "#f43f5e";
   // Generate a deterministic but random-looking path based on trend
-  const path = isPositive 
-    ? "M0 25 Q10 20 20 22 T40 15 T60 10 T80 5 L100 2" 
+  const path = isPositive
+    ? "M0 25 Q10 20 20 22 T40 15 T60 10 T80 5 L100 2"
     : "M0 5 Q10 10 20 8 T40 15 T60 20 T80 25 L100 28";
 
   return (
@@ -128,21 +129,22 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
     if (isOpen && stock) {
       // Reset range to 1D when opening a new stock
       setActiveRange("1D");
-      
+
       const fetchHistory = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5001/api/stocks`, {
+
+          const response = await axios.get(`/api/stocks`, {
             params: { category: 'NIFTY50', limit: 2000 },
             withCredentials: true
           });
-          
+
           if (response.data.success) {
             const filteredHistory = response.data.data
               .filter((item: any) => item.symbol === stock.symbol)
               // Sort ascending by time for the chart
               .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-            
+
             setHistory(filteredHistory.length > 0 ? filteredHistory : [stock]);
           }
         } catch (error) {
@@ -159,36 +161,36 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
   // Filter Data based on Active Range
   const chartData = useMemo(() => {
     if (!history.length) return [];
-    
+
     const now = new Date();
     const cutoff = new Date();
 
     switch (activeRange) {
-        case '1D':
-            // For 1D, we typically want today's data. 
-            // If data is scarce, we might fallback to last 24h.
-            cutoff.setHours(0, 0, 0, 0); 
-            break;
-        case '1W':
-            cutoff.setDate(now.getDate() - 7);
-            break;
-        case '1M':
-            cutoff.setMonth(now.getMonth() - 1);
-            break;
-        case '6M':
-            cutoff.setMonth(now.getMonth() - 6);
-            break;
-        case '1Y':
-            cutoff.setFullYear(now.getFullYear() - 1);
-            break;
-        case 'YTD':
-            cutoff.setMonth(0, 1); // January 1st of current year
-            cutoff.setHours(0, 0, 0, 0);
-            break;
-        case 'All':
-            return history;
-        default:
-            return history;
+      case '1D':
+        // For 1D, we typically want today's data. 
+        // If data is scarce, we might fallback to last 24h.
+        cutoff.setHours(0, 0, 0, 0);
+        break;
+      case '1W':
+        cutoff.setDate(now.getDate() - 7);
+        break;
+      case '1M':
+        cutoff.setMonth(now.getMonth() - 1);
+        break;
+      case '6M':
+        cutoff.setMonth(now.getMonth() - 6);
+        break;
+      case '1Y':
+        cutoff.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'YTD':
+        cutoff.setMonth(0, 1); // January 1st of current year
+        cutoff.setHours(0, 0, 0, 0);
+        break;
+      case 'All':
+        return history;
+      default:
+        return history;
     }
 
     return history.filter(item => new Date(item.timestamp) >= cutoff);
@@ -197,7 +199,7 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
   if (!isOpen || !stock) return null;
 
   const isPositive = stock.change >= 0;
-  const Color = isPositive ? "#10b981" : "#f43f5e"; 
+  const Color = isPositive ? "#10b981" : "#f43f5e";
 
   return (
     <AnimatePresence>
@@ -210,18 +212,18 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
             onClick={onClose}
             className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-lg"
           />
-          
+
           <motion.div
             className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none"
           >
             <motion.div
-              layoutId={`stock-row-${stock.symbol}`} 
+              layoutId={`stock-row-${stock.symbol}`}
               className="w-full max-w-5xl bg-[#020617] border border-white/10 rounded-[24px] shadow-2xl overflow-hidden pointer-events-auto flex flex-col md:flex-row h-[85vh] md:h-[600px]"
             >
               {/* LEFT SIDE: COMPANY INFO */}
               <div className="w-full md:w-[35%] p-8 bg-[#0B1121] border-r border-white/5 flex flex-col relative overflow-hidden">
                 <div className={`absolute top-0 left-0 w-full h-[60%] bg-gradient-to-b ${isPositive ? 'from-emerald-500/10' : 'from-red-500/10'} to-transparent pointer-events-none`} />
-                
+
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex justify-between items-start">
                     <button onClick={onClose} className="p-2 -ml-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
@@ -253,14 +255,14 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">High</span>
-                            <p className="text-lg font-semibold text-slate-200">₹{stock.high.toLocaleString()}</p>
-                        </div>
-                        <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Low</span>
-                            <p className="text-lg font-semibold text-slate-200">₹{stock.low.toLocaleString()}</p>
-                        </div>
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">High</span>
+                        <p className="text-lg font-semibold text-slate-200">₹{stock.high.toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Low</span>
+                        <p className="text-lg font-semibold text-slate-200">₹{stock.low.toLocaleString()}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -275,14 +277,14 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                   </div>
                   <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
                     {TIME_RANGES.map((t) => (
-                      <button 
-                        key={t} 
+                      <button
+                        key={t}
                         onClick={() => setActiveRange(t)}
                         className={cn(
-                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                            activeRange === t 
-                                ? "bg-cyan-500/20 text-cyan-400 shadow-sm" 
-                                : "text-slate-400 hover:text-white hover:bg-white/10"
+                          "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                          activeRange === t
+                            ? "bg-cyan-500/20 text-cyan-400 shadow-sm"
+                            : "text-slate-400 hover:text-white hover:bg-white/10"
                         )}
                       >
                         {t}
@@ -290,7 +292,7 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="flex-1 p-6 relative">
                   {loading ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
@@ -299,8 +301,8 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                     </div>
                   ) : chartData.length === 0 ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-500">
-                        <Activity className="h-8 w-8 opacity-20" />
-                        <span className="text-xs">No data for this time range</span>
+                      <Activity className="h-8 w-8 opacity-20" />
+                      <span className="text-xs">No data for this time range</span>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -313,33 +315,33 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                         <XAxis dataKey="timestamp" hide />
-                        <YAxis 
+                        <YAxis
                           /* FIX FOR FLAT GRAPH: 
                             Using 'dataMin' and 'dataMax' forces the Y-axis to scale 
                             to the exact range of the data, showing even small fluctuations.
                           */
-                          domain={['dataMin', 'dataMax']} 
-                          orientation="right" 
+                          domain={['dataMin', 'dataMax']}
+                          orientation="right"
                           tick={{ fill: '#64748b', fontSize: 11 }}
                           axisLine={false}
                           tickLine={false}
                           tickFormatter={(val) => `₹${val.toFixed(0)}`}
                           width={60}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{ backgroundColor: '#0F172A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
                           itemStyle={{ color: '#e2e8f0', fontSize: '12px' }}
                           labelStyle={{ display: 'none' }}
                           formatter={(value: any) => [`₹${value}`, 'Price']}
                         />
-                        <Area 
-                            type="monotone" 
-                            dataKey="price" 
-                            stroke={Color} 
-                            strokeWidth={2} 
-                            fillOpacity={1} 
-                            fill="url(#colorPriceNifty)" 
-                            animationDuration={1000} 
+                        <Area
+                          type="monotone"
+                          dataKey="price"
+                          stroke={Color}
+                          strokeWidth={2}
+                          fillOpacity={1}
+                          fill="url(#colorPriceNifty)"
+                          animationDuration={1000}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -347,27 +349,27 @@ const StockDetailModal = ({ stock, isOpen, onClose }: { stock: StockData | null;
                 </div>
 
                 <div className="p-6 border-t border-white/5 grid grid-cols-3 gap-6 bg-[#0B1121]/50">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400"><Layers size={18} /></div>
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Open</p>
-                            <p className="text-sm font-semibold text-slate-200">₹{stock.open.toLocaleString()}</p>
-                        </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400"><Layers size={18} /></div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold">Open</p>
+                      <p className="text-sm font-semibold text-slate-200">₹{stock.open.toLocaleString()}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><BarChart2 size={18} /></div>
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Volume</p>
-                            <p className="text-sm font-semibold text-slate-200">{(stock.volume / 1000).toFixed(2)}k</p>
-                        </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><BarChart2 size={18} /></div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold">Volume</p>
+                      <p className="text-sm font-semibold text-slate-200">{(stock.volume / 1000).toFixed(2)}k</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><Activity size={18} /></div>
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Prev Close</p>
-                            <p className="text-sm font-semibold text-slate-200">₹{(stock.price - stock.change).toFixed(2)}</p>
-                        </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><Activity size={18} /></div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold">Prev Close</p>
+                      <p className="text-sm font-semibold text-slate-200">₹{(stock.price - stock.change).toFixed(2)}</p>
                     </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -399,14 +401,41 @@ export default function Nifty50Page() {
   const fetchStocks = async () => {
     if (stocks.length === 0) setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:5001/api/stocks/nifty50", { withCredentials: true });
-      
+      const data = await stockApi.getNifty50Stocks();
+
       if (data.success) {
-        // 1. Filter for Nifty 50 only
-        const niftyOnly = data.data.filter((item: StockData) => 
-          item.category === 'NIFTY50' && 
-          !item.symbol.includes('ETF') && !item.symbol.includes('BEES')
-        );
+        /**
+       * PROFESSIONAL DATA-DRIVEN FILTERING
+       * 
+       * Instead of hardcoding symbols, we filter based on data characteristics:
+       * 1. Exclude index summary rows (symbol contains 'NIFTY' or 'INDEX')
+       * 2. Exclude non-stock instruments (ETF, BEES, GOLD, SILVER, etc.)
+       * 3. Require valid price data
+       * 
+       * This approach automatically adapts when the Nifty 50 index changes.
+       */
+        const nonStockPatterns = ['ETF', 'BEES', 'LIQUID', 'GILT', 'GOLD', 'SILVER', 'FUND', 'INDEX'];
+
+        const niftyOnly = data.data.filter((item: StockData) => {
+          const symbol = (item.symbol || '').trim().toUpperCase();
+
+          // Skip index summary rows
+          if (symbol.includes('NIFTY') || symbol.includes('SENSEX')) {
+            return false;
+          }
+
+          // Exclude known non-stock instruments
+          if (nonStockPatterns.some(p => symbol.includes(p))) {
+            return false;
+          }
+
+          // Must have valid price (real stocks have prices > 0)
+          if (!item.price || item.price <= 0) {
+            return false;
+          }
+
+          return true;
+        });
 
         // 2. NEW FIX: Deduplicate to get only the LATEST entry for each symbol
         // (This prevents the main list from showing the same company 50 times)
@@ -433,7 +462,7 @@ export default function Nifty50Page() {
 
   const fetchScraperStatus = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5001/api/scraper/status", { withCredentials: true });
+      const data = await stockApi.getScraperStatus();
       if (data.success) setScraperStatus(data.status);
     } catch (error) {
       setScraperStatus("Unknown");
@@ -443,10 +472,10 @@ export default function Nifty50Page() {
   const handleManualScrape = async () => {
     setIsScraping(true);
     try {
-      const { data } = await axios.post("http://localhost:5001/api/stocks/scrape", {}, { withCredentials: true });
+      const data = await stockApi.triggerManualScrape();
       if (data.success) {
         alert("Market Data Update Triggered.");
-        setTimeout(fetchStocks, 5000); 
+        setTimeout(fetchStocks, 5000);
       }
     } catch (error) {
       alert("Failed to trigger update.");
@@ -462,8 +491,8 @@ export default function Nifty50Page() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredStocks = stocks.filter(s => 
-    s.symbol.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredStocks = stocks.filter(s =>
+    s.symbol.toLowerCase().includes(search.toLowerCase()) ||
     s.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -471,38 +500,38 @@ export default function Nifty50Page() {
 
   return (
     <div className="min-h-screen bg-[#030712] text-slate-200 p-6 md:p-10 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
-      
+
       {/* Background Blobs */}
       <div className="fixed inset-0 pointer-events-none">
-         <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-cyan-600/10 rounded-full blur-[150px] animate-pulse" />
-         <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-slate-700/10 rounded-full blur-[150px] animate-pulse delay-1000" />
+        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-cyan-600/10 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-slate-700/10 rounded-full blur-[150px] animate-pulse delay-1000" />
       </div>
 
       <div className="max-w-[1600px] mx-auto relative z-10">
-        
+
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-400 tracking-tight"
             >
               Nifty 50 Index
             </motion.h1>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="flex flex-wrap items-center gap-4 mt-2 text-slate-500 text-sm font-medium"
             >
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5">
-                <Briefcase size={14} className="text-cyan-400" /> 
+                <Briefcase size={14} className="text-cyan-400" />
                 Top 50 Bluechip
               </span>
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5">
-                <Clock size={14} className="text-indigo-400" /> 
+                <Clock size={14} className="text-indigo-400" />
                 Updated: {lastUpdated || "--:--"}
               </span>
               <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5">
@@ -512,23 +541,23 @@ export default function Nifty50Page() {
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 h-4 w-4 group-focus-within:text-cyan-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Find company..." 
+              <input
+                type="text"
+                placeholder="Find company..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 pr-4 py-3 bg-[#0B1121] border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 w-full md:w-64 transition-all"
               />
             </div>
 
-            <button 
+            <button
               onClick={handleManualScrape}
               disabled={isScraping}
               className="flex items-center gap-2 px-4 py-3 bg-cyan-600/10 border border-cyan-500/20 hover:bg-cyan-600/20 text-cyan-400 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -537,8 +566,8 @@ export default function Nifty50Page() {
               <span className="hidden sm:inline font-medium text-xs">Update</span>
             </button>
 
-            <button 
-              onClick={() => { setLoading(true); fetchStocks(); fetchScraperStatus(); }} 
+            <button
+              onClick={() => { setLoading(true); fetchStocks(); fetchScraperStatus(); }}
               className="p-3 bg-[#0B1121] border border-white/10 rounded-xl hover:bg-white/5 hover:text-white text-slate-400 transition-all active:scale-95"
             >
               <RefreshCw size={18} className={cn(loading && "animate-spin")} />
@@ -561,7 +590,7 @@ export default function Nifty50Page() {
             <Loader2 className="h-10 w-10 text-cyan-500 animate-spin" />
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             variants={listContainerVariants}
             initial="hidden"
             animate="visible"
@@ -623,18 +652,18 @@ export default function Nifty50Page() {
         )}
 
         {showEmptyState && (
-           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-              <Search className="h-12 w-12 mb-4 opacity-50" />
-              <p>No Nifty 50 companies found.</p>
-           </div>
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+            <Search className="h-12 w-12 mb-4 opacity-50" />
+            <p>No Nifty 50 companies found.</p>
+          </div>
         )}
       </div>
 
       {/* DETAIL MODAL */}
-      <StockDetailModal 
-        stock={selectedStock} 
-        isOpen={!!selectedStock} 
-        onClose={() => setSelectedStock(null)} 
+      <StockDetailModal
+        stock={selectedStock}
+        isOpen={!!selectedStock}
+        onClose={() => setSelectedStock(null)}
       />
     </div>
   );

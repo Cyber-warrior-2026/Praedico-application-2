@@ -19,6 +19,7 @@ import {
 } from "@/shared-components/ui/dropdown-menu"; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared-components/ui/avatar";
 import { Button } from "@/shared-components/ui/button";
+import { authApi } from "@/lib/api";
 
 export default function DashboardNavbar() {
   const router = useRouter();
@@ -31,9 +32,8 @@ export default function DashboardNavbar() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5001/api/users/me", {
-          withCredentials: true
-        });
+
+        const data = await authApi.getMe();
 
         if (data.success && data.user) {
           setAdminName(data.user.name || "Admin"); 
@@ -53,7 +53,7 @@ export default function DashboardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5001/api/users/logout", {}, { withCredentials: true });
+      await authApi.logout();
       router.push("/");
     } catch(e) { console.error(e); }
   };

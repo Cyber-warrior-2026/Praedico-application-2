@@ -2,7 +2,8 @@
 
 import { useState, use } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+// REMOVED: import axios from "axios"; 
+import { authApi } from "@/lib/api/auth.api"; // 👈 IMPORT CENTRALIZED API
 import { Loader2, Eye, EyeOff, Lock, CheckCircle2, ShieldCheck } from "lucide-react";
 
 // Next.js 15+ Params Handling
@@ -22,7 +23,9 @@ export default function VerifyAccountPage({ params }: { params: Promise<{ token:
     setError("");
 
     try {
-      await axios.post("http://localhost:5001/api/users/verify", {
+      // ✅ FIXED: Use authApi.verify instead of direct axios
+      // This ensures it uses the correct Proxy URL on Vercel
+      await authApi.verify({
         token: token,
         password: password 
       });
@@ -33,6 +36,7 @@ export default function VerifyAccountPage({ params }: { params: Promise<{ token:
       }, 2500);
 
     } catch (err: any) {
+      // Improved error handling to match axios response structure
       setError(err.response?.data?.message || "Link expired or invalid.");
     } finally {
       setIsLoading(false);

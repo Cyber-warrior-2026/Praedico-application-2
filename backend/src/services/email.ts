@@ -16,7 +16,7 @@ const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-
 
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationLink = `${ENV.FRONTEND_URL}/user/verify/${token}`;
+  const verificationLink = `${ENV.FRONTEND_URL}/verify/${token}`;
 
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
@@ -130,7 +130,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
  * Send Password Reset Email with Beautiful Design
  */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-  const resetLink = `${ENV.FRONTEND_URL}/user/reset-password/${token}`;
+  const resetLink = `${ENV.FRONTEND_URL}/reset-password/${token}`;
 
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,

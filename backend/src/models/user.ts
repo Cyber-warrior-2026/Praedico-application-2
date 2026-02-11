@@ -27,6 +27,17 @@ export interface IUser extends Document {
     // ✨ Add these two properties:
   isDeleted?: boolean;
   deletedAt?: Date;
+
+    // Paper Trading Fields
+  virtualBalance: number;
+  initialVirtualBalance: number;
+  virtualBalanceLastReset?: Date;
+  totalPaperTradesCount: number;
+  profitablePaperTrades: number;
+  totalPaperPL: number;
+  bestPaperTrade?: number;
+  worstPaperTrade?: number;
+  tradingLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
 }
 
 
@@ -79,7 +90,23 @@ lastActive: { type: Date, default: Date.now },
   hasUsedTrial: { type: Boolean, default: false },
   isOnTrial: { type: Boolean, default: false },
   trialEndDate: { type: Date },
-}, {
+
+  virtualBalance: { type: Number, default: 100000 }, // ₹1,00,000 default
+initialVirtualBalance: { type: Number, default: 100000 },
+virtualBalanceLastReset: { type: Date },
+totalPaperTradesCount: { type: Number, default: 0 },
+profitablePaperTrades: { type: Number, default: 0 },
+totalPaperPL: { type: Number, default: 0 },
+bestPaperTrade: { type: Number },
+worstPaperTrade: { type: Number },
+tradingLevel: { 
+  type: String, 
+  enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
+  default: 'BEGINNER'
+},
+}, 
+
+{
   timestamps: true
 });
 

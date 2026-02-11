@@ -76,6 +76,12 @@ export const authApi = {
     return response.data;
   },
 
+  getMe: async () => {
+    // This uses the configured axios instance (which points to /api via proxy)
+    const response = await axiosInstance.get('/api/users/me');
+    return response.data;
+  },
+
   refreshToken: async () => {
     const response = await axiosInstance.post(API_ENDPOINTS.AUTH.REFRESH_TOKEN);
     if (response.data.accessToken) {

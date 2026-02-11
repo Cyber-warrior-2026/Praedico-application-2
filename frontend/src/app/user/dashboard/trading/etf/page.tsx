@@ -288,6 +288,7 @@ const fetchStocks = async () => {
           setSelectedStock(null);
         }}
         stock={selectedStock}
+        theme="light"
       />
  {/* AI Chatbot */}
       <AIChatButton />

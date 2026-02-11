@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
+
 import { securityHeaders } from "./common/middlewares/security.middleware";
 import { requestLogger } from "./common/middlewares/logging.middleware";
 import { globalErrorHandler } from "./common/errors/errorHandler";
@@ -12,6 +13,7 @@ import newsDataRoutes from './routes/newsData';
 import cronService from './services/cronService';
 import aiChatRoutes from './routes/aiChat'; 
 import paymentRoutes from './routes/payment';
+import paperTradingRoutes from './routes/paperTrading';
 
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
@@ -62,8 +64,9 @@ app.use(
   app.use("/api/users", userRoutes);
   app.use('/api', stockDataRoutes);
   app.use('/api', newsDataRoutes); 
-  app.use('/api', aiChatRoutes);
+  app.use('/api/ai', aiChatRoutes);
   app.use('/api/payments', paymentRoutes);
+  app.use('/api/paper-trading', paperTradingRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes

@@ -30,7 +30,7 @@ export const ENV = {
   EMAIL_PASS: getEnv('EMAIL_PASS'),
   
   // Frontend
-  FRONTEND_URL: getEnv('FRONTEND_URL', 'http://localhost:3000'),
+  FRONTEND_URL: getEnv('FRONTEND_URL', 'https://praedico-frontend.vercel.app'),
   
   // AI Configuration
   GEMINI_API_KEY: getEnv('GEMINI_API_KEY'),
