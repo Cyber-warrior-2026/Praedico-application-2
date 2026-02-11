@@ -95,26 +95,52 @@ institute: instituteId ? new Types.ObjectId(instituteId) : undefined,
   // =================================================================
   // 3. LOGIN (The "Gatekeeper")
   // =================================================================
-  async login(email: string, plainPass: string) {
-    const user = await UserModel.findOne({ email }).select("+passwordHash");
+// =================================================================
+// 3. LOGIN (The "Gatekeeper")
+// =================================================================
+async login(email: string, plainPass: string) {
+  const user = await UserModel.findOne({ email }).select("+passwordHash");
+  
+  if (!user) throw new Error("Invalid credentials");
+  
+  if (!user.isVerified) throw new Error("Please verify your email first");
 
-    if (!user) throw new Error("Invalid credentials");
-    if (!user.isVerified) throw new Error("Please verify your email first");
-
-    // 🛑 SECURITY GATE: Check if Deleted OR Inactive
-    if (user.isDeleted) {
-      throw new Error("This account has been deleted. Contact support to restore it.");
-    }
-    if (user.isActive === false) {
-      throw new Error("Your account has been deactivated. Please contact support.");
-    }
-
-    const isValid = await argon2.verify(user.passwordHash!, plainPass);
-    if (!isValid) throw new Error("Invalid credentials");
-
-    const { accessToken, refreshToken } = this.generateTokens(user);
-    return { user, accessToken, refreshToken };
+  // 🛑 SECURITY GATE: Check if Deleted OR Inactive
+  if (user.isDeleted) {
+    throw new Error("This account has been deleted. Contact support to restore it.");
   }
+
+  if (user.isActive === false) {
+    throw new Error("Your account has been deactivated. Please contact support.");
+  }
+
+  // 🆕 NEW: Check Institute Approval Status
+  if (user.institute) {
+    // Student is linked to an institute - check approval status
+    if (user.instituteApprovalStatus === 'pending') {
+      throw new Error("Your registration is pending approval from your institute. Please wait for institute admin to approve.");
+    }
+    
+    if (user.instituteApprovalStatus === 'rejected') {
+      const reason = user.instituteRejectedReason || 'No reason provided';
+      throw new Error(`Your registration was rejected by the institute. Reason: ${reason}. Please contact your institute admin.`);
+    }
+    
+    // Only 'approved' status can proceed
+    if (user.instituteApprovalStatus !== 'approved') {
+      throw new Error("Access denied. Please contact your institute admin.");
+    }
+  }
+  // If user.institute is null/undefined, it means no institute selected - allow normal login
+
+  const isValid = await argon2.verify(user.passwordHash!, plainPass);
+  if (!isValid) throw new Error("Invalid credentials");
+
+  const { accessToken, refreshToken } = this.generateTokens(user);
+  
+  return { user, accessToken, refreshToken };
+}
+
 
   // =================================================================
   // 4. FORGOT PASSWORD
