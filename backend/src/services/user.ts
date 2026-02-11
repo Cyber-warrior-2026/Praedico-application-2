@@ -2,9 +2,12 @@ import { UserModel } from "../models/user";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { Types } from "mongoose";
+
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
+    sendStudentApprovalNotificationToInstitutes,  
 } from "./email";
 import { ENV } from "../config/env";
 
@@ -13,38 +16,54 @@ export class UserService {
   // =================================================================
   // 1. REGISTER
   // =================================================================
-  async register(email: string, name?: string) {
-    const existingUser = await UserModel.findOne({ email });
-
-    if (existingUser && existingUser.isVerified) {
-      throw new Error("Email already registered");
-    }
-
-    // Smart Name Logic: Use provided name or fallback to email prefix
-    const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    if (existingUser && !existingUser.isVerified) {
-      // Scenario: User tried to register before but never verified. 
-      // Resend token and update details.
-      existingUser.verificationToken = verificationToken;
-      existingUser.name = nameToSave;
-      await existingUser.save();
-    } else {
-      // Scenario: New User
-      await UserModel.create({
-        email,
-        name: nameToSave,
-        isVerified: false,
-        verificationToken,
-        isActive: true, // <--- Explicitly set to TRUE for new users
-      });
-    }
-
-    await sendVerificationEmail(email, verificationToken);
-
-    return { message: "Verification email sent. Check your inbox." };
+async register(email: string, name?: string, instituteId?: string) {
+  const existingUser = await UserModel.findOne({ email });
+  if (existingUser && existingUser.isVerified) {
+    throw new Error("Email already registered");
   }
+
+  // Smart Name Logic: Use provided name or fallback to email prefix
+  const nameToSave = name && name.trim() !== "" ? name : email.split("@")[0];
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
+  if (existingUser && !existingUser.isVerified) {
+    // Scenario: User tried to register before but never verified.
+    // Resend token and update details.
+    existingUser.verificationToken = verificationToken;
+    existingUser.name = nameToSave;
+    
+    // NEW: Update institute if provided
+    if (instituteId) {
+      existingUser.institute = instituteId as any;
+      existingUser.instituteApprovalStatus = 'pending';
+    }
+    
+    await existingUser.save();
+  } else {
+    // Scenario: New User
+    await UserModel.create({
+      email,
+      name: nameToSave,
+      isVerified: false,
+      verificationToken,
+      isActive: true,
+      // NEW: Add institute fields
+institute: instituteId ? new Types.ObjectId(instituteId) : undefined,
+      instituteApprovalStatus: instituteId ? 'pending' : undefined,
+    });
+  }
+
+  await sendVerificationEmail(email, verificationToken);
+  
+  // NEW: Notify institute if student registered with institute
+  if (instituteId) {
+    // Import this function at the top
+    await sendStudentApprovalNotificationToInstitutes(instituteId, email, nameToSave);
+  }
+
+  return { message: "Verification email sent. Check your inbox." };
+}
+
 
   // =================================================================
   // 2. VERIFY EMAIL

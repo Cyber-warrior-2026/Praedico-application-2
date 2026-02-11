@@ -4,7 +4,8 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash?: string;
-  role: 'user' | 'admin' | 'super_admin';
+  role: 'user' | 'admin' | 'super_admin' | 'institute';
+
   isVerified: boolean;
   isActive: boolean;
   verificationToken?: string;
@@ -12,6 +13,14 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   lastLogin?: Date;
   lastActive?: Date;
+
+  // Institute Relationship
+institute?: mongoose.Types.ObjectId;
+instituteApprovalStatus?: 'pending' | 'approved' | 'rejected';
+instituteApprovedBy?: mongoose.Types.ObjectId;
+instituteApprovedAt?: Date;
+instituteRejectedReason?: string;
+
   
   // Subscription Fields
   subscriptionId?: string;
@@ -61,7 +70,8 @@ const UserSchema: Schema = new Schema({
 
   role: {
     type: String,
-    enum: ['user', 'admin', 'super_admin'],
+enum: ['user', 'admin', 'super_admin', 'institute'],
+
     default: 'user'
   },
   isVerified: { 
@@ -79,6 +89,23 @@ isActive: {
 lastActive: { type: Date, default: Date.now },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
+
+  // Institute Relationship
+institute: {
+  type: Schema.Types.ObjectId,
+  ref: 'Institute'
+},
+instituteApprovalStatus: {
+  type: String,
+  enum: ['pending', 'approved', 'rejected']
+},
+instituteApprovedBy: {
+  type: Schema.Types.ObjectId,
+  ref: 'Institute'
+},
+instituteApprovedAt: { type: Date },
+instituteRejectedReason: { type: String },
+
   
   // Subscription Fields (New)
   subscriptionId: { type: String },
