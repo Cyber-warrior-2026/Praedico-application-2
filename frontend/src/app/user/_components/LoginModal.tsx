@@ -9,7 +9,7 @@ import { authApi } from "@/lib/api";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister: () => void; 
+  onSwitchToRegister: () => void;
 }
 
 export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
@@ -67,7 +67,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
         <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl blur-lg opacity-30 animate-pulse" />
 
         {/* Main Modal */}
-        <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
           {/* Decorative Top Bar */}
           <div className="h-2 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
 
@@ -94,10 +94,10 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               </div>
 
               {/* Title with Gradient */}
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-2">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent mb-2">
                 Welcome Back
               </h2>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 dark:text-slate-400 text-sm">
                 Sign in to continue your journey
               </p>
             </div>
@@ -114,7 +114,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Email Field with Floating Label Effect */}
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-green-600 transition-colors">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-green-600 transition-colors">
                   Email Address
                 </label>
                 <div className="relative">
@@ -129,7 +129,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white transition-all duration-300 hover:border-gray-300"
+                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
                     required
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
               {/* Password Field */}
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-green-600 transition-colors">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-green-600 transition-colors">
                   Password
                 </label>
                 <div className="relative">
@@ -152,7 +152,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="w-full pl-12 pr-12 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white transition-all duration-300 hover:border-gray-300"
+                    className="w-full pl-12 pr-12 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
                     required
                   />
                   <button
@@ -180,7 +180,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                     }
                     className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer transition-all"
                   />
-                  <span className="ml-2 text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:text-white transition-colors">
                     Remember me
                   </span>
                 </label>
@@ -221,10 +221,10 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             {/* Divider with Animation */}
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-gray-200 dark:border-slate-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">
+                <span className="px-4 bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-400 font-medium">
                   Or continue with
                 </span>
               </div>
@@ -235,7 +235,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               {/* Google */}
               <button
                 type="button"
-                className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden border-2 border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center justify-center">
@@ -263,7 +263,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               {/* Facebook */}
               <button
                 type="button"
-                className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden border-2 border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center justify-center">
@@ -280,7 +280,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               {/* GitHub */}
               <button
                 type="button"
-                className="group relative overflow-hidden border-2 border-gray-200 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden border-2 border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center justify-center">
@@ -297,8 +297,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               <button
                 type="button"
                 onClick={() => {
-                   onClose();
-                   onSwitchToRegister(); 
+                  onClose();
+                  onSwitchToRegister();
                 }}
                 className="font-semibold text-green-600 hover:text-green-700 transition-colors relative group"
               >
