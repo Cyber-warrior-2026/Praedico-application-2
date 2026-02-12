@@ -161,4 +161,9 @@ export class InstituteController {
       message: `Institute ${institute.isActive ? 'activated' : 'deactivated'} successfully`
     });
   });
+  // Public list for registration
+  getPublicList = asyncHandler(async (req: Request, res: Response) => {
+    const institutes = await instituteService.getPublicList();
+    res.status(200).json({ success: true, institutes });
+  });
 }

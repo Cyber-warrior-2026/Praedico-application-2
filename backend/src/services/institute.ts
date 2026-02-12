@@ -335,4 +335,14 @@ export class InstituteService {
     
     return institute;
   }
+  // Get Public List of Institutes (for registration dropdown)
+  async getPublicList() {
+    return await InstituteModel.find({ 
+      isVerified: true, 
+      isActive: true, 
+      isDeleted: false 
+    })
+    .select('_id organizationName')
+    .sort({ organizationName: 1 });
+  }
 }
