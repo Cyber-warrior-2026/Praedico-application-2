@@ -8,6 +8,7 @@ const instituteController = new InstituteController();
 // ============================================
 // PUBLIC ROUTES
 // ============================================
+router.get("/public/list", instituteController.getPublicList);
 router.post("/register", instituteController.register);
 router.post("/verify", instituteController.verify);
 router.post("/login", instituteController.login);
