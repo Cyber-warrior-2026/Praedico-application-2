@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Mail, User, CheckCircle, ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
-import { authApi, organizationApi } from "@/lib/api";
+import { authApi, organizationApi, departmentApi } from "@/lib/api";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -18,6 +18,32 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [registerMode, setRegisterMode] = useState<'user' | 'organization'>('user');
+
+  // Async Data
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [selectedDeptId, setSelectedDeptId] = useState("");
+
+  // Fetch Orgs on mount
+  useEffect(() => {
+    organizationApi.getPublicList()
+      .then(res => setOrganizations(res.organizations || []))
+      .catch(err => console.error("Failed to fetch organizations", err));
+  }, []);
+
+  // Fetch Depts on org change
+  const handleOrgChange = (orgId: string) => {
+    setSelectedOrgId(orgId);
+    setSelectedDeptId("");
+    if (orgId) {
+      departmentApi.getPublicDepartments(orgId)
+        .then(res => setDepartments(res.departments || []))
+        .catch(err => console.error("Failed to fetch departments", err));
+    } else {
+      setDepartments([]);
+    }
+  };
 
   // User registration form data
   const [formData, setFormData] = useState({
@@ -53,6 +79,8 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         await authApi.register({
           email: formData.email,
           name: formData.name,
+          organizationId: selectedOrgId,
+          departmentId: selectedDeptId,
         });
       } else {
         // Organization registration
@@ -113,7 +141,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Enhanced Backdrop */}
       <div
         className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md transition-opacity"
@@ -132,7 +160,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-lg opacity-30 animate-pulse" />
 
         {/* Main Modal */}
-        <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden max-h-[85vh] overflow-y-auto scrollbar-hide">
           {/* Decorative Top Bar */}
           <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500" />
 
@@ -229,6 +257,51 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   {registerMode === 'user' ? (
                     <>
                       {/* USER REGISTRATION FORM */}
+
+                      {/* 0. Organization & Department Selection */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Organization Select */}
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                            Organization(Optional)
+                          </label>
+                          <select
+                            value={selectedOrgId}
+                            onChange={(e) => handleOrgChange(e.target.value)}
+                            className="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
+                            required
+                          >
+                            <option value="">Select Organization</option>
+                            {organizations.map((org: any) => (
+                              <option key={org._id || org.id} value={org._id || org.id}>
+                                {org.organizationName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Department Select */}
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                            Department(Optional)
+                          </label>
+                          <select
+                            value={selectedDeptId}
+                            onChange={(e) => setSelectedDeptId(e.target.value)}
+                            className="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
+                            disabled={!selectedOrgId}
+                            required
+                          >
+                            <option value="">Select Department</option>
+                            {departments.map((dept: any) => (
+                              <option key={dept._id || dept.id} value={dept._id || dept.id}>
+                                {dept.departmentName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
                       {/* 1. Name Field (Added) */}
                       <div className="group">
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-purple-600 transition-colors">

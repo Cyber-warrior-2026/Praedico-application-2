@@ -4,6 +4,8 @@ import { API_ENDPOINTS } from '../constants';
 export interface RegisterData {
   email: string;
   name: string;
+  organizationId?: string;
+  departmentId?: string;
 }
 
 export interface VerifyData {
@@ -41,7 +43,7 @@ export const authApi = {
     return response.data;
   },
 
-  
+
   // NEW: Change Password (for logged-in users)
   changePassword: async (data: ChangePasswordData) => {
     const response = await axiosInstance.put('/api/users/reset-password', data);
@@ -50,12 +52,12 @@ export const authApi = {
 
   login: async (data: LoginData) => {
     const response = await axiosInstance.post(API_ENDPOINTS.AUTH.LOGIN, data);
-    
+
     if (response.data.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
+
     return response.data;
   },
 

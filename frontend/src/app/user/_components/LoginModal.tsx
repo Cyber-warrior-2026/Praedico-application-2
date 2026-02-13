@@ -62,12 +62,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             router.push("/organization/coordinator/dashboard");
           } catch (coordError: any) {
             console.log('Coordinator login also failed:', coordError.response?.data);
-            // Both failed, throw the most relevant error
-            // If org login failed with 401 (wrong password), show that
-            // Otherwise show coordinator error
-            if (orgError.response?.status === 401) {
-              throw orgError;
-            }
+            // If org login failed, we tried coordinator and that failed too.
+            // Throw the coordinator error (or you could prefer the org error depending on logic)
             throw coordError;
           }
         }
@@ -84,7 +80,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Enhanced Backdrop with Blur */}
       <div
         className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md"
@@ -103,7 +99,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
         <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl blur-lg opacity-30 animate-pulse" />
 
         {/* Main Modal */}
-        <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden max-h-[85vh] overflow-y-auto scrollbar-hide">
           {/* Decorative Top Bar */}
           <div className="h-2 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
 
