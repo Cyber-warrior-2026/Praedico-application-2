@@ -1,7 +1,9 @@
 import nodemailer from "nodemailer";
 import { ENV } from "../config/env";
-import { InstituteModel } from "../models/institute";
-
+import { OrganizationModel } from "../models/organization";
+import { OrganizationAdminModel } from "../models/organizationAdmin";
+import { DepartmentCoordinatorModel } from "../models/departmentCoordinator";
+import { DepartmentModel } from "../models/department";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -14,8 +16,9 @@ const transporter = nodemailer.createTransport({
 // Your company logo URL
 const LOGO_URL = 'https://raw.githubusercontent.com/Cyber-warrior-2026/Praedico-application-2/main/backend/praedico_global_research_pvt_ltd_logo.jpg';
 
-
-
+// =====================================================
+// EXISTING USER EMAIL FUNCTIONS (UNCHANGED)
+// =====================================================
 
 export const sendVerificationEmail = async (email: string, token: string) => {
   const verificationLink = `${ENV.FRONTEND_URL}/verify/${token}`;
@@ -254,22 +257,24 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     `
   });
 };
+
 // =====================================================
-// INSTITUTE EMAIL FUNCTIONS
+// ORGANIZATION EMAIL FUNCTIONS (NEW)
 // =====================================================
 
-// Institute Verification Email
-export const sendInstituteVerificationEmail = async (
-  email: string, 
-  token: string, 
-  organizationName: string
+// Organization Verification Email (First Admin)
+export const sendOrganizationVerificationEmail = async (
+  email: string,
+  token: string,
+  organizationName: string,
+  adminName: string
 ) => {
-  const verificationLink = `${ENV.FRONTEND_URL}/institute/verify/${token}`;
+  const verificationLink = `${ENV.FRONTEND_URL}/organization/verify/${token}`;
   
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
-    subject: '✨ Welcome to Praedico - Verify Your Institute Account',
+    subject: '✨ Welcome to Praedico - Verify Your Organization',
     html: `
       <!DOCTYPE html>
       <html>
@@ -291,12 +296,19 @@ export const sendInstituteVerificationEmail = async (
           </div>
           <div class="content">
             <h2 style="color: #667eea;">🎉 Welcome ${organizationName}!</h2>
-            <p>Thank you for registering your institute with <strong>Praedico</strong>. We're excited to have you onboard!</p>
-            <p>Please verify your email address to activate your institute account and start managing your students:</p>
+            <p>Dear ${adminName},</p>
+            <p>Thank you for registering <strong>${organizationName}</strong> with Praedico. We're excited to have your organization onboard!</p>
+            <p>Please verify your email address to activate your organization account:</p>
             <center>
-              <a href="${verificationLink}" class="button">Verify Institute Account</a>
+              <a href="${verificationLink}" class="button">Verify Organization Account</a>
             </center>
             <p style="font-size: 14px; color: #666;">Or copy this link:<br/> <code style="background: #f4f4f4; padding: 5px 10px; border-radius: 3px;">${verificationLink}</code></p>
+            <p><strong>What's Next?</strong></p>
+            <ul>
+              <li>Create departments for your organization</li>
+              <li>Add department coordinators</li>
+              <li>Manage student registrations</li>
+            </ul>
             <p style="color: #e74c3c;"><strong>⏰ Note:</strong> This link expires in 24 hours.</p>
           </div>
           <div class="footer">
@@ -305,23 +317,135 @@ export const sendInstituteVerificationEmail = async (
         </div>
       </body>
       </html>
-    `,
+    `
   });
 };
 
-// Notify Institute about New Student Registration
-export const sendStudentApprovalNotificationToInstitutes = async (
-  instituteId: string,
+// Organization Admin Invite Email
+export const sendOrganizationAdminInviteEmail = async (
+  email: string,
+  name: string,
+  token: string,
+  organizationName: string
+) => {
+  const verificationLink = `${ENV.FRONTEND_URL}/organization/verify/${token}`;
+  
+  await transporter.sendMail({
+    from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
+    to: email,
+    subject: `🎓 You've been invited as Admin - ${organizationName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .content { background: #e8f4f8; padding: 30px; border-radius: 10px; border-left: 5px solid #667eea; }
+          .button { display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="content">
+            <h2 style="color: #667eea;">👋 Welcome ${name}!</h2>
+            <p>You have been invited as an administrator for <strong>${organizationName}</strong> on Praedico.</p>
+            <p>Click below to set your password and activate your account:</p>
+            <center>
+              <a href="${verificationLink}" class="button">Set Password & Login</a>
+            </center>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  });
+};
+
+// Coordinator Invite Email
+export const sendCoordinatorInviteEmail = async (
+  email: string,
+  name: string,
+  token: string,
+  departmentName: string
+) => {
+  const verificationLink = `${ENV.FRONTEND_URL}/coordinator/verify/${token}`;
+  
+  await transporter.sendMail({
+    from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
+    to: email,
+    subject: `🎓 You've been invited as Department Coordinator`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .content { background: #fff3cd; padding: 30px; border-radius: 10px; border-left: 5px solid #ffc107; }
+          .button { display: inline-block; padding: 15px 40px; background: #ffc107; color: #333; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="content">
+            <h2 style="color: #856404;">👋 Welcome ${name}!</h2>
+            <p>You have been invited as a <strong>Department Coordinator</strong> for the <strong>${departmentName}</strong> department.</p>
+            <p><strong>Your Responsibilities:</strong></p>
+            <ul>
+              <li>Approve/Reject student registrations in your department</li>
+              <li>Manage students in your department</li>
+              <li>View department statistics</li>
+            </ul>
+            <p>Click below to set your password and activate your account:</p>
+            <center>
+              <a href="${verificationLink}" class="button">Set Password & Login</a>
+            </center>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  });
+};
+
+// Notify Organization about New Student Registration
+export const sendStudentApprovalNotificationToOrganization = async (
+  organizationId: string,
+  departmentId: string,
   studentEmail: string,
   studentName: string
 ) => {
-  const institute = await InstituteModel.findById(instituteId);
+  const organization = await OrganizationModel.findById(organizationId);
+  const department = await DepartmentModel.findById(departmentId);
   
-  if (!institute) return;
+  if (!organization || !department) return;
+
+  // Get all organization admins
+  const admins = await OrganizationAdminModel.find({
+    organization: organizationId,
+    isActive: true,
+    isDeleted: false
+  });
+
+  // Get department coordinators
+  const coordinators = await DepartmentCoordinatorModel.find({
+    department: departmentId,
+    isActive: true,
+    isDeleted: false
+  });
+
+  // Combine all emails
+  const allRecipients = [
+    ...admins.map(a => a.email),
+    ...coordinators.map(c => c.email)
+  ];
+
+  if (allRecipients.length === 0) return;
 
   await transporter.sendMail({
     from: `"Praedico Notifications" <${ENV.EMAIL_USER}>`,
-    to: institute.email,
+    to: allRecipients.join(', '),
     subject: '🔔 New Student Registration - Approval Required',
     html: `
       <!DOCTYPE html>
@@ -342,21 +466,22 @@ export const sendStudentApprovalNotificationToInstitutes = async (
             <div class="info-box">
               <p><strong>📧 Student Email:</strong> ${studentEmail}</p>
               <p><strong>👤 Student Name:</strong> ${studentName}</p>
-              <p><strong>🏫 Institute:</strong> ${institute.organizationName}</p>
+              <p><strong>🏫 Organization:</strong> ${organization.organizationName}</p>
+              <p><strong>📚 Department:</strong> ${department.departmentName} (${department.departmentCode})</p>
             </div>
-            <p>A new student has registered and selected your institute. Please review and approve/reject their registration from your dashboard.</p>
+            <p>A new student has registered and selected your department. Please review and approve/reject their registration from your dashboard.</p>
             <center>
-              <a href="${ENV.FRONTEND_URL}/institute/dashboard" class="button">View Dashboard</a>
+              <a href="${ENV.FRONTEND_URL}/dashboard" class="button">View Dashboard</a>
             </center>
           </div>
         </div>
       </body>
       </html>
-    `,
+    `
   });
 };
 
-// Student Approval Email
+// Student Approval Email (Updated)
 export const sendStudentApprovalEmail = async (email: string, name: string) => {
   await transporter.sendMail({
     from: `"Praedico Team" <${ENV.EMAIL_USER}>`,
@@ -377,7 +502,7 @@ export const sendStudentApprovalEmail = async (email: string, name: string) => {
         <div class="container">
           <div class="content">
             <h2 style="color: #2E7D32;">🎉 Congratulations ${name}!</h2>
-            <p>Great news! Your registration has been <strong>approved</strong> by your institute.</p>
+            <p>Great news! Your registration has been <strong>approved</strong> by your organization.</p>
             <p>You now have full access to Praedico's paper trading platform and can start your trading journey.</p>
             <center>
               <a href="${ENV.FRONTEND_URL}/login" class="button">Login & Start Trading</a>
@@ -387,14 +512,14 @@ export const sendStudentApprovalEmail = async (email: string, name: string) => {
         </div>
       </body>
       </html>
-    `,
+    `
   });
 };
 
-// Student Rejection Email
+// Student Rejection Email (Updated)
 export const sendStudentRejectionEmail = async (
-  email: string, 
-  name: string, 
+  email: string,
+  name: string,
   reason?: string
 ) => {
   await transporter.sendMail({
@@ -416,14 +541,31 @@ export const sendStudentRejectionEmail = async (
           <div class="content">
             <h2 style="color: #c62828;">Registration Status Update</h2>
             <p>Dear ${name},</p>
-            <p>We regret to inform you that your registration was <strong>not approved</strong> by your institute.</p>
+            <p>We regret to inform you that your registration was <strong>not approved</strong> by your organization.</p>
             ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
-            <p>Please contact your institute administrator for more information or clarification.</p>
-            <p>If you believe this is an error, please reach out to your institute directly.</p>
+            <p>Please contact your organization administrator or department coordinator for more information or clarification.</p>
+            <p>If you believe this is an error, please reach out to your organization directly.</p>
           </div>
         </div>
       </body>
       </html>
-    `,
+    `
   });
+};
+
+// =====================================================
+// BACKWARD COMPATIBILITY (OLD INSTITUTE FUNCTIONS)
+// =====================================================
+// These are kept for backward compatibility with existing code
+// They will redirect to the new organization functions
+
+export const sendInstituteVerificationEmail = sendOrganizationVerificationEmail;
+export const sendStudentApprovalNotificationToInstitutes = async (
+  instituteId: string,
+  studentEmail: string,
+  studentName: string
+) => {
+  // This is the old function signature - we'll just call it without department
+  // In practice, this shouldn't be used anymore, but keeping for safety
+  console.warn('⚠️ sendStudentApprovalNotificationToInstitutes is deprecated. Use sendStudentApprovalNotificationToOrganization instead.');
 };

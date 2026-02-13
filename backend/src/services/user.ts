@@ -7,7 +7,7 @@ import { Types } from "mongoose";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-    sendStudentApprovalNotificationToInstitutes,  
+  sendStudentApprovalNotificationToOrganization,  // NEW
 } from "./email";
 import { ENV } from "../config/env";
 
@@ -16,7 +16,7 @@ export class UserService {
   // =================================================================
   // 1. REGISTER
   // =================================================================
-async register(email: string, name?: string, instituteId?: string) {
+async register(email: string, name?: string, organizationId?: string, departmentId?: string) {
   const existingUser = await UserModel.findOne({ email });
   if (existingUser && existingUser.isVerified) {
     throw new Error("Email already registered");
@@ -32,37 +32,49 @@ async register(email: string, name?: string, instituteId?: string) {
     existingUser.verificationToken = verificationToken;
     existingUser.name = nameToSave;
     
-    // NEW: Update institute if provided
-    if (instituteId) {
-      existingUser.institute = instituteId as any;
-      existingUser.instituteApprovalStatus = 'pending';
+    // Update organization and department if provided
+    if (organizationId) {
+      existingUser.organization = organizationId as any;
+      existingUser.department = departmentId as any;
+      existingUser.organizationApprovalStatus = 'pending';
     }
     
     await existingUser.save();
   } else {
-    // Scenario: New User
-    await UserModel.create({
-      email,
-      name: nameToSave,
-      isVerified: false,
-      verificationToken,
-      isActive: true,
-      // NEW: Add institute fields
-institute: instituteId ? new Types.ObjectId(instituteId) : undefined,
-      instituteApprovalStatus: instituteId ? 'pending' : undefined,
-    });
+  // Scenario: New User
+await UserModel.create({
+  email,
+  name: nameToSave,
+  isVerified: false,
+  verificationToken,
+  isActive: true,
+  // ✅ Only add organization/department if they exist
+  ...(organizationId && { 
+    organization: organizationId,
+    organizationApprovalStatus: 'pending'
+  }),
+  ...(departmentId && { 
+    department: departmentId 
+  }),
+});
+
   }
 
   await sendVerificationEmail(email, verificationToken);
   
-  // NEW: Notify institute if student registered with institute
-  if (instituteId) {
-    // Import this function at the top
-    await sendStudentApprovalNotificationToInstitutes(instituteId, email, nameToSave);
+  // Notify organization if student registered with organization AND department
+  if (organizationId && departmentId) {
+    await sendStudentApprovalNotificationToOrganization(
+      organizationId,
+      departmentId,
+      email,
+      nameToSave
+    );
   }
 
   return { message: "Verification email sent. Check your inbox." };
 }
+
 
 
   // =================================================================
@@ -114,24 +126,24 @@ async login(email: string, plainPass: string) {
     throw new Error("Your account has been deactivated. Please contact support.");
   }
 
-  // 🆕 NEW: Check Institute Approval Status
-  if (user.institute) {
-    // Student is linked to an institute - check approval status
-    if (user.instituteApprovalStatus === 'pending') {
-      throw new Error("Your registration is pending approval from your institute. Please wait for institute admin to approve.");
+  // 🆕 NEW: Check Organization Approval Status
+  if (user.organization) {
+    // Student is linked to an organization - check approval status
+    if (user.organizationApprovalStatus === 'pending') {
+      throw new Error("Your registration is pending approval from your organization. Please wait for admin/coordinator to approve.");
     }
     
-    if (user.instituteApprovalStatus === 'rejected') {
-      const reason = user.instituteRejectedReason || 'No reason provided';
-      throw new Error(`Your registration was rejected by the institute. Reason: ${reason}. Please contact your institute admin.`);
+    if (user.organizationApprovalStatus === 'rejected') {
+      const reason = user.RejectedReason || 'No reason provided';
+      throw new Error(`Your registration was rejected by the organization. Reason: ${reason}. Please contact your organization admin.`);
     }
     
     // Only 'approved' status can proceed
-    if (user.instituteApprovalStatus !== 'approved') {
-      throw new Error("Access denied. Please contact your institute admin.");
+    if (user.organizationApprovalStatus !== 'approved') {
+      throw new Error("Access denied. Please contact your organization admin.");
     }
   }
-  // If user.institute is null/undefined, it means no institute selected - allow normal login
+  // If user.organization is null/undefined, it means no organization selected - allow normal login
 
   const isValid = await argon2.verify(user.passwordHash!, plainPass);
   if (!isValid) throw new Error("Invalid credentials");
@@ -140,6 +152,7 @@ async login(email: string, plainPass: string) {
   
   return { user, accessToken, refreshToken };
 }
+
 
 
   // =================================================================

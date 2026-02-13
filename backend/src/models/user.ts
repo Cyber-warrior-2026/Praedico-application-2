@@ -4,7 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash?: string;
-  role: 'user' | 'admin' | 'super_admin' | 'institute';
+role: 'user' | 'admin' | 'super_admin' | 'organization_admin' | 'department_coordinator';
 
   isVerified: boolean;
   isActive: boolean;
@@ -14,12 +14,14 @@ export interface IUser extends Document {
   lastLogin?: Date;
   lastActive?: Date;
 
-  // Institute Relationship
-institute?: mongoose.Types.ObjectId;
-instituteApprovalStatus?: 'pending' | 'approved' | 'rejected';
-instituteApprovedBy?: mongoose.Types.ObjectId;
-instituteApprovedAt?: Date;
-instituteRejectedReason?: string;
+  // Organization Relationship
+organization?: mongoose.Types.ObjectId; 
+department?: mongoose.Types.ObjectId;  
+organizationApprovalStatus?: 'pending' | 'approved' | 'rejected';
+ApprovedBy?: mongoose.Types.ObjectId;
+approvedByType?: 'organization_admin' | 'department_coordinator'; 
+ApprovedAt?: Date;
+RejectedReason?: string;
 
   
   // Subscription Fields
@@ -70,7 +72,7 @@ const UserSchema: Schema = new Schema({
 
   role: {
     type: String,
-enum: ['user', 'admin', 'super_admin', 'institute'],
+    enum: ['user', 'admin', 'super_admin', 'organization_admin', 'department_coordinator'],
 
     default: 'user'
   },
@@ -90,21 +92,29 @@ lastActive: { type: Date, default: Date.now },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
 
-  // Institute Relationship
-institute: {
+// Organization Relationship
+organization: {
   type: Schema.Types.ObjectId,
-  ref: 'Institute'
+  ref: 'Organization'
 },
-instituteApprovalStatus: {
+department: {
+  type: Schema.Types.ObjectId,
+  ref: 'Department'
+},
+organizationApprovalStatus: {
   type: String,
   enum: ['pending', 'approved', 'rejected']
 },
-instituteApprovedBy: {
+approvedBy: {
   type: Schema.Types.ObjectId,
-  ref: 'Institute'
+  refPath: 'approvedByType'
 },
-instituteApprovedAt: { type: Date },
-instituteRejectedReason: { type: String },
+approvedByType: {
+  type: String,
+  enum: ['organization_admin', 'department_coordinator']
+},
+approvedAt: { type: Date },
+rejectedReason: { type: String },
 
   
   // Subscription Fields (New)

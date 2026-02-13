@@ -14,7 +14,9 @@ import cronService from './services/cronService';
 import aiChatRoutes from './routes/aiChat'; 
 import paymentRoutes from './routes/payment';
 import paperTradingRoutes from './routes/paperTrading';
-import instituteRoutes from "./routes/institute";
+import organizationRoutes from "./routes/organization";
+import departmentRoutes from "./routes/department";
+import coordinatorRoutes from "./routes/coordinator";
 
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
@@ -68,7 +70,9 @@ app.use(
   app.use('/api/ai', aiChatRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/paper-trading', paperTradingRoutes);
-app.use('/api/institute', instituteRoutes);
+app.use("/api/organization", organizationRoutes);
+app.use("/api/department", departmentRoutes);
+app.use("/api/coordinator", coordinatorRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes
