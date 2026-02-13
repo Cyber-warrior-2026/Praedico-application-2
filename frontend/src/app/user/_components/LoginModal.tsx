@@ -59,7 +59,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
             });
 
             onClose();
-            router.push("/coordinator/dashboard");
+            router.push("/organization/coordinator/dashboard");
           } catch (coordError: any) {
             console.log('Coordinator login also failed:', coordError.response?.data);
             // Both failed, throw the most relevant error
