@@ -2,8 +2,8 @@
 // If you are in Production (Vercel), use empty string.
 // This makes requests go to "https://praedico-frontend.vercel.app/api/..."
 // which the Rewrite rule above then forwards to the backend.
-export const API_BASE_URL = process.env.NODE_ENV === "production" 
-  ? "" 
+export const API_BASE_URL = process.env.NODE_ENV === "production"
+  ? ""
   : "http://localhost:5001";
 
 // API Endpoints
@@ -18,14 +18,14 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/api/users/reset-password',
     REFRESH_TOKEN: '/api/users/refresh-token',
   },
-  
+
   // Admin
   ADMIN: {
     LOGIN: '/api/admin/login',
     DASHBOARD: '/api/admin/dashboard',
     USERS: '/api/admin/users',
   },
-  
+
   // User
   USER: {
     PROFILE: '/api/users/me',
@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
     LOGOUT: "/api/users/logout",
   },
 
-    // ✨ NEW: Stock Market Data
+  // ✨ NEW: Stock Market Data
   STOCK: {
     ALL_LATEST: '/api/stocks/latest',
     NIFTY50: '/api/stocks/latest?category=NIFTY50',
@@ -45,7 +45,7 @@ export const API_ENDPOINTS = {
     MANUAL_SCRAPE: '/api/stocks/scrape',
   },
 
-   // ✨ NEW: News Data
+  // ✨ NEW: News Data
   NEWS: {
     LATEST: '/api/news/latest',
     ALL: '/api/news',
@@ -63,5 +63,63 @@ export const API_ENDPOINTS = {
     TRIAL: '/api/payments/trial',
     VERIFY: '/api/payments/verify',
   },
-  
+
+  // ✨ NEW: Organization Endpoints
+  ORGANIZATION: {
+    // Public
+    REGISTER: '/api/organization/register',
+    VERIFY: '/api/organization/verify',
+    LOGIN: '/api/organization/login',
+    LOGOUT: '/api/organization/logout',
+    PUBLIC_LIST: '/api/organization/public/list',
+
+    // Protected (Org Admin)
+    ME: '/api/organization/me',
+    STATS: '/api/organization/stats',
+    ADMINS: '/api/organization/admins',
+    STUDENTS_PENDING: '/api/organization/students/pending',
+    STUDENTS: '/api/organization/students',
+    APPROVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/approve`,
+    REJECT_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/reject`,
+
+    // Platform Admin
+    ALL: '/api/organization/all',
+    TOGGLE_ACTIVE: (id: string) => `/api/organization/${id}/toggle-active`,
+  },
+
+  // ✨ NEW: Coordinator Endpoints
+  COORDINATOR: {
+    // Public
+    VERIFY: '/api/coordinator/verify',
+    LOGIN: '/api/coordinator/login',
+    LOGOUT: '/api/coordinator/logout',
+
+    // Protected (Coordinator)
+    ME: '/api/coordinator/me',
+    STUDENTS: '/api/coordinator/students',
+    STUDENTS_PENDING: '/api/coordinator/students/pending',
+    APPROVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/approve`,
+    REJECT_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/reject`,
+
+    // Org Admin
+    CREATE: '/api/coordinator',
+    ALL: '/api/coordinator/all',
+    DELETE: (id: string) => `/api/coordinator/${id}`,
+  },
+
+  // ✨ NEW: Department Endpoints
+  DEPARTMENT: {
+    // Public
+    PUBLIC: (organizationId: string) => `/api/department/public/${organizationId}`,
+
+    // Protected
+    CREATE: '/api/department',
+    LIST: '/api/department',
+    BY_ID: (id: string) => `/api/department/${id}`,
+    DETAILS: (id: string) => `/api/department/${id}/details`,
+    UPDATE: (id: string) => `/api/department/${id}`,
+    DELETE: (id: string) => `/api/department/${id}`,
+  },
+
 } as const;
+

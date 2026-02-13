@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Mail, User, CheckCircle, ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
-import { authApi } from "@/lib/api";
+import { authApi, organizationApi } from "@/lib/api";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -17,11 +17,29 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [registerMode, setRegisterMode] = useState<'user' | 'organization'>('user');
 
-  // 1. Updated State: Added name, removed acceptTerms
+  // User registration form data
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+  });
+
+  // Organization registration form data
+  const [orgFormData, setOrgFormData] = useState({
+    organizationName: "",
+    organizationType: "university" as 'university' | 'college' | 'institute' | 'school' | 'other',
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "",
+    contactEmail: "",
+    contactPhone: "",
+    website: "",
+    registeredByName: "",
+    registeredByEmail: "",
+    registeredByDesignation: "",
   });
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -29,14 +47,33 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     setIsLoading(true);
     setError("");
 
-    // Terms validation removed
-
     try {
-      // 2. Sending name to API
-      await authApi.register({
-        email: formData.email,
-        name: formData.name,
-      });
+      if (registerMode === 'user') {
+        // User registration
+        await authApi.register({
+          email: formData.email,
+          name: formData.name,
+        });
+      } else {
+        // Organization registration
+        await organizationApi.register({
+          organizationName: orgFormData.organizationName,
+          organizationType: orgFormData.organizationType,
+          address: orgFormData.address,
+          city: orgFormData.city,
+          state: orgFormData.state,
+          pincode: orgFormData.pincode,
+          country: orgFormData.country || undefined,
+          contactEmail: orgFormData.contactEmail,
+          contactPhone: orgFormData.contactPhone,
+          website: orgFormData.website || undefined,
+          registeredBy: {
+            name: orgFormData.registeredByName,
+            email: orgFormData.registeredByEmail,
+            designation: orgFormData.registeredByDesignation,
+          },
+        });
+      }
 
       setSuccess(true);
 
@@ -44,7 +81,25 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       setTimeout(() => {
         onClose();
         setSuccess(false);
-        setFormData({ name: "", email: "" });
+        if (registerMode === 'user') {
+          setFormData({ name: "", email: "" });
+        } else {
+          setOrgFormData({
+            organizationName: "",
+            organizationType: "university",
+            address: "",
+            city: "",
+            state: "",
+            pincode: "",
+            country: "",
+            contactEmail: "",
+            contactPhone: "",
+            website: "",
+            registeredByName: "",
+            registeredByEmail: "",
+            registeredByDesignation: "",
+          });
+        }
       }, 3000);
     } catch (err: any) {
       setError(
@@ -109,7 +164,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   We've sent a verification link to
                 </p>
                 <p className="text-green-600 font-semibold mb-6">
-                  {formData.email}
+                  {registerMode === 'user' ? formData.email : orgFormData.contactEmail}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-slate-400">
                   Click the link to complete your registration
@@ -144,76 +199,340 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                   </div>
                 )}
 
+                {/* Mode Slider Toggle */}
+                <div className="mb-6 flex items-center justify-center gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setRegisterMode('user')}
+                    className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${registerMode === 'user'
+                      ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterMode('organization')}
+                    className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${registerMode === 'organization'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    Organization
+                  </button>
+                </div>
+
                 {/* Register Form */}
                 <form onSubmit={handleRegister} className="space-y-5">
 
-                  {/* 1. Name Field (Added) */}
-                  <div className="group">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-purple-600 transition-colors">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                        <User className="h-5 w-5" />
+                  {registerMode === 'user' ? (
+                    <>
+                      {/* USER REGISTRATION FORM */}
+                      {/* 1. Name Field (Added) */}
+                      <div className="group">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-purple-600 transition-colors">
+                          Full Name
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">
+                            <User className="h-5 w-5" />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Arjun Singh"
+                            value={formData.name}
+                            onChange={(e) =>
+                              setFormData({ ...formData, name: e.target.value })
+                            }
+                            className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
+                            required
+                          />
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Arjun Singh"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  {/* 2. Email Field */}
-                  <div className="group">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-purple-600 transition-colors">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">
-                        <Mail className="h-5 w-5" />
+                      {/* 2. Email Field */}
+                      <div className="group">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 group-focus-within:text-purple-600 transition-colors">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">
+                            <Mail className="h-5 w-5" />
+                          </div>
+                          <input
+                            id="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={formData.email}
+                            onChange={(e) =>
+                              setFormData({ ...formData, email: e.target.value })
+                            }
+                            className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
+                            required
+                          />
+                        </div>
                       </div>
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-slate-900 transition-all duration-300 hover:border-gray-300"
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  {/* Register Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="relative w-full group overflow-hidden mt-2"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="relative px-6 py-3.5 flex items-center justify-center gap-2 text-white font-semibold">
-                      {isLoading ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Creating account...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Get Started Free</span>
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                        </>
-                      )}
-                    </div>
-                  </button>
+                      {/* Register Button */}
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="relative w-full group overflow-hidden mt-2"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative px-6 py-3.5 flex items-center justify-center gap-2 text-white font-semibold">
+                          {isLoading ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Creating account...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Get Started Free</span>
+                              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                            </>
+                          )}
+                        </div>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* ORGANIZATION REGISTRATION FORM */}
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        {/* Organization Details Section */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 border-b pb-2">Organization Details</h3>
+
+                          {/* Organization Name */}
+                          <div className="group">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                              Organization Name *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="ABC University"
+                              value={orgFormData.organizationName}
+                              onChange={(e) => setOrgFormData({ ...orgFormData, organizationName: e.target.value })}
+                              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              required
+                            />
+                          </div>
+
+                          {/* Organization Type */}
+                          <div className="group">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                              Organization Type *
+                            </label>
+                            <select
+                              value={orgFormData.organizationType}
+                              onChange={(e) => setOrgFormData({ ...orgFormData, organizationType: e.target.value as any })}
+                              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              required
+                            >
+                              <option value="university">University</option>
+                              <option value="college">College</option>
+                              <option value="institute">Institute</option>
+                              <option value="school">School</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+
+                          {/* Address */}
+                          <div className="group">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                              Address *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="123 Main Street"
+                              value={orgFormData.address}
+                              onChange={(e) => setOrgFormData({ ...orgFormData, address: e.target.value })}
+                              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              required
+                            />
+                          </div>
+
+                          {/* City, State, Pincode */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                City *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Mumbai"
+                                value={orgFormData.city}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, city: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                State *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Maharashtra"
+                                value={orgFormData.state}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, state: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Pincode *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="400001"
+                                value={orgFormData.pincode}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, pincode: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Country & Website */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Country
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="India"
+                                value={orgFormData.country}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, country: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              />
+                            </div>
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Website
+                              </label>
+                              <input
+                                type="url"
+                                placeholder="https://example.com"
+                                value={orgFormData.website}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, website: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Contact Information Section */}
+                        <div className="space-y-4 pt-4">
+                          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 border-b pb-2">Contact Information</h3>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Contact Email *
+                              </label>
+                              <input
+                                type="email"
+                                placeholder="contact@example.com"
+                                value={orgFormData.contactEmail}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, contactEmail: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Contact Phone *
+                              </label>
+                              <input
+                                type="tel"
+                                placeholder="+91 9876543210"
+                                value={orgFormData.contactPhone}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, contactPhone: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Admin Details Section */}
+                        <div className="space-y-4 pt-4">
+                          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 border-b pb-2">Admin Details</h3>
+
+                          <div className="group">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                              Admin Name *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="John Doe"
+                              value={orgFormData.registeredByName}
+                              onChange={(e) => setOrgFormData({ ...orgFormData, registeredByName: e.target.value })}
+                              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                              required
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Admin Email *
+                              </label>
+                              <input
+                                type="email"
+                                placeholder="admin@example.com"
+                                value={orgFormData.registeredByEmail}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, registeredByEmail: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                            <div className="group">
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                Designation *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Principal/Dean"
+                                value={orgFormData.registeredByDesignation}
+                                onChange={(e) => setOrgFormData({ ...orgFormData, registeredByDesignation: e.target.value })}
+                                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 dark:text-white bg-white dark:bg-slate-900"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Register Button for Organization */}
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="relative w-full group overflow-hidden mt-4"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative px-6 py-3.5 flex items-center justify-center gap-2 text-white font-semibold">
+                          {isLoading ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Registering Organization...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Register Organization</span>
+                              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                            </>
+                          )}
+                        </div>
+                      </button>
+                    </>
+                  )}
                 </form>
 
                 {/* Divider */}

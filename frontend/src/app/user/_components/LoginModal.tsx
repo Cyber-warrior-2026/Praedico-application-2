@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Eye, EyeOff, Mail, Lock, Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { authApi } from "@/lib/api";
+import { authApi, organizationApi, coordinatorApi } from "@/lib/api";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loginMode, setLoginMode] = useState<'user' | 'organization'>('user'); // NEW: Login mode toggle
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,13 +30,48 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
     setError("");
 
     try {
-      await authApi.login({
-        email: formData.email,
-        password: formData.password,
-      });
+      if (loginMode === 'user') {
+        // User login
+        await authApi.login({
+          email: formData.email,
+          password: formData.password,
+        });
+        onClose();
+        router.push("/user/dashboard");
+      } else {
+        // Organization login (admin or coordinator)
+        // Try organization admin login first
+        try {
+          const response = await organizationApi.login({
+            email: formData.email,
+            password: formData.password,
+          });
 
-      onClose();
-      router.push("/user/dashboard");
+          onClose();
+          router.push("/organization/dashboard");
+        } catch (orgError: any) {
+          console.log('Organization login failed:', orgError.response?.data);
+          // If organization login fails, try coordinator login
+          try {
+            await coordinatorApi.login({
+              email: formData.email,
+              password: formData.password,
+            });
+
+            onClose();
+            router.push("/coordinator/dashboard");
+          } catch (coordError: any) {
+            console.log('Coordinator login also failed:', coordError.response?.data);
+            // Both failed, throw the most relevant error
+            // If org login failed with 401 (wrong password), show that
+            // Otherwise show coordinator error
+            if (orgError.response?.status === 401) {
+              throw orgError;
+            }
+            throw coordError;
+          }
+        }
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
@@ -100,6 +136,30 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               <p className="text-gray-500 dark:text-slate-400 text-sm">
                 Sign in to continue your journey
               </p>
+            </div>
+
+            {/* NEW: Mode Slider Toggle */}
+            <div className="mb-6 flex items-center justify-center gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setLoginMode('user')}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${loginMode === 'user'
+                  ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-md'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+              >
+                User
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode('organization')}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${loginMode === 'organization'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+              >
+                Organization
+              </button>
             </div>
 
             {/* Error Alert with Animation */}
