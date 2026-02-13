@@ -11,9 +11,9 @@ export default function OrganizationLayout({
     children: ReactNode;
 }) {
     const pathname = usePathname();
-    const isCoordinatorPage = pathname?.includes('/organization/coordinator');
+    const isCoordinatorPortal = pathname?.startsWith('/organization/coordinator/') || pathname === '/organization/coordinator';
 
-    if (isCoordinatorPage) {
+    if (isCoordinatorPortal) {
         return <>{children}</>;
     }
 

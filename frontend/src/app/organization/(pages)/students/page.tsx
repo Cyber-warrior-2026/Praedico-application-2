@@ -18,7 +18,7 @@ interface Student {
         departmentName: string;
     };
     registrationNumber?: string;
-    isApproved: boolean;
+    organizationApprovalStatus: 'pending' | 'approved' | 'rejected';
     createdAt: string;
 }
 
@@ -186,11 +186,13 @@ export default function AllStudentsPage() {
                                                     )}
                                                 </td>
                                                 <td className="py-4">
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${student.isApproved
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${student.organizationApprovalStatus === 'approved'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            : student.organizationApprovalStatus === 'rejected'
+                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                         }`}>
-                                                        {student.isApproved ? 'Active' : 'Pending'}
+                                                        {student.organizationApprovalStatus === 'approved' ? 'Active' : student.organizationApprovalStatus.charAt(0).toUpperCase() + student.organizationApprovalStatus.slice(1)}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 pr-8 text-right">

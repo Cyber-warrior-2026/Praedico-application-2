@@ -3,6 +3,8 @@ import { OrganizationService } from "../services/organization";
 import { asyncHandler } from "../common/errors/errorHandler";
 import { z } from "zod";
 
+
+
 const organizationService = new OrganizationService();
 
 const registerSchema = z.object({
@@ -45,7 +47,7 @@ const approveRejectSchema = z.object({
 });
 
 export class OrganizationController {
-  
+
   register = asyncHandler(async (req: Request, res: Response) => {
     const data = registerSchema.parse(req.body);
     const result = await organizationService.register(data);
@@ -56,10 +58,10 @@ export class OrganizationController {
     const { token, password } = verifySchema.parse(req.body);
     const result = await organizationService.verify(token, password);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       organization: result.organization,
-      admin: result.admin 
+      admin: result.admin
     });
   });
 
@@ -67,16 +69,16 @@ export class OrganizationController {
     const { email, password } = loginSchema.parse(req.body);
     const result = await organizationService.login(email, password);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       organization: result.organization,
-      admin: result.admin 
+      admin: result.admin
     });
   });
 
   getMe = asyncHandler(async (req: Request, res: Response) => {
     const adminId = (req as any).user.id;
-    
+
     const result = await organizationService.getAdminById(adminId);
     res.status(200).json({ success: true, ...result });
   });
@@ -85,7 +87,7 @@ export class OrganizationController {
   createAdmin = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
     const data = createAdminSchema.parse(req.body);
-    
+
     const result = await organizationService.createAdmin(organizationId, data);
     res.status(201).json({ success: true, ...result });
   });
@@ -93,14 +95,14 @@ export class OrganizationController {
   // Get Organization Statistics
   getStats = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
-    
     const stats = await organizationService.getOrganizationStats(organizationId);
+
     res.status(200).json({ success: true, ...stats });
   });
 
   getPendingStudents = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
-    
+
     const students = await organizationService.getPendingStudents(organizationId);
     res.status(200).json({ success: true, students, count: students.length });
   });
@@ -108,7 +110,7 @@ export class OrganizationController {
   approveStudent = asyncHandler(async (req: Request, res: Response) => {
     const adminId = (req as any).user.id;
     const studentId = req.params.studentId as string;
-    
+
     const result = await organizationService.approveStudent(adminId, studentId);
     res.status(200).json({ success: true, ...result });
   });
@@ -117,7 +119,7 @@ export class OrganizationController {
     const adminId = (req as any).user.id;
     const studentId = req.params.studentId as string;
     const { reason } = approveRejectSchema.parse(req.body);
-    
+
     const result = await organizationService.rejectStudent(adminId, studentId, reason);
     res.status(200).json({ success: true, ...result });
   });
@@ -126,7 +128,7 @@ export class OrganizationController {
     const organizationId = (req as any).user.organization;
     const status = req.query.status as string | undefined;
     const departmentId = req.query.departmentId as string | undefined;
-    
+
     const students = await organizationService.getStudents(organizationId, {
       status,
       departmentId
@@ -170,14 +172,14 @@ export class OrganizationController {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string || '';
-    
+
     const result = await organizationService.getAllOrganizations({ page, limit, search });
     res.status(200).json({ success: true, ...result });
   });
 
   toggleOrganizationActive = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = req.params.id as string;
-    
+
     const organization = await organizationService.toggleOrganizationActive(organizationId);
     res.status(200).json({
       success: true,
