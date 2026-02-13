@@ -1,0 +1,30 @@
+CWD: D:\github\Praedico-application-2\backend
+.env exists: true
+MONGODB_URI from env: FOUND (starts with mongodb+sr)
+Connecting to MongoDB...
+Connected.
+Found 1 organizations.
+
+Organization: MIT Indore (698ee607668951d057d1b21c)
+Verified: true, Active: true
+Linked Students: 1
+Pending Students: 0 (Deleted: 0)
+Admins: 1
+ - Admin: sambhav.j.dev@gmail.com | Name: Sambhav Jain | Verified: true
+ - Student: xofad82541@homuno.com | Status: approved | Deleted: false | Created: Fri Feb 13 2026 23:09:16 GMT+0530 (India Standard Time)
+
+--- Independent Users (No Organization) ---
+Found independent users (showing last 10):
+ - arjunbhadauriya220@gmail.com | Created: Thu Feb 12 2026 02:37:04 GMT+0530 (India Standard Time)
+ - test_script_1770721902803@example.com | Created: Tue Feb 10 2026 16:41:42 GMT+0530 (India Standard Time)
+ - test_script_1770721862856@example.com | Created: Tue Feb 10 2026 16:41:03 GMT+0530 (India Standard Time)
+ - test_script_1770721806468@example.com | Created: Tue Feb 10 2026 16:40:06 GMT+0530 (India Standard Time)
+ - test_script_1770721688250@example.com | Created: Tue Feb 10 2026 16:38:08 GMT+0530 (India Standard Time)
+ - tester@test.com | Created: Tue Feb 10 2026 14:57:22 GMT+0530 (India Standard Time)
+ - testuser@example.com | Created: Tue Feb 10 2026 14:53:37 GMT+0530 (India Standard Time)
+ - 22cs10sa83@mitsgwl.ac.in | Created: Mon Feb 09 2026 13:09:20 GMT+0530 (India Standard Time)
+ - priyankguptagwalior@gmail.com | Created: Mon Feb 09 2026 01:51:02 GMT+0530 (India Standard Time)
+ - arjunsinghbhadauriya220@gmail.com | Created: Sun Feb 08 2026 00:58:34 GMT+0530 (India Standard Time)
+
+--- Users with Organization but ID mismatch? ---
+Disconnected.

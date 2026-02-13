@@ -4,3 +4,6 @@ export * from './user.api';
 export * from './stock.api';
 export * from './news.api'; // ✨ Add this
 export * from './payment.api'; // 👈 Add this
+export * from './organization.api'; // ✨ Organization API
+export * from './coordinator.api'; // ✨ Coordinator API
+export * from './department.api'; // ✨ Department API
