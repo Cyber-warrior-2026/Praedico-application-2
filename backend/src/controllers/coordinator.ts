@@ -27,18 +27,33 @@ const approveRejectSchema = z.object({
   reason: z.string().optional()
 });
 
+const addStudentSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email is required")
+});
+
+const importCSVSchema = z.object({
+  students: z.array(z.object({
+    name: z.string(),
+    email: z.string(),
+    organization: z.string().optional(),
+    department: z.string().optional()
+  }))
+});
+
+
 export class CoordinatorController {
-  
+
   // Create Coordinator (by Organization Admin)
   createCoordinator = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
     const data = createCoordinatorSchema.parse(req.body);
-    
+
     const result = await coordinatorService.createCoordinator({
       organizationId,
       ...data
     });
-    
+
     res.status(201).json({ success: true, ...result });
   });
 
@@ -46,11 +61,11 @@ export class CoordinatorController {
   verify = asyncHandler(async (req: Request, res: Response) => {
     const { token, password } = verifySchema.parse(req.body);
     const result = await coordinatorService.verify(token, password);
-    
+
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(200).json({ 
-      success: true, 
-      coordinator: result.coordinator 
+    res.status(200).json({
+      success: true,
+      coordinator: result.coordinator
     });
   });
 
@@ -58,18 +73,18 @@ export class CoordinatorController {
   login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = loginSchema.parse(req.body);
     const result = await coordinatorService.login(email, password);
-    
+
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(200).json({ 
-      success: true, 
-      coordinator: result.coordinator 
+    res.status(200).json({
+      success: true,
+      coordinator: result.coordinator
     });
   });
 
   // Get Coordinator Profile
   getMe = asyncHandler(async (req: Request, res: Response) => {
     const coordinatorId = (req as any).user.id;
-    
+
     const coordinator = await coordinatorService.getCoordinatorById(coordinatorId);
     res.status(200).json({ success: true, coordinator });
   });
@@ -78,24 +93,24 @@ export class CoordinatorController {
   getMyStudents = asyncHandler(async (req: Request, res: Response) => {
     const coordinatorId = (req as any).user.id;
     const status = req.query.status as string | undefined;
-    
+
     const students = await coordinatorService.getMyDepartmentStudents(coordinatorId, status);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       students,
-      count: students.length 
+      count: students.length
     });
   });
 
   // Get Pending Approvals
   getPendingStudents = asyncHandler(async (req: Request, res: Response) => {
     const coordinatorId = (req as any).user.id;
-    
+
     const students = await coordinatorService.getPendingStudents(coordinatorId);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       students,
-      count: students.length 
+      count: students.length
     });
   });
 
@@ -103,7 +118,7 @@ export class CoordinatorController {
   approveStudent = asyncHandler(async (req: Request, res: Response) => {
     const coordinatorId = (req as any).user.id;
     const studentId = req.params.studentId as string;
-    
+
     const result = await coordinatorService.approveStudent(coordinatorId, studentId);
     res.status(200).json({ success: true, ...result });
   });
@@ -113,8 +128,26 @@ export class CoordinatorController {
     const coordinatorId = (req as any).user.id;
     const studentId = req.params.studentId as string;
     const { reason } = approveRejectSchema.parse(req.body);
-    
+
     const result = await coordinatorService.rejectStudent(coordinatorId, studentId, reason);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Add Student Directly (No Approval Needed)
+  addStudent = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const { name, email } = addStudentSchema.parse(req.body);
+
+    const result = await coordinatorService.addStudentDirectly(coordinatorId, { name, email });
+    res.status(201).json({ success: true, ...result });
+  });
+
+  // Import Students from CSV
+  importStudentsCSV = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const { students } = importCSVSchema.parse(req.body);
+
+    const result = await coordinatorService.importStudentsFromCSV(coordinatorId, students);
     res.status(200).json({ success: true, ...result });
   });
 
@@ -135,12 +168,12 @@ export class CoordinatorController {
   // Get All Coordinators (by Org Admin)
   getAllCoordinators = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
-    
+
     const coordinators = await coordinatorService.getCoordinatorsByOrganization(organizationId);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       coordinators,
-      count: coordinators.length 
+      count: coordinators.length
     });
   });
 
@@ -148,7 +181,7 @@ export class CoordinatorController {
   deleteCoordinator = asyncHandler(async (req: Request, res: Response) => {
     const organizationId = (req as any).user.organization;
     const coordinatorId = req.params.id as string;
-    
+
     const result = await coordinatorService.deleteCoordinator(coordinatorId, organizationId);
     res.status(200).json({ success: true, ...result });
   });

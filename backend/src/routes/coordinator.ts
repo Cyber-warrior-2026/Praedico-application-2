@@ -21,6 +21,11 @@ router.get("/students/pending", authorize(["department_coordinator"]), coordinat
 router.patch("/students/:studentId/approve", authorize(["department_coordinator"]), coordinatorController.approveStudent);
 router.patch("/students/:studentId/reject", authorize(["department_coordinator"]), coordinatorController.rejectStudent);
 
+// New Routes: Direct Student Addition & CSV Import
+router.post("/students/add", authorize(["department_coordinator"]), coordinatorController.addStudent);
+router.post("/students/import-csv", authorize(["department_coordinator"]), coordinatorController.importStudentsCSV);
+
+
 // ============================================
 // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
 // ============================================
