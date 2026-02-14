@@ -99,6 +99,16 @@ export const coordinatorApi = {
         return response.data;
     },
 
+    addStudent: async (data: { name: string; email: string }) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.COORDINATOR.ADD_STUDENT, data);
+        return response.data;
+    },
+
+    importStudentsCSV: async (data: { students: any[] }) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.COORDINATOR.IMPORT_CSV, data);
+        return response.data;
+    },
+
     // ============================================
     // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
     // ============================================
