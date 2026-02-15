@@ -12,7 +12,7 @@ import {
 } from "./email";
 
 export class CoordinatorService {
-  
+
   // Create Coordinator (by Organization Admin)
   async createCoordinator(data: {
     organizationId: string;
@@ -145,7 +145,7 @@ export class CoordinatorService {
   // Get Students in Coordinator's Department
   async getMyDepartmentStudents(coordinatorId: string, status?: string) {
     const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
-    
+
     if (!coordinator) {
       throw new Error("Coordinator not found");
     }
@@ -169,7 +169,7 @@ export class CoordinatorService {
   // Get Pending Approvals in Department
   async getPendingStudents(coordinatorId: string) {
     const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
-    
+
     if (!coordinator) {
       throw new Error("Coordinator not found");
     }
@@ -186,7 +186,7 @@ export class CoordinatorService {
   // Approve Student
   async approveStudent(coordinatorId: string, studentId: string) {
     const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
-    
+
     if (!coordinator) {
       throw new Error("Coordinator not found");
     }
@@ -222,7 +222,7 @@ export class CoordinatorService {
   // Reject Student
   async rejectStudent(coordinatorId: string, studentId: string, reason?: string) {
     const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
-    
+
     if (!coordinator) {
       throw new Error("Coordinator not found");
     }
@@ -247,6 +247,207 @@ export class CoordinatorService {
     await sendStudentRejectionEmail(student.email, student.name, reason);
 
     return { message: "Student rejected" };
+  }
+
+  // Add Student Directly (No Approval Needed)
+  async addStudentDirectly(coordinatorId: string, studentData: {
+    name: string;
+    email: string;
+  }) {
+    // Get coordinator details
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    if (!coordinator.isActive || !coordinator.isVerified) {
+      throw new Error("Coordinator account is not active");
+    }
+
+    // Check if email already exists
+    const existingUser = await UserModel.findOne({ email: studentData.email });
+    if (existingUser) {
+      throw new Error("A user with this email already exists");
+    }
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    // Create user with pre-approved status
+    const student = await UserModel.create({
+      name: studentData.name,
+      email: studentData.email,
+      organization: coordinator.organization,
+      department: coordinator.department,
+      organizationApprovalStatus: 'approved', // Pre-approved
+      ApprovedBy: coordinatorId as any,
+      approvedByType: 'department_coordinator',
+      ApprovedAt: new Date(),
+      isVerified: false, // Still needs to set password
+      verificationToken,
+      isActive: true
+    });
+
+    // Send verification email
+    const { sendVerificationEmail } = await import('./email');
+    await sendVerificationEmail(studentData.email, verificationToken);
+
+    // Update department stats
+    await this.updateDepartmentStats(coordinator.department.toString());
+
+    return {
+      message: "Student added successfully. Verification email sent.",
+      studentId: student._id
+    };
+  }
+
+  // Import Students from CSV (Bulk Addition)
+  async importStudentsFromCSV(coordinatorId: string, csvData: Array<{
+    name: string;
+    email: string;
+    organization?: string;
+    department?: string;
+  }>) {
+    // Get coordinator details
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId)
+      .populate('department', 'departmentName departmentCode');
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    if (!coordinator.isActive || !coordinator.isVerified) {
+      throw new Error("Coordinator account is not active");
+    }
+
+    const results = {
+      added: [] as Array<{ name: string; email: string }>,
+      skipped: [] as Array<{ name: string; email: string; reason: string }>,
+      errors: [] as Array<{ row: number; name: string; email: string; error: string }>
+    };
+
+    // Get department info for validation
+    const department = coordinator.department as any;
+    const departmentName = department.departmentName;
+    const departmentCode = department.departmentCode;
+
+    // Process each row
+    for (let i = 0; i < csvData.length; i++) {
+      const row = csvData[i];
+
+      try {
+        // Validate required fields
+        if (!row.name || !row.email) {
+          results.errors.push({
+            row: i + 1,
+            name: row.name || '',
+            email: row.email || '',
+            error: 'Missing required fields (name or email)'
+          });
+          continue;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(row.email)) {
+          results.errors.push({
+            row: i + 1,
+            name: row.name,
+            email: row.email,
+            error: 'Invalid email format'
+          });
+          continue;
+        }
+
+        // Check if department field exists and validate
+        if (row.department) {
+          const rowDept = row.department.trim();
+          // Check if it matches coordinator's department (by name or code)
+          if (rowDept !== departmentName && rowDept !== departmentCode) {
+            results.skipped.push({
+              name: row.name,
+              email: row.email,
+              reason: `Department mismatch: "${rowDept}" does not match your department "${departmentName}"`
+            });
+            continue;
+          }
+        }
+
+        // Check if email already exists
+        const existingUser = await UserModel.findOne({ email: row.email });
+        if (existingUser) {
+          results.skipped.push({
+            name: row.name,
+            email: row.email,
+            reason: 'Email already exists in system'
+          });
+          continue;
+        }
+
+        // Check for duplicate within this CSV batch
+        const duplicateInBatch = results.added.find(s => s.email === row.email);
+        if (duplicateInBatch) {
+          results.skipped.push({
+            name: row.name,
+            email: row.email,
+            reason: 'Duplicate email in CSV file'
+          });
+          continue;
+        }
+
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        // Create user with pre-approved status
+        await UserModel.create({
+          name: row.name.trim(),
+          email: row.email.trim().toLowerCase(),
+          organization: coordinator.organization,
+          department: coordinator.department,
+          organizationApprovalStatus: 'approved', // Pre-approved
+          ApprovedBy: coordinatorId as any,
+          approvedByType: 'department_coordinator',
+          ApprovedAt: new Date(),
+          isVerified: false,
+          verificationToken,
+          isActive: true
+        });
+
+        // Send verification email
+        const { sendVerificationEmail } = await import('./email');
+        await sendVerificationEmail(row.email, verificationToken);
+
+        results.added.push({
+          name: row.name,
+          email: row.email
+        });
+
+      } catch (error: any) {
+        results.errors.push({
+          row: i + 1,
+          name: row.name || '',
+          email: row.email || '',
+          error: error.message || 'Unknown error'
+        });
+      }
+    }
+
+    // Update department stats if any students were added
+    if (results.added.length > 0) {
+      await this.updateDepartmentStats(coordinator.department.toString());
+    }
+
+    return {
+      message: `Import completed: ${results.added.length} added, ${results.skipped.length} skipped, ${results.errors.length} errors`,
+      summary: {
+        totalProcessed: csvData.length,
+        successfullyAdded: results.added.length,
+        skipped: results.skipped.length,
+        errors: results.errors.length
+      },
+      details: results
+    };
   }
 
   // Update Department Stats
@@ -336,9 +537,9 @@ export class CoordinatorService {
       organization: organizationId,
       isDeleted: false
     })
-    .populate('department', 'departmentName departmentCode')
-    .select('-passwordHash')
-    .sort({ createdAt: -1 });
+      .populate('department', 'departmentName departmentCode')
+      .select('-passwordHash')
+      .sort({ createdAt: -1 });
 
     return coordinators;
   }

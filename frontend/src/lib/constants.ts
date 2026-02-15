@@ -100,6 +100,8 @@ export const API_ENDPOINTS = {
     STUDENTS_PENDING: '/api/coordinator/students/pending',
     APPROVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/approve`,
     REJECT_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/reject`,
+    ADD_STUDENT: '/api/coordinator/students/add',
+    IMPORT_CSV: '/api/coordinator/students/import-csv',
 
     // Org Admin
     CREATE: '/api/coordinator',
