@@ -1,6 +1,7 @@
 import { DepartmentCoordinatorModel, IDepartmentCoordinator } from "../models/departmentCoordinator";
 import { UserModel } from "../models/user";
 import { DepartmentModel } from "../models/department";
+import PortfolioHolding from "../models/portfolio";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -10,6 +11,7 @@ import {
   sendStudentApprovalEmail,
   sendStudentRejectionEmail
 } from "./email";
+
 
 export class CoordinatorService {
 
@@ -151,8 +153,7 @@ export class CoordinatorService {
     }
 
     const filter: any = {
-      department: coordinator.department,
-      isDeleted: false
+      department: coordinator.department
     };
 
     if (status) {
@@ -449,6 +450,192 @@ export class CoordinatorService {
       details: results
     };
   }
+
+  // Get Student by ID (Department Restricted)
+  async getStudentById(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    })
+      .populate('department', 'departmentName departmentCode')
+      .select('-passwordHash');
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    return student;
+  }
+
+  // Update Student (Department Restricted - Cannot change department)
+  async updateStudent(coordinatorId: string, studentId: string, updateData: {
+    name?: string;
+    email?: string;
+  }) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    // If updating email, check for duplicates
+    if (updateData.email && updateData.email !== student.email) {
+      const existingUser = await UserModel.findOne({ email: updateData.email });
+      if (existingUser) {
+        throw new Error("A user with this email already exists");
+      }
+    }
+
+    // Update fields (coordinators cannot change department)
+    if (updateData.name) student.name = updateData.name;
+    if (updateData.email) student.email = updateData.email;
+
+    await student.save();
+
+    return {
+      message: "Student updated successfully",
+      student: await UserModel.findById(studentId)
+        .populate('department', 'departmentName departmentCode')
+        .select('-passwordHash')
+    };
+  }
+
+  // Archive Student (Department Restricted)
+  async archiveStudent(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    if (student.isDeleted) {
+      throw new Error("Student is already archived");
+    }
+
+    // Soft delete
+    student.isDeleted = true;
+    student.deletedAt = new Date();
+    student.isActive = false;
+    await student.save();
+
+    // Update department stats
+    await this.updateDepartmentStats(coordinator.department.toString());
+
+    return {
+      message: "Student archived successfully"
+    };
+  }
+
+  // Unarchive Student (Department Restricted)
+  async unarchiveStudent(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    // Find student in department (even if deleted)
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    if (!student.isDeleted) {
+      throw new Error("Student is not archived");
+    }
+
+    // Restore
+    student.isDeleted = false;
+    student.deletedAt = undefined;
+    student.isActive = true;
+    await student.save();
+
+    // Update department stats
+    await this.updateDepartmentStats(coordinator.department.toString());
+
+    return {
+      message: "Student unarchived successfully"
+    };
+  }
+
+  // Get Student Portfolio (Department Restricted)
+  async getStudentPortfolio(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    // Verify student belongs to coordinator's department
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    // Get portfolio holdings
+    const holdings = await PortfolioHolding.find({ userId: studentId })
+      .sort({ currentValue: -1 });
+
+
+    // Calculate summary
+    const totalInvested = holdings.reduce((sum, h) => sum + h.totalInvested, 0);
+    const currentValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
+    const totalPL = currentValue - totalInvested;
+    const totalPLPercent = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
+
+    return {
+      student: {
+        id: student._id,
+        name: student.name,
+        email: student.email
+      },
+      holdings,
+      summary: {
+        totalHoldings: holdings.length,
+        totalInvested,
+        currentValue,
+        totalPL,
+        totalPLPercent: parseFloat(totalPLPercent.toFixed(2))
+      }
+    };
+  }
+
 
   // Update Department Stats
   private async updateDepartmentStats(departmentId: string) {

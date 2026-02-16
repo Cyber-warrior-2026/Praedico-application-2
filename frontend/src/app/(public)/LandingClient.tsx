@@ -112,20 +112,7 @@ export default function LandingClient() {
         <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans pb-20">
 
             {/* GLOBAL STYLES (Animations) */}
-            <style jsx global>{`
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-          100% { transform: translateY(0px); }
-        }
-        @keyframes reveal {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-float-delayed { animation: float 8s ease-in-out infinite 2s; }
-        .animate-reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-      `}</style>
+            {/* GLOBAL STYLES (Animations) - Moved to globals.css */}
 
             {/* PAGE BACKGROUND (Layered over layout background) */}
             <div className="fixed inset-0 z-0 pointer-events-none">

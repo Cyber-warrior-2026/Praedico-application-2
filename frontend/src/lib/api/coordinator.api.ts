@@ -104,8 +104,37 @@ export const coordinatorApi = {
         return response.data;
     },
 
-    importStudentsCSV: async (data: { students: any[] }) => {
+    importStudentsCSV: async (data: { students: Array<{ name: string; email: string }> }) => {
         const response = await axiosInstance.post(API_ENDPOINTS.COORDINATOR.IMPORT_CSV, data);
+        return response.data;
+    },
+
+    // Student Management (Department Restricted)
+    getStudentById: async (studentId: string) => {
+        const response = await axiosInstance.get(API_ENDPOINTS.COORDINATOR.GET_STUDENT(studentId));
+        return response.data;
+    },
+
+    updateStudent: async (studentId: string, data: {
+        name?: string;
+        email?: string;
+    }) => {
+        const response = await axiosInstance.put(API_ENDPOINTS.COORDINATOR.UPDATE_STUDENT(studentId), data);
+        return response.data;
+    },
+
+    archiveStudent: async (studentId: string) => {
+        const response = await axiosInstance.delete(API_ENDPOINTS.COORDINATOR.ARCHIVE_STUDENT(studentId));
+        return response.data;
+    },
+
+    unarchiveStudent: async (studentId: string) => {
+        const response = await axiosInstance.patch(API_ENDPOINTS.COORDINATOR.UNARCHIVE_STUDENT(studentId));
+        return response.data;
+    },
+
+    getStudentPortfolio: async (studentId: string) => {
+        const response = await axiosInstance.get(API_ENDPOINTS.COORDINATOR.STUDENT_PORTFOLIO(studentId));
         return response.data;
     },
 

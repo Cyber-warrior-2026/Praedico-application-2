@@ -41,6 +41,14 @@ const importCSVSchema = z.object({
   }))
 });
 
+const updateStudentSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  email: z.string().email("Valid email is required").optional()
+});
+
+
+
+
 
 export class CoordinatorController {
 
@@ -150,6 +158,53 @@ export class CoordinatorController {
     const result = await coordinatorService.importStudentsFromCSV(coordinatorId, students);
     res.status(200).json({ success: true, ...result });
   });
+
+  // Get Student by ID (Department Restricted)
+  getStudentById = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const student = await coordinatorService.getStudentById(coordinatorId, studentId);
+    res.status(200).json({ success: true, student });
+  });
+
+  // Update Student (Department Restricted)
+  updateStudent = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+    const updateData = updateStudentSchema.parse(req.body);
+
+    const result = await coordinatorService.updateStudent(coordinatorId, studentId, updateData);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Archive Student (Department Restricted)
+  archiveStudent = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const result = await coordinatorService.archiveStudent(coordinatorId, studentId);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Unarchive Student (Department Restricted)
+  unarchiveStudent = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const result = await coordinatorService.unarchiveStudent(coordinatorId, studentId);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Get Student Portfolio (Department Restricted)
+  getStudentPortfolio = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const portfolio = await coordinatorService.getStudentPortfolio(coordinatorId, studentId);
+    res.status(200).json({ success: true, portfolio });
+  });
+
 
   // Logout
   logout = asyncHandler(async (req: Request, res: Response) => {
