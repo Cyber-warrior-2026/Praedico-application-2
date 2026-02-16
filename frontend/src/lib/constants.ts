@@ -81,6 +81,16 @@ export const API_ENDPOINTS = {
     STUDENTS: '/api/organization/students',
     APPROVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/approve`,
     REJECT_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/reject`,
+    ADD_STUDENT: '/api/organization/students/add',
+    IMPORT_CSV: '/api/organization/students/import-csv',
+
+    // Student Management
+    GET_STUDENT: (studentId: string) => `/api/organization/students/${studentId}`,
+    UPDATE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}`,
+    ARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}`,
+    UNARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/unarchive`,
+    STUDENT_PORTFOLIO: (studentId: string) => `/api/organization/students/${studentId}/portfolio`,
+
 
     // Platform Admin
     ALL: '/api/organization/all',
@@ -102,6 +112,14 @@ export const API_ENDPOINTS = {
     REJECT_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/reject`,
     ADD_STUDENT: '/api/coordinator/students/add',
     IMPORT_CSV: '/api/coordinator/students/import-csv',
+
+    // Student Management
+    GET_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}`,
+    UPDATE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}`,
+    ARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}`,
+    UNARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/unarchive`,
+    STUDENT_PORTFOLIO: (studentId: string) => `/api/coordinator/students/${studentId}/portfolio`,
+
 
     // Org Admin
     CREATE: '/api/coordinator',

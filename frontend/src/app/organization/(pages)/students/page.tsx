@@ -1,12 +1,20 @@
+// ... imports
 "use client";
 
 import { useState, useEffect } from 'react';
 import {
     GraduationCap, Search, Filter, MoreVertical,
     ChevronRight, Mail, Phone, Calendar,
-    RefreshCcw, Loader2, Users, FileSpreadsheet
+    RefreshCcw, Loader2, Users, FileSpreadsheet, UserPlus
 } from 'lucide-react';
 import { organizationApi } from '@/lib/api';
+import AddStudentModal from '../../_components/AddStudentModal';
+import ImportCSVModal from '../../_components/ImportCSVModal';
+import StudentActionMenu from '../../_components/StudentActionMenu';
+import EditStudentModal from '../../_components/EditStudentModal';
+import ArchiveStudentModal from '../../_components/ArchiveStudentModal';
+import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
+import ViewPortfolioModal from '../../_components/ViewPortfolioModal';
 
 interface Student {
     _id: string;
@@ -20,12 +28,24 @@ interface Student {
     registrationNumber?: string;
     organizationApprovalStatus: 'pending' | 'approved' | 'rejected';
     createdAt: string;
+    isDeleted?: boolean;
 }
 
 export default function AllStudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Modal States
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+
+    // Action Modal States
+    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showArchiveModal, setShowArchiveModal] = useState(false);
+    const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+    const [showPortfolioModal, setShowPortfolioModal] = useState(false);
 
     useEffect(() => {
         fetchStudents();
@@ -43,6 +63,21 @@ export default function AllStudentsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEditStudent = (student: any) => {
+        setSelectedStudent(student);
+        setShowEditModal(true);
+    };
+
+    const handleArchiveStudent = (student: any) => {
+        setSelectedStudent(student);
+        setShowArchiveModal(true);
+    };
+
+    const handleViewPortfolio = (student: any) => {
+        setSelectedStudent(student);
+        setShowPortfolioModal(true);
     };
 
     const filteredStudents = students.filter((student) =>
@@ -87,6 +122,22 @@ export default function AllStudentsPage() {
                             <Users className="w-5 h-5 text-blue-400" />
                             <span className="text-blue-400 font-bold">{students.length} Total Students</span>
                         </div>
+
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            className="bg-[#0F172A] hover:bg-[#1E293B] text-slate-200 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 transition-all"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            <span className="hidden md:inline">Import CSV</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            <span className="hidden md:inline">Add Student</span>
+                        </button>
                     </div>
                 </div>
 
@@ -185,20 +236,30 @@ export default function AllStudentsPage() {
                                                         <span className="text-slate-600 italic">Not provided</span>
                                                     )}
                                                 </td>
-                                                <td className="py-4">
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${student.organizationApprovalStatus === 'approved'
-                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                <td className="px-6 py-4">
+                                                    {student.isDeleted ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
+                                                            ARCHIVED
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${student.organizationApprovalStatus === 'approved'
+                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                                             : student.organizationApprovalStatus === 'rejected'
-                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                        }`}>
-                                                        {student.organizationApprovalStatus === 'approved' ? 'Active' : student.organizationApprovalStatus.charAt(0).toUpperCase() + student.organizationApprovalStatus.slice(1)}
-                                                    </span>
+                                                                ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                                : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                                            }`}>
+                                                            {student.organizationApprovalStatus === 'approved' ? 'ACTIVE' : student.organizationApprovalStatus?.toUpperCase()}
+                                                        </span>
+                                                    )}
                                                 </td>
-                                                <td className="py-4 pr-8 text-right">
-                                                    <button className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-colors">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
+                                                <td className="px-6 py-4 text-right">
+                                                    <StudentActionMenu
+                                                        student={student}
+                                                        onEdit={(s) => { setSelectedStudent(s); setShowEditModal(true); }}
+                                                        onArchive={(s) => { setSelectedStudent(s); setShowArchiveModal(true); }}
+                                                        onUnarchive={(s) => { setSelectedStudent(s); setShowUnarchiveModal(true); }}
+                                                        onViewPortfolio={(s) => { setSelectedStudent(s); setShowPortfolioModal(true); }}
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}
@@ -209,15 +270,51 @@ export default function AllStudentsPage() {
                     </div>
                 </div>
             </div>
+
+            <AddStudentModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={() => {
+                    fetchStudents();
+                }}
+            />
+
+            <ImportCSVModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => fetchStudents()}
+            />
+
+            <EditStudentModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                student={selectedStudent}
+                onSuccess={() => fetchStudents()}
+            />
+
+            <ArchiveStudentModal
+                isOpen={showArchiveModal}
+                onClose={() => setShowArchiveModal(false)}
+                student={selectedStudent}
+                onSuccess={() => fetchStudents()}
+            />
+
+            <UnarchiveStudentModal
+                isOpen={showUnarchiveModal}
+                onClose={() => setShowUnarchiveModal(false)}
+                student={selectedStudent}
+                onSuccess={() => fetchStudents()}
+            />
+
+            <ViewPortfolioModal
+                isOpen={showPortfolioModal}
+                onClose={() => setShowPortfolioModal(false)}
+                student={selectedStudent}
+            />
+
             {/* Global CSS for Animations */}
-            <style jsx global>{`
-                @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-                .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
-                .animate-slide-down { animation: slideDown 0.6s ease-out forwards; }
-                .animate-pulse-slow { animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-            `}</style>
-        </div>
+            {/* Global CSS for Animations - Moved to globals.css */}
+        </div >
     );
 }
+

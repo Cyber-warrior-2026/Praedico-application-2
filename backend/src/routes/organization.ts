@@ -25,6 +25,18 @@ router.get("/students", authorize(["organization_admin"]), organizationControlle
 router.patch("/students/:studentId/approve", authorize(["organization_admin"]), organizationController.approveStudent);
 router.patch("/students/:studentId/reject", authorize(["organization_admin"]), organizationController.rejectStudent);
 
+// New Routes: Direct Student Addition & CSV Import (Organization Admin)
+router.post("/students/add", authorize(["organization_admin"]), organizationController.addStudent);
+router.post("/students/import-csv", authorize(["organization_admin"]), organizationController.importStudentsCSV);
+
+// New Routes: Student Management (Get, Update, Archive, View Portfolio)
+router.get("/students/:studentId", authorize(["organization_admin"]), organizationController.getStudentById);
+router.put("/students/:studentId", authorize(["organization_admin"]), organizationController.updateStudent);
+router.delete("/students/:studentId", authorize(["organization_admin"]), organizationController.archiveStudent);
+router.patch("/students/:studentId/unarchive", authorize(["organization_admin"]), organizationController.unarchiveStudent);
+router.get("/students/:studentId/portfolio", authorize(["organization_admin"]), organizationController.getStudentPortfolio);
+
+
 // ============================================
 // PLATFORM ADMIN ROUTES (Manage Organizations)
 // ============================================

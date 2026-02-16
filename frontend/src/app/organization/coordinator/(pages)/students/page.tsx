@@ -1,3 +1,4 @@
+// ... imports
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,6 +9,12 @@ import {
     Download, Upload, X, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { coordinatorApi } from '@/lib/api';
+// Using coordinator-specific components
+import StudentActionMenu from '../../_components/StudentActionMenu';
+import EditStudentModal from '../../_components/EditStudentModal';
+import ArchiveStudentModal from '../../_components/ArchiveStudentModal';
+import ViewPortfolioModal from '../../_components/ViewPortfolioModal';
+import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
 
 interface Student {
     _id: string;
@@ -17,6 +24,7 @@ interface Student {
     registrationNumber?: string;
     organizationApprovalStatus: 'pending' | 'approved' | 'rejected';
     createdAt: string;
+    isDeleted?: boolean;
 }
 
 export default function CoordinatorAllStudentsPage() {
@@ -27,6 +35,13 @@ export default function CoordinatorAllStudentsPage() {
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+
+    // Action Modal States
+    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showArchiveModal, setShowArchiveModal] = useState(false);
+    const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+    const [showPortfolioModal, setShowPortfolioModal] = useState(false);
 
     // Form States
     const [newStudent, setNewStudent] = useState({ name: '', email: '' });
@@ -53,7 +68,23 @@ export default function CoordinatorAllStudentsPage() {
         }
     };
 
+    const handleEditStudent = (student: any) => {
+        setSelectedStudent(student);
+        setShowEditModal(true);
+    };
+
+    const handleArchiveStudent = (student: any) => {
+        setSelectedStudent(student);
+        setShowArchiveModal(true);
+    };
+
+    const handleViewPortfolio = (student: any) => {
+        setSelectedStudent(student);
+        setShowPortfolioModal(true);
+    };
+
     const handleAddStudent = async (e: React.FormEvent) => {
+        // ... (existing code)
         e.preventDefault();
         setIsSubmitting(true);
         try {
@@ -70,6 +101,8 @@ export default function CoordinatorAllStudentsPage() {
             setIsSubmitting(false);
         }
     };
+
+    // ... (rest of the file updates)
 
     const handleImportCSV = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -334,15 +367,21 @@ export default function CoordinatorAllStudentsPage() {
                                                         <span className="text-slate-600 italic">Not provided</span>
                                                     )}
                                                 </td>
-                                                <td className="py-4">
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${student.organizationApprovalStatus === 'approved'
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                        : student.organizationApprovalStatus === 'rejected'
-                                                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                        }`}>
-                                                        {student.organizationApprovalStatus === 'approved' ? 'Active' : student.organizationApprovalStatus.charAt(0).toUpperCase() + student.organizationApprovalStatus.slice(1)}
-                                                    </span>
+                                                <td className="px-6 py-4">
+                                                    {student.isDeleted ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
+                                                            ARCHIVED
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${student.organizationApprovalStatus === 'approved'
+                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                            : student.organizationApprovalStatus === 'rejected'
+                                                                ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                                : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                                            }`}>
+                                                            {student.organizationApprovalStatus === 'approved' ? 'ACTIVE' : student.organizationApprovalStatus?.toUpperCase()}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 text-slate-400">
                                                     <div className="flex items-center gap-2">
@@ -350,10 +389,14 @@ export default function CoordinatorAllStudentsPage() {
                                                         {new Date(student.createdAt).toLocaleDateString()}
                                                     </div>
                                                 </td>
-                                                <td className="py-4 pr-8 text-right">
-                                                    <button className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-colors">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
+                                                <td className="px-6 py-4 text-right">
+                                                    <StudentActionMenu
+                                                        student={student}
+                                                        onEdit={(s) => { setSelectedStudent(s); setShowEditModal(true); }}
+                                                        onArchive={(s) => { setSelectedStudent(s); setShowArchiveModal(true); }}
+                                                        onUnarchive={(s) => { setSelectedStudent(s); setShowUnarchiveModal(true); }}
+                                                        onViewPortfolio={(s) => { setSelectedStudent(s); setShowPortfolioModal(true); }}
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}
@@ -363,13 +406,9 @@ export default function CoordinatorAllStudentsPage() {
                         )}
                     </div>
                 </div>
-
-                {/* Modals */}
-
-                {/* Add Student Modal */}
                 {showAddModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold text-white">Add New Student</h3>
                                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
@@ -415,145 +454,185 @@ export default function CoordinatorAllStudentsPage() {
                         </div>
                     </div>
                 )}
-
                 {/* Import CSV Modal */}
-                {showImportModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold text-white">Import Students via CSV</h3>
-                                <button onClick={() => { setShowImportModal(false); setImportResult(null); setCsvFile(null); }} className="text-slate-400 hover:text-white">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
+                {
+                    showImportModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-white">Import Students via CSV</h3>
+                                    <button onClick={() => { setShowImportModal(false); setImportResult(null); setCsvFile(null); }} className="text-slate-400 hover:text-white">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
 
-                            {!importResult ? (
-                                <div className="space-y-6">
-                                    {/* Template Download */}
-                                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex justify-between items-center">
-                                        <div>
-                                            <h4 className="font-bold text-blue-400 text-sm">Need a template?</h4>
-                                            <p className="text-slate-400 text-xs mt-1">Download sample CSV file to see required format</p>
+                                {!importResult ? (
+                                    <div className="space-y-6">
+                                        {/* Template Download */}
+                                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex justify-between items-center">
+                                            <div>
+                                                <h4 className="font-bold text-blue-400 text-sm">Need a template?</h4>
+                                                <p className="text-slate-400 text-xs mt-1">Download sample CSV file to see required format</p>
+                                            </div>
+                                            <button
+                                                onClick={downloadTemplate}
+                                                className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                                            >
+                                                <Download className="w-3 h-3" /> Download
+                                            </button>
                                         </div>
+
+                                        {/* File Upload */}
+                                        <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 hover:bg-white/[0.02] transition-colors text-center cursor-pointer relative">
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            />
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400">
+                                                    <Upload className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-white">
+                                                        {csvFile ? csvFile.name : "Click to upload or drag & drop"}
+                                                    </p>
+                                                    <p className="text-sm text-slate-500 mt-1">CSV files only (max 5MB)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <button
-                                            onClick={downloadTemplate}
-                                            className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                                            onClick={processImport}
+                                            disabled={!csvFile || isSubmitting}
+                                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <Download className="w-3 h-3" /> Download
+                                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileSpreadsheet className="w-5 h-5" />}
+                                            {isSubmitting ? 'Processing...' : 'Import Students'}
                                         </button>
                                     </div>
-
-                                    {/* File Upload */}
-                                    <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 hover:bg-white/[0.02] transition-colors text-center cursor-pointer relative">
-                                        <input
-                                            type="file"
-                                            accept=".csv"
-                                            onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        />
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400">
-                                                <Upload className="w-6 h-6" />
+                                ) : (
+                                    <div className="space-y-6">
+                                        {/* Success Summary */}
+                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                                                <h4 className="font-bold text-emerald-400">Import Complete</h4>
                                             </div>
+                                            <p className="text-sm text-slate-300">
+                                                Successfully added <span className="text-white font-bold">{importResult.summary.successfullyAdded}</span> students.
+                                            </p>
+                                        </div>
+
+                                        {/* Skipped Items */}
+                                        {importResult.details.skipped.length > 0 && (
                                             <div>
-                                                <p className="font-medium text-white">
-                                                    {csvFile ? csvFile.name : "Click to upload or drag & drop"}
-                                                </p>
-                                                <p className="text-sm text-slate-500 mt-1">CSV files only (max 5MB)</p>
+                                                <h4 className="font-bold text-amber-400 text-sm mb-2 flex items-center gap-2">
+                                                    <AlertCircle className="w-4 h-4" /> Skipped ({importResult.details.skipped.length})
+                                                </h4>
+                                                <div className="bg-[#020617] rounded-xl border border-white/5 p-3 max-h-32 overflow-y-auto space-y-2">
+                                                    {importResult.details.skipped.map((item: any, idx: number) => (
+                                                        <div key={idx} className="text-xs text-slate-400 border-b border-white/5 pb-1 last:border-0 last:pb-0">
+                                                            <span className="text-white">{item.email}</span>: {item.reason}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
+
+                                        {/* Errors */}
+                                        {importResult.details.errors.length > 0 && (
+                                            <div>
+                                                <h4 className="font-bold text-red-400 text-sm mb-2 flex items-center gap-2">
+                                                    <AlertCircle className="w-4 h-4" /> Errors ({importResult.details.errors.length})
+                                                </h4>
+                                                <div className="bg-[#020617] rounded-xl border border-white/5 p-3 max-h-32 overflow-y-auto space-y-2">
+                                                    {importResult.details.errors.map((item: any, idx: number) => (
+                                                        <div key={idx} className="text-xs text-slate-400 border-b border-white/5 pb-1 last:border-0 last:pb-0">
+                                                            Row {item.row}: {item.error}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button
+                                            onClick={() => { setShowImportModal(false); setImportResult(null); setCsvFile(null); }}
+                                            className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all"
+                                        >
+                                            Close
+                                        </button>
                                     </div>
-
-                                    <button
-                                        onClick={processImport}
-                                        disabled={!csvFile || isSubmitting}
-                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileSpreadsheet className="w-5 h-5" />}
-                                        {isSubmitting ? 'Processing...' : 'Import Students'}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {/* Success Summary */}
-                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <CheckCircle className="w-5 h-5 text-emerald-400" />
-                                            <h4 className="font-bold text-emerald-400">Import Complete</h4>
-                                        </div>
-                                        <p className="text-sm text-slate-300">
-                                            Successfully added <span className="text-white font-bold">{importResult.summary.successfullyAdded}</span> students.
-                                        </p>
-                                    </div>
-
-                                    {/* Skipped Items */}
-                                    {importResult.details.skipped.length > 0 && (
-                                        <div>
-                                            <h4 className="font-bold text-amber-400 text-sm mb-2 flex items-center gap-2">
-                                                <AlertCircle className="w-4 h-4" /> Skipped ({importResult.details.skipped.length})
-                                            </h4>
-                                            <div className="bg-[#020617] rounded-xl border border-white/5 p-3 max-h-32 overflow-y-auto space-y-2">
-                                                {importResult.details.skipped.map((item: any, idx: number) => (
-                                                    <div key={idx} className="text-xs text-slate-400 border-b border-white/5 pb-1 last:border-0 last:pb-0">
-                                                        <span className="text-white">{item.email}</span>: {item.reason}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Errors */}
-                                    {importResult.details.errors.length > 0 && (
-                                        <div>
-                                            <h4 className="font-bold text-red-400 text-sm mb-2 flex items-center gap-2">
-                                                <AlertCircle className="w-4 h-4" /> Errors ({importResult.details.errors.length})
-                                            </h4>
-                                            <div className="bg-[#020617] rounded-xl border border-white/5 p-3 max-h-32 overflow-y-auto space-y-2">
-                                                {importResult.details.errors.map((item: any, idx: number) => (
-                                                    <div key={idx} className="text-xs text-slate-400 border-b border-white/5 pb-1 last:border-0 last:pb-0">
-                                                        Row {item.row}: {item.error}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button
-                                        onClick={() => { setShowImportModal(false); setImportResult(null); setCsvFile(null); }}
-                                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Notification Toast */}
-                {notification && (
-                    <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-[100] ${notification.type === 'success'
+                {
+                    notification && (
+                        <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-300 z-[100] ${notification.type === 'success'
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                             : 'bg-red-500/10 border-red-500/20 text-red-400'
-                        }`}>
-                        {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                        <span className="font-medium">{notification.message}</span>
-                        <button onClick={() => setNotification(null)} className="ml-2 opacity-70 hover:opacity-100">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
+                            }`}>
+                            {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                            <span className="font-medium">{notification.message}</span>
+                            <button onClick={() => setNotification(null)} className="ml-2 opacity-70 hover:opacity-100">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )
+                }
+                {/* Action Modals - Rendered Conditionally */}
+                {selectedStudent && (
+                    <>
+                        <EditStudentModal
+                            isOpen={showEditModal}
+                            onClose={() => setShowEditModal(false)}
+                            student={selectedStudent}
+                            onSuccess={() => {
+                                setShowEditModal(false);
+                                fetchStudents();
+                                setNotification({ type: 'success', message: 'Student updated successfully' });
+                            }}
+                        />
+
+                        <ArchiveStudentModal
+                            isOpen={showArchiveModal}
+                            onClose={() => setShowArchiveModal(false)}
+                            student={selectedStudent}
+                            onSuccess={() => {
+                                setShowArchiveModal(false);
+                                fetchStudents();
+                                setNotification({ type: 'success', message: 'Student archived successfully' });
+                            }}
+                        />
+
+                        <UnarchiveStudentModal
+                            isOpen={showUnarchiveModal}
+                            onClose={() => setShowUnarchiveModal(false)}
+                            student={selectedStudent}
+                            onSuccess={() => {
+                                setShowUnarchiveModal(false);
+                                fetchStudents();
+                                setNotification({ type: 'success', message: 'Student unarchived successfully' });
+                            }}
+                        />
+
+                        <ViewPortfolioModal
+                            isOpen={showPortfolioModal}
+                            onClose={() => setShowPortfolioModal(false)}
+                            student={selectedStudent}
+                        />
+                    </>
                 )}
-            </div>
+
+            </div >
             {/* Global CSS for Animations */}
-            <style jsx global>{`
-                @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-                .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
-                .animate-slide-down { animation: slideDown 0.6s ease-out forwards; }
-                .animate-pulse-slow { animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-            `}</style>
-        </div>
+            {/* Global CSS for Animations - Moved to globals.css */}
+        </div >
     );
 }
 

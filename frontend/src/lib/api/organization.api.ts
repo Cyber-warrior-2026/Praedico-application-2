@@ -65,13 +65,13 @@ export const organizationApi = {
 
   login: async (data: OrganizationLoginData) => {
     const response = await axiosInstance.post(API_ENDPOINTS.ORGANIZATION.LOGIN, data);
-    
+
     if (response.data.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('organization', JSON.stringify(response.data.organization));
       localStorage.setItem('admin', JSON.stringify(response.data.admin));
     }
-    
+
     return response.data;
   },
 
@@ -129,6 +129,49 @@ export const organizationApi = {
       API_ENDPOINTS.ORGANIZATION.REJECT_STUDENT(studentId),
       data
     );
+    return response.data;
+  },
+
+  // ============================================
+  // STUDENT MANAGEMENT
+  // ============================================
+
+  addStudent: async (data: { name: string; email: string; departmentId: string }) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.ORGANIZATION.ADD_STUDENT, data);
+    return response.data;
+  },
+
+  importStudentsCSV: async (data: { students: Array<{ name: string; email: string; department: string }> }) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.ORGANIZATION.IMPORT_CSV, data);
+    return response.data;
+  },
+
+  // Student Management
+  getStudentById: async (studentId: string) => {
+    const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.GET_STUDENT(studentId));
+    return response.data;
+  },
+
+  updateStudent: async (studentId: string, data: {
+    name?: string;
+    email?: string;
+  }) => {
+    const response = await axiosInstance.put(API_ENDPOINTS.ORGANIZATION.UPDATE_STUDENT(studentId), data);
+    return response.data;
+  },
+
+  archiveStudent: async (studentId: string) => {
+    const response = await axiosInstance.delete(API_ENDPOINTS.ORGANIZATION.ARCHIVE_STUDENT(studentId));
+    return response.data;
+  },
+
+  unarchiveStudent: async (studentId: string) => {
+    const response = await axiosInstance.patch(API_ENDPOINTS.ORGANIZATION.UNARCHIVE_STUDENT(studentId));
+    return response.data;
+  },
+
+  getStudentPortfolio: async (studentId: string) => {
+    const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.STUDENT_PORTFOLIO(studentId));
     return response.data;
   },
 

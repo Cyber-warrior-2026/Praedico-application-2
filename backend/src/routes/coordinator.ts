@@ -25,6 +25,14 @@ router.patch("/students/:studentId/reject", authorize(["department_coordinator"]
 router.post("/students/add", authorize(["department_coordinator"]), coordinatorController.addStudent);
 router.post("/students/import-csv", authorize(["department_coordinator"]), coordinatorController.importStudentsCSV);
 
+// New Routes: Student Management (Get, Update, Archive, View Portfolio)
+router.get("/students/:studentId", authorize(["department_coordinator"]), coordinatorController.getStudentById);
+router.put("/students/:studentId", authorize(["department_coordinator"]), coordinatorController.updateStudent);
+router.delete("/students/:studentId", authorize(["department_coordinator"]), coordinatorController.archiveStudent);
+router.patch("/students/:studentId/unarchive", authorize(["department_coordinator"]), coordinatorController.unarchiveStudent);
+router.get("/students/:studentId/portfolio", authorize(["department_coordinator"]), coordinatorController.getStudentPortfolio);
+
+
 
 // ============================================
 // ORGANIZATION ADMIN ROUTES (Manage Coordinators)

@@ -46,6 +46,28 @@ const approveRejectSchema = z.object({
   reason: z.string().optional()
 });
 
+const addStudentSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email is required"),
+  departmentId: z.string().min(1, "Department is required")
+});
+
+const importCSVSchema = z.object({
+  students: z.array(z.object({
+    name: z.string(),
+    email: z.string(),
+    department: z.string()
+  }))
+});
+
+const updateStudentSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  email: z.string().email("Valid email is required").optional()
+});
+
+
+
+
 export class OrganizationController {
 
   register = asyncHandler(async (req: Request, res: Response) => {
@@ -135,6 +157,71 @@ export class OrganizationController {
     });
     res.status(200).json({ success: true, students, count: students.length });
   });
+
+  // Add Student Directly (No Approval Needed)
+  addStudent = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const { name, email, departmentId } = addStudentSchema.parse(req.body);
+
+    const result = await organizationService.addStudentDirectly(adminId, { name, email, departmentId });
+    res.status(201).json({ success: true, ...result });
+  });
+
+  // Import Students from CSV
+  importStudentsCSV = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const { students } = importCSVSchema.parse(req.body);
+
+    const result = await organizationService.importStudentsFromCSV(adminId, students);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Get Student by ID
+  getStudentById = asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = (req as any).user.organization;
+    const studentId = req.params.studentId as string;
+
+    const student = await organizationService.getStudentById(organizationId, studentId);
+    res.status(200).json({ success: true, student });
+  });
+
+  // Update Student
+  updateStudent = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+    const updateData = updateStudentSchema.parse(req.body);
+
+    const result = await organizationService.updateStudent(adminId, studentId, updateData);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Archive Student (Soft Delete)
+  archiveStudent = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const result = await organizationService.archiveStudent(adminId, studentId);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Unarchive Student
+  unarchiveStudent = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const result = await organizationService.unarchiveStudent(adminId, studentId);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Get Student Portfolio
+  getStudentPortfolio = asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = (req as any).user.organization;
+    const studentId = req.params.studentId as string;
+
+    const portfolio = await organizationService.getStudentPortfolio(organizationId, studentId);
+    res.status(200).json({ success: true, portfolio });
+  });
+
 
   logout = asyncHandler(async (req: Request, res: Response) => {
     const isProduction = process.env.NODE_ENV === "production";
