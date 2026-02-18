@@ -4,6 +4,7 @@ import { DepartmentModel } from "../models/department";
 import { DepartmentCoordinatorModel } from "../models/departmentCoordinator";
 import { UserModel } from "../models/user";
 import PortfolioHolding from "../models/portfolio";
+import { PaperTradeModel } from "../models/paperTrade";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -704,8 +705,35 @@ export class OrganizationService {
 
     // Get portfolio holdings
     const holdings = await PortfolioHolding.find({ userId: studentId })
-      .sort({ currentValue: -1 });
+      .sort({ currentValue: -1 })
+      .lean();
 
+    // Get all executed trades for this student
+    const trades = await PaperTradeModel.find({
+      userId: studentId,
+      status: 'EXECUTED'
+    }).sort({ executedAt: 1 }).lean();
+
+    // Group trades by symbol
+    const tradesBySymbol: Record<string, any[]> = {};
+    for (const trade of trades) {
+      if (!tradesBySymbol[trade.symbol]) {
+        tradesBySymbol[trade.symbol] = [];
+      }
+      tradesBySymbol[trade.symbol].push({
+        date: trade.executedAt || (trade as any).createdAt,
+        type: trade.type,
+        quantity: trade.quantity,
+        price: trade.price,
+        totalAmount: trade.totalAmount
+      });
+    }
+
+    // Attach transactions to each holding
+    const holdingsWithTransactions = holdings.map(h => ({
+      ...h,
+      transactions: tradesBySymbol[h.symbol] || []
+    }));
 
     // Calculate summary
     const totalInvested = holdings.reduce((sum, h) => sum + h.totalInvested, 0);
@@ -719,7 +747,7 @@ export class OrganizationService {
         name: student.name,
         email: student.email
       },
-      holdings,
+      holdings: holdingsWithTransactions,
       summary: {
         totalHoldings: holdings.length,
         totalInvested,
