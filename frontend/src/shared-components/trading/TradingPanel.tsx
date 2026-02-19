@@ -231,14 +231,26 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
                         : "Why are you selling this stock? Explain your reasoning (min 50 characters)..."
                     }
                     rows={3}
+                    maxLength={1000}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none placeholder:text-slate-600"
                 />
-                <div className={cn(
-                    "text-xs mt-1.5 font-medium tabular-nums transition-colors",
-                    isReasonValid ? "text-emerald-400" : "text-slate-500"
-                )}>
-                    {reason.trim().length}/{MIN_REASON_LENGTH} minimum characters
-                    {isReasonValid && <span className="ml-1">✓</span>}
+                <div className="flex justify-between items-center mt-1.5">
+                    <div className={cn(
+                        "text-xs font-medium transition-colors",
+                        isReasonValid ? "text-emerald-400" : "text-amber-500"
+                    )}>
+                        {isReasonValid ? (
+                            <span className="flex items-center gap-1">✓ Valid reason</span>
+                        ) : (
+                            <span>Min 50 chars required</span>
+                        )}
+                    </div>
+                    <div className={cn(
+                        "text-xs font-medium tabular-nums transition-colors",
+                        isReasonValid ? "text-emerald-400" : "text-amber-500"
+                    )}>
+                        {reason.length} / 1000
+                    </div>
                 </div>
             </div>
 
@@ -295,7 +307,7 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
                         ? tradeType === 'BUY'
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                             : "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-white/5 text-slate-500 cursor-not-allowed"
+                        : "bg-white/5 text-slate-500 cursor-not-allowed opacity-50"
                 )}
             >
                 {loading ? (
