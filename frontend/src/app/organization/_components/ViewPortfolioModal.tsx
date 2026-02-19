@@ -5,7 +5,7 @@ import {
     X, Loader2, TrendingUp, TrendingDown, DollarSign,
     PieChart, ChevronDown, ChevronRight, History,
     ArrowDownRight, ArrowUpRight, Calendar, BarChart3,
-    Layers, Package
+    Layers, Package, Info
 } from 'lucide-react';
 import { organizationApi } from '@/lib/api';
 
@@ -350,18 +350,55 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                                                 </div>
                                                                                                             </td>
                                                                                                             <td className="px-4 py-3">
-                                                                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold tracking-wide
-                                                                                                                    ${txn.type === 'BUY'
-                                                                                                                        ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20'
-                                                                                                                        : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/20'
-                                                                                                                    }`}
-                                                                                                                >
-                                                                                                                    {txn.type === 'BUY'
-                                                                                                                        ? <ArrowDownRight className="w-3 h-3" />
-                                                                                                                        : <ArrowUpRight className="w-3 h-3" />
-                                                                                                                    }
-                                                                                                                    {txn.type}
-                                                                                                                </span>
+                                                                                                                <div className="flex items-center gap-2">
+                                                                                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold tracking-wide
+                                                                                                                        ${txn.type === 'BUY'
+                                                                                                                            ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20'
+                                                                                                                            : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/20'
+                                                                                                                        }`}
+                                                                                                                    >
+                                                                                                                        {txn.type === 'BUY'
+                                                                                                                            ? <ArrowDownRight className="w-3 h-3" />
+                                                                                                                            : <ArrowUpRight className="w-3 h-3" />
+                                                                                                                        }
+                                                                                                                        {txn.type}
+                                                                                                                    </span>
+                                                                                                                    {/* Reason Tooltip */}
+                                                                                                                    <div className="relative group/reason flex items-center">
+                                                                                                                        <Info className={`w-4 h-4 cursor-help transition-all duration-300 ${txn.reason ? 'text-slate-400 hover:text-indigo-400 hover:scale-110 drop-shadow-md' : 'text-slate-600 hover:text-slate-400'}`} />
+
+                                                                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 pointer-events-none opacity-0 group-hover/reason:opacity-100 translate-y-2 group-hover/reason:translate-y-0 transition-all duration-300 z-[100] w-max max-w-[320px]">
+                                                                                                                            {/* Tooltip Card */}
+                                                                                                                            <div className="relative p-4 rounded-xl bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.5)] ring-1 ring-white/5">
+                                                                                                                                {/* Glow effect */}
+                                                                                                                                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 opacity-0 group-hover/reason:opacity-100 transition-opacity duration-500" />
+
+                                                                                                                                <div className="relative flex flex-col gap-1.5">
+                                                                                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                                                                                        <div className="p-1 rounded-md bg-indigo-500/20">
+                                                                                                                                            <Info className="w-3 h-3 text-indigo-400" />
+                                                                                                                                        </div>
+                                                                                                                                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300 text-[11px] uppercase tracking-widest">
+                                                                                                                                            Reason for Trade
+                                                                                                                                        </span>
+                                                                                                                                    </div>
+                                                                                                                                    <div className="text-[13px] leading-relaxed text-slate-300 whitespace-pre-wrap font-medium">
+                                                                                                                                        {txn.reason ? (
+                                                                                                                                            <span className="text-slate-200">{txn.reason}</span>
+                                                                                                                                        ) : (
+                                                                                                                                            <span className="text-slate-500 italic">No reason provided for this trade.</span>
+                                                                                                                                        )}
+                                                                                                                                    </div>
+                                                                                                                                </div>
+
+                                                                                                                                {/* Custom Triangle Arrow */}
+                                                                                                                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                                                                                                                                    <div className="w-4 h-4 rotate-45 bg-slate-900/95 border-r border-b border-white/10" />
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                </div>
                                                                                                             </td>
                                                                                                             <td className="px-4 py-3 text-right text-slate-200 font-mono font-medium">{txn.quantity}</td>
                                                                                                             <td className="px-4 py-3 text-right text-slate-300 font-mono">{formatCurrency(txn.price)}</td>

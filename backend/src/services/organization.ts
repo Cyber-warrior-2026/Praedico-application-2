@@ -725,7 +725,8 @@ export class OrganizationService {
         type: trade.type,
         quantity: trade.quantity,
         price: trade.price,
-        totalAmount: trade.totalAmount
+        totalAmount: trade.totalAmount,
+        reason: trade.reason
       });
     }
 
