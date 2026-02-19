@@ -42,7 +42,8 @@ export const executePaperTrade = async (req: Request, res: Response) => {
       quantity, 
       orderType = 'MARKET',
       limitPrice,
-      stopLossPrice 
+      stopLossPrice,
+      reason 
     } = req.body;
 
     // Validation
@@ -67,6 +68,14 @@ export const executePaperTrade = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate reason/thesis (required for all trades, min 50 characters)
+    if (!reason || typeof reason !== 'string' || reason.trim().length < 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'A trading reason/thesis is required (minimum 50 characters)'
+      });
+    }
+
     // Get AI recommendation before trade (optional)
     let aiAnalysis = null;
     try {
@@ -84,7 +93,8 @@ export const executePaperTrade = async (req: Request, res: Response) => {
       quantity,
       orderType,
       limitPrice,
-      stopLossPrice
+      stopLossPrice,
+      reason.trim()
     );
 
     res.status(200).json({

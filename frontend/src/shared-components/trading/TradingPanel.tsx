@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, Loader2, AlertCircle } from "lucide-react";
+import { ShoppingCart, Loader2, AlertCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tradingApi } from "@/lib/api/trading.api";
 import { TradeRequest, PortfolioHolding } from "@/lib/types/trading.types";
@@ -29,9 +29,13 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
     const [quantity, setQuantity] = useState<number>(1);
     const [limitPrice, setLimitPrice] = useState<string>('');
     const [stopLossPrice, setStopLossPrice] = useState<string>('');
+    const [reason, setReason] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    const MIN_REASON_LENGTH = 50;
+    const isReasonValid = reason.trim().length >= MIN_REASON_LENGTH;
 
     // Calculate total amount
     const effectivePrice = orderType === 'LIMIT' && limitPrice
@@ -42,7 +46,8 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
     // Validation
     const canBuy = tradeType === 'BUY' && totalAmount <= availableBalance;
     const canSell = tradeType === 'SELL' && userHolding && quantity <= userHolding.quantity;
-    const isValid = tradeType === 'BUY' ? canBuy : canSell;
+    const isTradeValid = tradeType === 'BUY' ? canBuy : canSell;
+    const isValid = isTradeValid && isReasonValid;
 
     // Handle quick quantity selectors
     const quickQuantities = [5, 10, 25, 50];
@@ -69,6 +74,7 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
                 type: tradeType,
                 quantity,
                 orderType,
+                reason: reason.trim(),
             };
 
             if (orderType === 'LIMIT' && limitPrice) {
@@ -86,6 +92,7 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
                 setQuantity(1);
                 setLimitPrice('');
                 setStopLossPrice('');
+                setReason('');
                 onTradeExecuted?.();
 
                 // Clear success message after 3 seconds
@@ -208,6 +215,32 @@ export const TradingPanel: React.FC<TradingPanelProps> = ({
                     />
                 </div>
             )}
+
+            {/* Reason / Thesis Textarea */}
+            <div>
+                <label className="text-xs text-slate-400 font-medium mb-2 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" />
+                    Trading Reason / Thesis
+                    <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder={tradeType === 'BUY'
+                        ? "Why are you buying this stock? Explain your thesis (min 50 characters)..."
+                        : "Why are you selling this stock? Explain your reasoning (min 50 characters)..."
+                    }
+                    rows={3}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none placeholder:text-slate-600"
+                />
+                <div className={cn(
+                    "text-xs mt-1.5 font-medium tabular-nums transition-colors",
+                    isReasonValid ? "text-emerald-400" : "text-slate-500"
+                )}>
+                    {reason.trim().length}/{MIN_REASON_LENGTH} minimum characters
+                    {isReasonValid && <span className="ml-1">✓</span>}
+                </div>
+            </div>
 
             {/* Order Summary */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">

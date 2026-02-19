@@ -7,6 +7,7 @@ export interface TradeRequest {
   orderType?: 'MARKET' | 'LIMIT' | 'STOP_LOSS';
   limitPrice?: number;
   stopLossPrice?: number;
+  reason?: string;
 }
 
 export interface Trade {
@@ -33,6 +34,7 @@ export interface Trade {
   realizedPL?: number;
   category: 'NIFTY50' | 'NIFTY100' | 'ETF';
   tradingSession: string;
+  reason?: string;
   createdAt: string;
   updatedAt: string;
 }

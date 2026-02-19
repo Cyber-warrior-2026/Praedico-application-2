@@ -14,7 +14,8 @@ class PaperTradingService {
     quantity: number,
     orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
     limitPrice?: number,
-    stopLossPrice?: number
+    stopLossPrice?: number,
+    reason?: string
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -70,7 +71,8 @@ class PaperTradingService {
         status: 'EXECUTED',
         executedAt: new Date(),
         category: stockData.category,
-        tradingSession: new Date().toISOString().split('T')[0]
+        tradingSession: new Date().toISOString().split('T')[0],
+        reason
       }], { session });
 
       // 5. Update user balance
