@@ -323,23 +323,23 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                     </div>
 
                                                                                     {holding.transactions && holding.transactions.length > 0 ? (
-                                                                                        <div className="rounded-lg border border-white/5 overflow-hidden bg-slate-900/20">
+                                                                                        <div className="rounded-lg border border-white/5 bg-slate-900/20">
                                                                                             <table className="w-full text-left">
                                                                                                 <thead className="bg-slate-800/50 text-[11px] uppercase text-slate-400 tracking-wider">
                                                                                                     <tr>
-                                                                                                        <th className="px-4 py-3 font-semibold">#</th>
+                                                                                                        <th className="px-4 py-3 font-semibold rounded-tl-lg">#</th>
                                                                                                         <th className="px-4 py-3 font-semibold">Date & Time</th>
                                                                                                         <th className="px-4 py-3 font-semibold">Type</th>
                                                                                                         <th className="px-4 py-3 text-right font-semibold">Quantity</th>
                                                                                                         <th className="px-4 py-3 text-right font-semibold">Price</th>
-                                                                                                        <th className="px-4 py-3 text-right font-semibold">Total Value</th>
+                                                                                                        <th className="px-4 py-3 text-right font-semibold rounded-tr-lg">Total Value</th>
                                                                                                     </tr>
                                                                                                 </thead>
                                                                                                 <tbody className="divide-y divide-white/[0.03] text-sm">
                                                                                                     {holding.transactions.map((txn: any, tIdx: number) => (
                                                                                                         <tr
                                                                                                             key={tIdx}
-                                                                                                            className={`transition-colors duration-150 hover:bg-white/[0.02]
+                                                                                                            className={`relative hover:z-50 transition-colors duration-150 hover:bg-white/[0.02]
                                                                                                                 ${tIdx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'}`}
                                                                                                         >
                                                                                                             <td className="px-4 py-3 text-slate-500 font-mono text-xs">{tIdx + 1}</td>
@@ -364,10 +364,10 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                                                         {txn.type}
                                                                                                                     </span>
                                                                                                                     {/* Reason Tooltip */}
-                                                                                                                    <div className="relative group/reason flex items-center">
+                                                                                                                    <div className="relative hover:z-50 group/reason flex items-center">
                                                                                                                         <Info className={`w-4 h-4 cursor-help transition-all duration-300 ${txn.reason ? 'text-slate-400 hover:text-indigo-400 hover:scale-110 drop-shadow-md' : 'text-slate-600 hover:text-slate-400'}`} />
 
-                                                                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 pointer-events-none opacity-0 group-hover/reason:opacity-100 translate-y-2 group-hover/reason:translate-y-0 transition-all duration-300 z-[100] w-max max-w-[320px]">
+                                                                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 pointer-events-none opacity-0 group-hover/reason:opacity-100 translate-y-2 group-hover/reason:translate-y-0 transition-all duration-300 z-[999] w-max max-w-[320px]">
                                                                                                                             {/* Tooltip Card */}
                                                                                                                             <div className="relative p-4 rounded-xl bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.5)] ring-1 ring-white/5">
                                                                                                                                 {/* Glow effect */}
@@ -411,14 +411,14 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                                 {/* Summary Footer */}
                                                                                                 <tfoot className="border-t border-white/10 bg-slate-800/30">
                                                                                                     <tr>
-                                                                                                        <td colSpan={3} className="px-4 py-3 text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                                                                                                        <td colSpan={3} className="px-4 py-3 text-xs text-slate-400 font-semibold uppercase tracking-wider rounded-bl-lg">
                                                                                                             Total — {holding.transactions.length} transaction{holding.transactions.length > 1 ? 's' : ''}
                                                                                                         </td>
                                                                                                         <td className="px-4 py-3 text-right text-slate-300 font-mono text-xs font-bold">
                                                                                                             Net: {txnSummary ? txnSummary.totalBuys - txnSummary.totalSells : 0} qty
                                                                                                         </td>
                                                                                                         <td className="px-4 py-3"></td>
-                                                                                                        <td className="px-4 py-3 text-right text-white font-mono text-xs font-bold">
+                                                                                                        <td className="px-4 py-3 text-right text-white font-mono text-xs font-bold rounded-br-lg">
                                                                                                             {formatCurrency(
                                                                                                                 holding.transactions.reduce(
                                                                                                                     (sum: number, t: any) => sum + (t.totalAmount || t.quantity * t.price), 0
