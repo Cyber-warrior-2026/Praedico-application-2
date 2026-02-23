@@ -373,4 +373,30 @@ async login(email: string, plainPass: string) {
 
     return user;
   }
+
+  // --- BULK OPERATIONS ---
+  async bulkSoftDelete(userIds: string[]) {
+    const result = await UserModel.updateMany(
+      { _id: { $in: userIds }, isDeleted: false },
+      { $set: { isDeleted: true, deletedAt: new Date(), isActive: false } }
+    );
+    return { message: "Users archived successfully", count: result.modifiedCount };
+  }
+
+  async bulkRestore(userIds: string[]) {
+    const result = await UserModel.updateMany(
+      { _id: { $in: userIds }, isDeleted: true },
+      // Leave isActive as whatever it is (likely false). Needs manual unblocking if desired
+      { $set: { isDeleted: false }, $unset: { deletedAt: "" } }
+    );
+    return { message: "Users restored successfully", count: result.modifiedCount };
+  }
+
+  async bulkToggleActive(userIds: string[], isActive: boolean) {
+    const result = await UserModel.updateMany(
+      { _id: { $in: userIds }, isDeleted: false },
+      { $set: { isActive } }
+    );
+    return { message: `Users ${isActive ? 'unblocked' : 'blocked'} successfully`, count: result.modifiedCount };
+  }
 }

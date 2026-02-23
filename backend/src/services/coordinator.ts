@@ -666,6 +666,36 @@ export class CoordinatorService {
   }
 
 
+  // Bulk Archive Students (Department Restricted)
+  async bulkArchiveStudents(coordinatorId: string, studentIds: string[]) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) throw new Error("Coordinator not found");
+
+    const result = await UserModel.updateMany(
+      { _id: { $in: studentIds }, department: coordinator.department, isDeleted: false },
+      { $set: { isDeleted: true, deletedAt: new Date(), isActive: false } }
+    );
+
+    await this.updateDepartmentStats(coordinator.department.toString());
+
+    return { message: `${result.modifiedCount} student(s) archived successfully`, modifiedCount: result.modifiedCount };
+  }
+
+  // Bulk Unarchive Students (Department Restricted)
+  async bulkUnarchiveStudents(coordinatorId: string, studentIds: string[]) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) throw new Error("Coordinator not found");
+
+    const result = await UserModel.updateMany(
+      { _id: { $in: studentIds }, department: coordinator.department, isDeleted: true },
+      { $set: { isDeleted: false, isActive: true }, $unset: { deletedAt: 1 } }
+    );
+
+    await this.updateDepartmentStats(coordinator.department.toString());
+
+    return { message: `${result.modifiedCount} student(s) unarchived successfully`, modifiedCount: result.modifiedCount };
+  }
+
   // Update Department Stats
   private async updateDepartmentStats(departmentId: string) {
     const totalStudents = await UserModel.countDocuments({

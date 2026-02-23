@@ -65,7 +65,10 @@ const updateStudentSchema = z.object({
   email: z.string().email("Valid email is required").optional()
 });
 
-
+const bulkActionSchema = z.object({
+  studentIds: z.array(z.string()).min(1, "At least one student is required").max(100, "Maximum 100 students at a time"),
+  action: z.enum(['archive', 'unarchive'])
+});
 
 
 export class OrganizationController {
@@ -222,6 +225,21 @@ export class OrganizationController {
     res.status(200).json({ success: true, portfolio });
   });
 
+
+  // Bulk Action (Archive / Unarchive)
+  bulkAction = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const { studentIds, action } = bulkActionSchema.parse(req.body);
+
+    let result;
+    if (action === 'archive') {
+      result = await organizationService.bulkArchiveStudents(adminId, studentIds);
+    } else {
+      result = await organizationService.bulkUnarchiveStudents(adminId, studentIds);
+    }
+
+    res.status(200).json({ success: true, ...result });
+  });
 
   logout = asyncHandler(async (req: Request, res: Response) => {
     const isProduction = process.env.NODE_ENV === "production";

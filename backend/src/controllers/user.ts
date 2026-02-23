@@ -221,4 +221,35 @@ register = asyncHandler(async (req: Request, res: Response) => {
       message: `User ${user.isActive ? 'activated' : 'blocked'} successfully` 
     });
   });
+
+  // Bulk actions for grouping related requests
+  bulkAction = asyncHandler(async (req: Request, res: Response) => {
+    const { userIds, action } = req.body;
+    
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      res.status(400).json({ success: false, message: "Invalid userIds" });
+      return;
+    }
+
+    let result;
+    switch (action) {
+      case 'archive':
+        result = await userService.bulkSoftDelete(userIds);
+        break;
+      case 'unarchive':
+        result = await userService.bulkRestore(userIds);
+        break;
+      case 'block':
+        result = await userService.bulkToggleActive(userIds, false);
+        break;
+      case 'unblock':
+        result = await userService.bulkToggleActive(userIds, true);
+        break;
+      default:
+        res.status(400).json({ success: false, message: "Invalid action" });
+        return;
+    }
+
+    res.status(200).json({ success: true, ...result });
+  });
 }

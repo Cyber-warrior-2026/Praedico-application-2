@@ -46,7 +46,10 @@ const updateStudentSchema = z.object({
   email: z.string().email("Valid email is required").optional()
 });
 
-
+const bulkActionSchema = z.object({
+  studentIds: z.array(z.string()).min(1, "At least one student is required").max(100, "Maximum 100 students at a time"),
+  action: z.enum(['archive', 'unarchive'])
+});
 
 
 
@@ -205,6 +208,21 @@ export class CoordinatorController {
     res.status(200).json({ success: true, portfolio });
   });
 
+
+  // Bulk Action (Archive / Unarchive)
+  bulkAction = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const { studentIds, action } = bulkActionSchema.parse(req.body);
+
+    let result;
+    if (action === 'archive') {
+      result = await coordinatorService.bulkArchiveStudents(coordinatorId, studentIds);
+    } else {
+      result = await coordinatorService.bulkUnarchiveStudents(coordinatorId, studentIds);
+    }
+
+    res.status(200).json({ success: true, ...result });
+  });
 
   // Logout
   logout = asyncHandler(async (req: Request, res: Response) => {

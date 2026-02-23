@@ -817,6 +817,49 @@ export class OrganizationService {
     };
   }
 
+  // Bulk Archive Students
+  async bulkArchiveStudents(adminId: string, studentIds: string[]) {
+    const admin = await OrganizationAdminModel.findById(adminId);
+    if (!admin) throw new Error("Admin not found");
+
+    // Only archive students belonging to this organization that are not already archived
+    const result = await UserModel.updateMany(
+      { _id: { $in: studentIds }, organization: admin.organization, isDeleted: false },
+      { $set: { isDeleted: true, deletedAt: new Date(), isActive: false } }
+    );
+
+    // Refresh stats
+    await this.updateOrganizationStats(admin.organization.toString());
+    // Get affected departments to update their stats
+    const affectedStudents = await UserModel.find({ _id: { $in: studentIds } }).select('department');
+    const deptIds = [...new Set(affectedStudents.map(s => s.department?.toString()).filter(Boolean))];
+    for (const deptId of deptIds) {
+      await this.updateDepartmentStats(deptId!);
+    }
+
+    return { message: `${result.modifiedCount} student(s) archived successfully`, modifiedCount: result.modifiedCount };
+  }
+
+  // Bulk Unarchive Students
+  async bulkUnarchiveStudents(adminId: string, studentIds: string[]) {
+    const admin = await OrganizationAdminModel.findById(adminId);
+    if (!admin) throw new Error("Admin not found");
+
+    const result = await UserModel.updateMany(
+      { _id: { $in: studentIds }, organization: admin.organization, isDeleted: true },
+      { $set: { isDeleted: false, isActive: true }, $unset: { deletedAt: 1 } }
+    );
+
+    await this.updateOrganizationStats(admin.organization.toString());
+    const affectedStudents = await UserModel.find({ _id: { $in: studentIds } }).select('department');
+    const deptIds = [...new Set(affectedStudents.map(s => s.department?.toString()).filter(Boolean))];
+    for (const deptId of deptIds) {
+      await this.updateDepartmentStats(deptId!);
+    }
+
+    return { message: `${result.modifiedCount} student(s) unarchived successfully`, modifiedCount: result.modifiedCount };
+  }
+
   // Update Organization Stats
   private async updateOrganizationStats(organizationId: string) {
     const totalDepartments = await DepartmentModel.countDocuments({

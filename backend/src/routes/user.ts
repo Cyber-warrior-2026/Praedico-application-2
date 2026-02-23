@@ -26,6 +26,7 @@ router.get("/:id", authorize(["admin", "super_admin"]), userController.getUserBy
 router.put("/:id", authorize(["admin", "super_admin"]), userController.updateUser);
 
 // Status Management
+router.patch("/bulk-action", authorize(["admin", "super_admin"]), userController.bulkAction);
 router.patch("/:id/toggle-active", authorize(["admin", "super_admin"]), userController.toggleUserActive);
 
 // --- NEW: SOFT DELETE ROUTES ---

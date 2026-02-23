@@ -9,6 +9,8 @@ import {
 
 // 👇 IMPORT API & TYPES
 import { userApi, User, UserStats, Pagination } from "@/lib/api/user.api";
+import AdminBulkActionBar from "@/shared-components/AdminBulkActionBar";
+import BulkConfirmModal, { BulkActionType } from "@/shared-components/BulkConfirmModal";
 
 // ============================================
 // MAIN COMPONENT
@@ -43,6 +45,12 @@ export default function UserManagementPage() {
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+
+  // Bulk State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkActionType, setBulkActionType] = useState<BulkActionType>('archive');
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -245,6 +253,59 @@ export default function UserManagementPage() {
     a.click();
   };
 
+  // --- BULK SELECTION LOGIC ---
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const newSelected = new Set(selectedIds);
+      users.forEach(user => newSelected.add(user._id));
+      setSelectedIds(newSelected);
+    } else {
+      const newSelected = new Set(selectedIds);
+      users.forEach(user => newSelected.delete(user._id));
+      setSelectedIds(newSelected);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // --- BULK ACTION HANDLER ---
+  const openBulkConfirm = (action: BulkActionType) => {
+    setBulkActionType(action);
+    setBulkConfirmOpen(true);
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+
+    try {
+      const data = await userApi.bulkAction({
+        userIds: Array.from(selectedIds),
+        action: bulkActionType
+      });
+
+      if (data.success) {
+        setSelectedIds(new Set());
+        setBulkConfirmOpen(false);
+        fetchUsers();
+        fetchStats();
+      }
+    } catch (err: any) {
+      console.error("Bulk action error:", err);
+      alert(`Failed to perform bulk ${bulkActionType}`);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   // ============================================
   // EFFECTS
   // ============================================
@@ -256,6 +317,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
+    setSelectedIds(new Set()); // Clear selection when filters change
   }, [searchQuery, roleFilter, statusFilter]);
 
   // ============================================
@@ -348,7 +410,7 @@ export default function UserManagementPage() {
       </div>
 
       <div className="relative z-10 p-6 md:p-10 max-w-[1600px] mx-auto space-y-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-down">
           <div>
@@ -475,6 +537,14 @@ export default function UserManagementPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/5 bg-[#020617]/50">
+                      <th className="px-6 py-5 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-white/10 bg-[#020617] text-indigo-500 focus:ring-indigo-500/20 cursor-pointer"
+                          checked={users.length > 0 && users.every(u => selectedIds.has(u._id))}
+                          onChange={handleSelectAll}
+                        />
+                      </th>
                       <th className="px-8 py-5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">User Details</th>
                       <th className="px-6 py-5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
                       <th className="px-6 py-5 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
@@ -486,9 +556,17 @@ export default function UserManagementPage() {
                     {users.map((user, index) => (
                       <tr
                         key={user._id}
-                        className={`group hover:bg-white/[0.02] transition-colors duration-300 ${user.isDeleted ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+                        className={`group hover:bg-white/[0.02] transition-colors duration-300 ${user.isDeleted ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${selectedIds.has(user._id) ? 'bg-indigo-500/5 hover:bg-indigo-500/10' : ''}`}
                         style={{ animation: `slideUp 0.3s ease-out ${index * 0.05}s backwards` }}
                       >
+                        <td className="px-6 py-5 text-center">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-white/10 bg-[#020617] text-indigo-500 focus:ring-indigo-500/20 cursor-pointer"
+                            checked={selectedIds.has(user._id)}
+                            onChange={() => toggleSelection(user._id)}
+                          />
+                        </td>
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
                             <div className={`h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg bg-gradient-to-br ${user.isDeleted
@@ -564,7 +642,7 @@ export default function UserManagementPage() {
               </div>
             )}
           </div>
-          
+
           {/* Pagination Controls */}
           {!loading && users.length > 0 && (
             <div className="p-6 border-t border-white/5 bg-[#020617]/30 flex items-center justify-between">
@@ -624,34 +702,34 @@ export default function UserManagementPage() {
             </button>
             <h3 className="text-xl font-bold text-white mb-6 text-center">Edit User</h3>
             <form onSubmit={handleUpdateUser} className="space-y-4">
-               {/* Same form inputs as before */}
-               <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
-                  placeholder="Name"
-                />
-                <input
-                  type="email"
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
-                  placeholder="Email"
-                />
-                 <select
-                    value={editFormData.role}
-                    // @ts-ignore
-                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                    className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="super_admin">Super Admin</option>
-                  </select>
-                <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all">
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
+              {/* Same form inputs as before */}
+              <input
+                type="text"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                placeholder="Name"
+              />
+              <input
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                placeholder="Email"
+              />
+              <select
+                value={editFormData.role}
+                // @ts-ignore
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                className="w-full bg-[#020617] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+              <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
             </form>
           </div>
         </div>
@@ -675,7 +753,7 @@ export default function UserManagementPage() {
       {/* Restore Modal */}
       {restoreModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-300">
+          <div className="bg-[#0F172A] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-300">
             <RefreshCcw className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Restore User?</h3>
             <p className="text-slate-400 text-sm mb-6">Are you sure you want to restore {selectedUser.name}?</p>
@@ -687,8 +765,27 @@ export default function UserManagementPage() {
         </div>
       )}
 
-       {/* Global CSS Keyframes (Same as before) */}
-       <style jsx global>{`
+      {/* Bulk Components */}
+      <AdminBulkActionBar
+        selectedCount={selectedIds.size}
+        onArchive={() => openBulkConfirm('archive')}
+        onUnarchive={() => openBulkConfirm('unarchive')}
+        onBlock={() => openBulkConfirm('block')}
+        onUnblock={() => openBulkConfirm('unblock')}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+
+      <BulkConfirmModal
+        isOpen={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={handleBulkAction}
+        action={bulkActionType}
+        count={selectedIds.size}
+        loading={bulkLoading}
+      />
+
+      {/* Global CSS Keyframes (Same as before) */}
+      <style jsx global>{`
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

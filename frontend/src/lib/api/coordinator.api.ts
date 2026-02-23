@@ -138,6 +138,11 @@ export const coordinatorApi = {
         return response.data;
     },
 
+    bulkAction: async (data: { studentIds: string[], action: 'archive' | 'unarchive' }) => {
+        const response = await axiosInstance.patch(API_ENDPOINTS.COORDINATOR.BULK_ACTION, data);
+        return response.data;
+    },
+
     // ============================================
     // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
     // ============================================

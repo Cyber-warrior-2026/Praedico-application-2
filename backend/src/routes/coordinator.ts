@@ -24,6 +24,7 @@ router.patch("/students/:studentId/reject", authorize(["department_coordinator"]
 // New Routes: Direct Student Addition & CSV Import
 router.post("/students/add", authorize(["department_coordinator"]), coordinatorController.addStudent);
 router.post("/students/import-csv", authorize(["department_coordinator"]), coordinatorController.importStudentsCSV);
+router.patch("/students/bulk-action", authorize(["department_coordinator"]), coordinatorController.bulkAction);
 
 // New Routes: Student Management (Get, Update, Archive, View Portfolio)
 router.get("/students/:studentId", authorize(["department_coordinator"]), coordinatorController.getStudentById);

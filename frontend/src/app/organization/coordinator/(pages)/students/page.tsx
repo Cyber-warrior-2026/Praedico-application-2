@@ -15,6 +15,8 @@ import EditStudentModal from '../../_components/EditStudentModal';
 import ArchiveStudentModal from '../../_components/ArchiveStudentModal';
 import ViewPortfolioModal from '../../_components/ViewPortfolioModal';
 import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
+import BulkActionBar from '@/shared-components/BulkActionBar';
+import BulkConfirmModal from '@/shared-components/BulkConfirmModal';
 
 interface Student {
     _id: string;
@@ -49,6 +51,11 @@ export default function CoordinatorAllStudentsPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [importResult, setImportResult] = useState<any>(null); // To store CSV import summary
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    // Bulk Selection States
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [bulkAction, setBulkAction] = useState<'archive' | 'unarchive' | null>(null);
+    const [bulkLoading, setBulkLoading] = useState(false);
 
     useEffect(() => {
         fetchStudents();
@@ -225,6 +232,44 @@ export default function CoordinatorAllStudentsPage() {
         (student.registrationNumber && student.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
+    // Clear selection when search changes
+    useEffect(() => {
+        setSelectedIds(new Set());
+    }, [searchQuery]);
+
+    // Bulk selection helpers
+    const isAllSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedIds.has(s._id));
+    const toggleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredStudents.map(s => s._id)));
+        }
+    };
+    const toggleSelectOne = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkConfirm = async () => {
+        if (!bulkAction) return;
+        setBulkLoading(true);
+        try {
+            await coordinatorApi.bulkAction({ studentIds: Array.from(selectedIds), action: bulkAction });
+            setSelectedIds(new Set());
+            setBulkAction(null);
+            fetchStudents();
+            setNotification({ type: 'success', message: `Students ${bulkAction}d successfully` });
+        } catch (e: any) {
+            setNotification({ type: 'error', message: e.response?.data?.message || 'Bulk action failed' });
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen w-full bg-[#030712] text-slate-200 font-sans selection:bg-indigo-500/30 relative overflow-hidden p-6 md:p-10">
             {/* Background Effects */}
@@ -321,7 +366,15 @@ export default function CoordinatorAllStudentsPage() {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-white/5 bg-[#020617]/50">
-                                            <th className="pb-4 pt-4 pl-8 font-semibold">Student Name</th>
+                                            <th className="pb-4 pt-4 pl-4 w-10">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isAllSelected}
+                                                    onChange={toggleSelectAll}
+                                                    className="w-4 h-4 accent-indigo-500 rounded cursor-pointer"
+                                                />
+                                            </th>
+                                            <th className="pb-4 pt-4 pl-4 font-semibold">Student Name</th>
                                             <th className="pb-4 pt-4 font-semibold">Contact Info</th>
                                             <th className="pb-4 pt-4 font-semibold">Registration Info</th>
                                             <th className="pb-4 pt-4 font-semibold">Status</th>
@@ -336,7 +389,16 @@ export default function CoordinatorAllStudentsPage() {
                                                 className="group hover:bg-white/[0.02] transition-colors"
                                                 style={{ animation: `slideUp 0.3s ease-out ${index * 0.05}s backwards` }}
                                             >
-                                                <td className="py-4 pl-8">
+                                                <td className="py-4 pl-4 w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.has(student._id)}
+                                                        onChange={() => toggleSelectOne(student._id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-4 h-4 accent-indigo-500 rounded cursor-pointer"
+                                                    />
+                                                </td>
+                                                <td className="py-4 pl-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex-shrink-0 shadow-lg flex items-center justify-center text-sm font-bold text-white border border-white/10">
                                                             {student.name.charAt(0).toUpperCase()}
@@ -630,6 +692,23 @@ export default function CoordinatorAllStudentsPage() {
                 )}
 
             </div >
+
+            {/* Bulk Action Components */}
+            <BulkActionBar
+                selectedCount={selectedIds.size}
+                onArchive={() => setBulkAction('archive')}
+                onUnarchive={() => setBulkAction('unarchive')}
+                onClearSelection={() => setSelectedIds(new Set())}
+            />
+            <BulkConfirmModal
+                isOpen={bulkAction !== null}
+                onClose={() => setBulkAction(null)}
+                onConfirm={handleBulkConfirm}
+                action={bulkAction || 'archive'}
+                count={selectedIds.size}
+                loading={bulkLoading}
+            />
+
             {/* Global CSS for Animations */}
             {/* Global CSS for Animations - Moved to globals.css */}
         </div >

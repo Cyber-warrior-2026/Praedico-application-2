@@ -110,4 +110,10 @@ export const userApi = {
     const response = await axiosInstance.patch(`/api/users/${userId}/restore`);
     return response.data;
   },
+
+  // Bulk Actions
+  bulkAction: async (data: { userIds: string[], action: 'archive' | 'unarchive' | 'block' | 'unblock' }) => {
+    const response = await axiosInstance.patch('/api/users/bulk-action', data);
+    return response.data;
+  },
 };

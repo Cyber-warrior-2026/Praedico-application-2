@@ -28,6 +28,7 @@ router.patch("/students/:studentId/reject", authorize(["organization_admin"]), o
 // New Routes: Direct Student Addition & CSV Import (Organization Admin)
 router.post("/students/add", authorize(["organization_admin"]), organizationController.addStudent);
 router.post("/students/import-csv", authorize(["organization_admin"]), organizationController.importStudentsCSV);
+router.patch("/students/bulk-action", authorize(["organization_admin"]), organizationController.bulkAction);
 
 // New Routes: Student Management (Get, Update, Archive, View Portfolio)
 router.get("/students/:studentId", authorize(["organization_admin"]), organizationController.getStudentById);

@@ -90,7 +90,7 @@ export const API_ENDPOINTS = {
     ARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}`,
     UNARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/unarchive`,
     STUDENT_PORTFOLIO: (studentId: string) => `/api/organization/students/${studentId}/portfolio`,
-
+    BULK_ACTION: '/api/organization/students/bulk-action',
 
     // Platform Admin
     ALL: '/api/organization/all',
@@ -119,7 +119,7 @@ export const API_ENDPOINTS = {
     ARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}`,
     UNARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/unarchive`,
     STUDENT_PORTFOLIO: (studentId: string) => `/api/coordinator/students/${studentId}/portfolio`,
-
+    BULK_ACTION: '/api/coordinator/students/bulk-action',
 
     // Org Admin
     CREATE: '/api/coordinator',

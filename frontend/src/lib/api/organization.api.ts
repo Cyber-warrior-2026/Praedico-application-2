@@ -175,6 +175,11 @@ export const organizationApi = {
     return response.data;
   },
 
+  bulkAction: async (data: { studentIds: string[], action: 'archive' | 'unarchive' }) => {
+    const response = await axiosInstance.patch(API_ENDPOINTS.ORGANIZATION.BULK_ACTION, data);
+    return response.data;
+  },
+
   // ============================================
   // PLATFORM ADMIN ROUTES (Manage Organizations)
   // ============================================
