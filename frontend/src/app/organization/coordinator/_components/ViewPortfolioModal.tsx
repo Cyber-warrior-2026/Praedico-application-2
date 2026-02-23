@@ -96,6 +96,15 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
         setExpandedRows(newExpanded);
     };
 
+    // Fire-and-forget rating save
+    const handleRateTransaction = async (transactionId: string, rating: number) => {
+        try {
+            await coordinatorApi.rateTransaction(transactionId, rating);
+        } catch (err) {
+            console.error('Failed to save rating:', err);
+        }
+    };
+
     // Compute transaction summary for a holding
     const getTransactionSummary = useMemo(() => {
         return (transactions: any[]) => {
@@ -440,7 +449,11 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
 
                                                                                                                     {/* INLINE ROW RATING COMPONENT */}
                                                                                                                     {txn.reason && (
-                                                                                                                        <TransactionRating transactionId={txn._id || tIdx.toString()} />
+                                                                                                                        <TransactionRating
+                                                                                                                            transactionId={txn._id || tIdx.toString()}
+                                                                                                                            initialRating={txn.rating || 0}
+                                                                                                                            onRate={handleRateTransaction}
+                                                                                                                        />
                                                                                                                     )}
                                                                                                                 </div>
                                                                                                             </td>

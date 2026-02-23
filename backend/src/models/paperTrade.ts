@@ -16,6 +16,7 @@ export interface IPaperTrade extends Document {
   cancelledAt?: Date;
   rejectionReason?: string;
   reason?: string; // Student's thesis/reason for making this trade
+  rating?: number;  // Coordinator's 1-5 star rating of this trade's reasoning
   
   // AI Analysis Integration
   aiRecommendation?: string;
@@ -61,6 +62,7 @@ const PaperTradeSchema: Schema = new Schema({
   cancelledAt: { type: Date },
   rejectionReason: { type: String },
   reason: { type: String }, // Student's thesis/reason for making this trade
+  rating: { type: Number, min: 1, max: 5 }, // Coordinator's 1-5 star rating
   
   // AI Integration
   aiRecommendation: { type: String },

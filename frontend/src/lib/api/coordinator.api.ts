@@ -143,6 +143,14 @@ export const coordinatorApi = {
         return response.data;
     },
 
+    rateTransaction: async (transactionId: string, rating: number) => {
+        const response = await axiosInstance.patch(
+            API_ENDPOINTS.COORDINATOR.RATE_TRANSACTION(transactionId),
+            { rating }
+        );
+        return response.data;
+    },
+
     // ============================================
     // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
     // ============================================

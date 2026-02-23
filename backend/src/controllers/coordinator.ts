@@ -51,6 +51,10 @@ const bulkActionSchema = z.object({
   action: z.enum(['archive', 'unarchive'])
 });
 
+const rateTransactionSchema = z.object({
+  rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5")
+});
+
 
 
 export class CoordinatorController {
@@ -221,6 +225,16 @@ export class CoordinatorController {
       result = await coordinatorService.bulkUnarchiveStudents(coordinatorId, studentIds);
     }
 
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Rate a Transaction
+  rateTransaction = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const transactionId = req.params.transactionId as string;
+    const { rating } = rateTransactionSchema.parse(req.body);
+
+    const result = await coordinatorService.rateTransaction(coordinatorId, transactionId, rating);
     res.status(200).json({ success: true, ...result });
   });
 

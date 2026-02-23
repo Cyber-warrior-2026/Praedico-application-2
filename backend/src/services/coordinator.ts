@@ -627,12 +627,14 @@ export class CoordinatorService {
         tradesBySymbol[trade.symbol] = [];
       }
       tradesBySymbol[trade.symbol].push({
+        _id: trade._id,
         date: trade.executedAt || (trade as any).createdAt,
         type: trade.type,
         quantity: trade.quantity,
         price: trade.price,
         totalAmount: trade.totalAmount,
-        reason: trade.reason
+        reason: trade.reason,
+        rating: trade.rating
       });
     }
 
@@ -665,6 +667,30 @@ export class CoordinatorService {
     };
   }
 
+  // Rate a specific transaction (Department Restricted)
+  async rateTransaction(coordinatorId: string, transactionId: string, rating: number) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    // Single atomic update: find the trade that belongs to a student in coordinator's department
+    const result = await PaperTradeModel.updateOne(
+      {
+        _id: transactionId,
+        userId: {
+          $in: await UserModel.find({ department: coordinator.department, isDeleted: false }).distinct('_id')
+        }
+      },
+      { $set: { rating } }
+    );
+
+    if (result.matchedCount === 0) {
+      throw new Error("Transaction not found or access denied");
+    }
+
+    return { message: "Rating saved successfully", rating };
+  }
 
   // Bulk Archive Students (Department Restricted)
   async bulkArchiveStudents(coordinatorId: string, studentIds: string[]) {

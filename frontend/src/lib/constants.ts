@@ -120,6 +120,7 @@ export const API_ENDPOINTS = {
     UNARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/unarchive`,
     STUDENT_PORTFOLIO: (studentId: string) => `/api/coordinator/students/${studentId}/portfolio`,
     BULK_ACTION: '/api/coordinator/students/bulk-action',
+    RATE_TRANSACTION: (transactionId: string) => `/api/coordinator/transactions/${transactionId}/rate`,
 
     // Org Admin
     CREATE: '/api/coordinator',
