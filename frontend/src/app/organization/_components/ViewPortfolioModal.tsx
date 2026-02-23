@@ -269,8 +269,9 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                             <div className="font-bold text-white text-base flex items-center gap-2">
                                                                                 {holding.symbol}
                                                                                 {txnSummary && (
-                                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 bg-white/5 rounded text-slate-400">
-                                                                                        {txnSummary.buyCount + txnSummary.sellCount} txns
+                                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 bg-white/5 rounded text-slate-400 whitespace-nowrap">
+                                                                                        {txnSummary.buyCount} Buy{txnSummary.buyCount !== 1 ? 's' : ''}
+                                                                                        {txnSummary.sellCount > 0 && `, ${txnSummary.sellCount} Sell${txnSummary.sellCount !== 1 ? 's' : ''}`}
                                                                                     </span>
                                                                                 )}
                                                                             </div>
