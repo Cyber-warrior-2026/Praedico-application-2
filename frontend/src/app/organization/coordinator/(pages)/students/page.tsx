@@ -6,7 +6,8 @@ import {
     GraduationCap, Search, Filter, MoreVertical,
     ChevronRight, Mail, Phone, Calendar,
     RefreshCcw, Loader2, Users, UserPlus, FileSpreadsheet,
-    Download, Upload, X, CheckCircle, AlertCircle
+    Download, Upload, X, CheckCircle, AlertCircle,
+    Check, ChevronDown
 } from 'lucide-react';
 import { coordinatorApi } from '@/lib/api';
 // Using coordinator-specific components
@@ -33,6 +34,8 @@ export default function CoordinatorAllStudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
@@ -226,11 +229,20 @@ export default function CoordinatorAllStudentsPage() {
         document.body.removeChild(link);
     };
 
-    const filteredStudents = students.filter((student) =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (student.registrationNumber && student.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredStudents = students.filter((student) => {
+        const matchesSearch =
+            student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (student.registrationNumber && student.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        const matchesStatus =
+            filterStatus === 'all' ||
+            (filterStatus === 'active' && student.organizationApprovalStatus === 'approved' && !student.isDeleted) ||
+            (filterStatus === 'inactive' && (student.isDeleted || student.organizationApprovalStatus === 'rejected')) ||
+            (filterStatus === 'pending' && student.organizationApprovalStatus === 'pending' && !student.isDeleted);
+
+        return matchesSearch && matchesStatus;
+    });
 
     // Clear selection when search changes
     useEffect(() => {
@@ -327,23 +339,68 @@ export default function CoordinatorAllStudentsPage() {
                 {/* Filters & Table */}
                 <div className="rounded-[32px] bg-[#0F172A]/80 backdrop-blur-2xl border border-white/5 shadow-2xl overflow-hidden animate-slide-up">
                     <div className="p-6 border-b border-white/5 flex flex-col lg:flex-row gap-4 justify-between items-center bg-[#0F172A]/50">
-                        {/* Search */}
-                        <div className="relative w-full lg:w-96 group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                        {/* Search & Filters */}
+                        <div className="flex flex-col sm:flex-row gap-4 w-full">
+                            <div className="relative flex-1 group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Search className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search by name, email, reg no..."
+                                    className="block w-full pl-11 pr-4 py-3 bg-[#020617] border border-white/5 rounded-2xl text-sm text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all outline-none"
+                                />
                             </div>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by name, email, reg no..."
-                                className="block w-full pl-11 pr-4 py-3.5 bg-[#020617] border border-white/5 rounded-2xl text-sm text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all outline-none"
-                            />
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                            {/* Potential bulk actions here in future */}
+                            {/* Dropdown Filter */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl border transition-all duration-300 bg-[#020617] h-full min-w-[140px] justify-between
+                                        ${isFilterOpen ? 'border-indigo-500/50 ring-2 ring-indigo-500/10' : 'border-white/5 hover:border-white/10'}
+                                    `}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Filter className={`w-4 h-4 ${filterStatus !== 'all' ? 'text-indigo-400' : 'text-slate-500'}`} />
+                                        <span className="text-sm font-semibold text-slate-200">
+                                            {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                        </span>
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isFilterOpen && (
+                                    <>
+                                        {/* Overlay to close dropdown */}
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsFilterOpen(false)} />
+
+                                        <div className="absolute top-full right-0 mt-2 w-48 bg-[#0F172A]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="p-1.5 space-y-1">
+                                                {(['all', 'active', 'pending', 'inactive'] as const).map((status) => (
+                                                    <button
+                                                        key={status}
+                                                        onClick={() => {
+                                                            setFilterStatus(status);
+                                                            setIsFilterOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-all
+                                                            ${filterStatus === status
+                                                                ? 'bg-indigo-600 text-white font-bold'
+                                                                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                                            }
+                                                        `}
+                                                    >
+                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                        {filterStatus === status && <Check className="w-4 h-4" />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
 
