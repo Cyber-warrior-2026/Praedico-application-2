@@ -5,7 +5,7 @@ import {
     X, Loader2, TrendingUp, TrendingDown, DollarSign,
     PieChart, ChevronDown, ChevronRight, History,
     ArrowDownRight, ArrowUpRight, Calendar, BarChart3,
-    Layers, Package, Info
+    Layers, Package, Info, Star
 } from 'lucide-react';
 import { coordinatorApi } from '@/lib/api';
 
@@ -14,6 +14,46 @@ interface ViewPortfolioModalProps {
     onClose: () => void;
     student: any;
 }
+
+// ------------------------------------------------------------------
+// Local Sub-Component: TransactionRating
+// Encapsulates the 5-star rating state logic to a single row
+// ------------------------------------------------------------------
+const TransactionRating = ({ transactionId, initialRating = 0, onRate }: { transactionId: string, initialRating?: number, onRate?: (id: string, rating: number) => void }) => {
+    const [rating, setRating] = useState(initialRating);
+    const [hoverRating, setHoverRating] = useState(0);
+
+    const handleRate = (newRating: number) => {
+        setRating(newRating);
+        if (onRate) onRate(transactionId, newRating);
+    };
+
+    return (
+        <div
+            className="flex items-center gap-0.5 ml-3 px-2 py-1 rounded-md bg-slate-800/50 border border-white/5 shadow-sm"
+            onMouseLeave={() => setHoverRating(0)}
+        >
+            {[1, 2, 3, 4, 5].map((star) => {
+                const isActive = (hoverRating || rating) >= star;
+                return (
+                    <button
+                        key={star}
+                        type="button"
+                        onClick={() => handleRate(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        className="p-0.5 transition-all duration-150 hover:scale-110 focus:outline-none"
+                    >
+                        <Star
+                            className={`w-3.5 h-3.5 ${isActive ? 'fill-yellow-400 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]' : 'text-slate-600 hover:text-slate-400'}`}
+                            strokeWidth={isActive ? 1.5 : 2}
+                        />
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
+// ------------------------------------------------------------------
 
 export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPortfolioModalProps) {
     const [portfolio, setPortfolio] = useState<any>(null);
@@ -363,7 +403,6 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                                                         }
                                                                                                                         {txn.type}
                                                                                                                     </span>
-                                                                                                                    {/* Reason Tooltip */}
                                                                                                                     <div className="relative hover:z-50 group/reason flex items-center">
                                                                                                                         <Info className={`w-4 h-4 cursor-help transition-all duration-300 ${txn.reason ? 'text-slate-400 hover:text-indigo-400 hover:scale-110 drop-shadow-md' : 'text-slate-600 hover:text-slate-400'}`} />
 
@@ -398,6 +437,11 @@ export default function ViewPortfolioModal({ isOpen, onClose, student }: ViewPor
                                                                                                                             </div>
                                                                                                                         </div>
                                                                                                                     </div>
+
+                                                                                                                    {/* INLINE ROW RATING COMPONENT */}
+                                                                                                                    {txn.reason && (
+                                                                                                                        <TransactionRating transactionId={txn._id || tIdx.toString()} />
+                                                                                                                    )}
                                                                                                                 </div>
                                                                                                             </td>
                                                                                                             <td className="px-4 py-3 text-right text-slate-200 font-mono font-medium">{txn.quantity}</td>
