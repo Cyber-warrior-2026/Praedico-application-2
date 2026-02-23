@@ -12,9 +12,9 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
+    Activity,
     Users,
-    ShieldCheck,
-    Activity
+    ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { coordinatorApi } from "@/lib/api";
@@ -268,8 +268,11 @@ const UserProfileFooter = memo(({ isOpen, user }: { isOpen: boolean; user: any }
     const handleLogout = async () => {
         try {
             await coordinatorApi.logout();
-            router.push("/login");
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            router.push("/");
+        }
     };
 
     return (

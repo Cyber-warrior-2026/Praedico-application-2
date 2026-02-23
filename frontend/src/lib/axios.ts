@@ -56,7 +56,9 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('open-login-modal'));
+        }
         return Promise.reject(refreshError);
       }
     }

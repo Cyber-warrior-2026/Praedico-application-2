@@ -48,15 +48,18 @@ export default function CoordinatorNavbar() {
     const handleLogout = async () => {
         try {
             await coordinatorApi.logout();
+        } catch (e) {
+            console.error(e);
+        } finally {
             router.push("/");
-        } catch (e) { console.error(e); }
+        }
     };
 
     return (
         <header
             className={`sticky top-0 z-40 flex h-20 w-full items-center justify-between px-6 transition-all duration-500 ease-in-out border-b ${scrolled
-                    ? "bg-[#0f172a]/90 backdrop-blur-xl border-slate-800 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
-                    : "bg-[#030712] border-transparent shadow-none"
+                ? "bg-[#0f172a]/90 backdrop-blur-xl border-slate-800 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+                : "bg-[#030712] border-transparent shadow-none"
                 }`}
         >
 
