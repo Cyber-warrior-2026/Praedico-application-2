@@ -704,51 +704,7 @@ export default function CoordinatorAllStudentsPage() {
                         </div>
                     )
                 }
-                {/* Action Modals - Rendered Conditionally */}
-                {selectedStudent && (
-                    <>
-                        <EditStudentModal
-                            isOpen={showEditModal}
-                            onClose={() => setShowEditModal(false)}
-                            student={selectedStudent}
-                            onSuccess={() => {
-                                setShowEditModal(false);
-                                fetchStudents();
-                                setNotification({ type: 'success', message: 'Student updated successfully' });
-                            }}
-                        />
-
-                        <ArchiveStudentModal
-                            isOpen={showArchiveModal}
-                            onClose={() => setShowArchiveModal(false)}
-                            student={selectedStudent}
-                            onSuccess={() => {
-                                setShowArchiveModal(false);
-                                fetchStudents();
-                                setNotification({ type: 'success', message: 'Student archived successfully' });
-                            }}
-                        />
-
-                        <UnarchiveStudentModal
-                            isOpen={showUnarchiveModal}
-                            onClose={() => setShowUnarchiveModal(false)}
-                            student={selectedStudent}
-                            onSuccess={() => {
-                                setShowUnarchiveModal(false);
-                                fetchStudents();
-                                setNotification({ type: 'success', message: 'Student unarchived successfully' });
-                            }}
-                        />
-
-                        <ViewPortfolioModal
-                            isOpen={showPortfolioModal}
-                            onClose={() => setShowPortfolioModal(false)}
-                            student={selectedStudent}
-                        />
-                    </>
-                )}
-
-            </div >
+            </div>
 
             {/* Bulk Action Components */}
             <BulkActionBar
@@ -766,9 +722,53 @@ export default function CoordinatorAllStudentsPage() {
                 loading={bulkLoading}
             />
 
+            {/* Action Modals - Rendered Conditionally (Moved Outside Main z-10 Container) */}
+            {selectedStudent && (
+                <>
+                    <EditStudentModal
+                        isOpen={showEditModal}
+                        onClose={() => setShowEditModal(false)}
+                        student={selectedStudent}
+                        onSuccess={() => {
+                            setShowEditModal(false);
+                            fetchStudents();
+                            setNotification({ type: 'success', message: 'Student updated successfully' });
+                        }}
+                    />
+
+                    <ArchiveStudentModal
+                        isOpen={showArchiveModal}
+                        onClose={() => setShowArchiveModal(false)}
+                        student={selectedStudent}
+                        onSuccess={() => {
+                            setShowArchiveModal(false);
+                            fetchStudents();
+                            setNotification({ type: 'success', message: 'Student archived successfully' });
+                        }}
+                    />
+
+                    <UnarchiveStudentModal
+                        isOpen={showUnarchiveModal}
+                        onClose={() => setShowUnarchiveModal(false)}
+                        student={selectedStudent}
+                        onSuccess={() => {
+                            setShowUnarchiveModal(false);
+                            fetchStudents();
+                            setNotification({ type: 'success', message: 'Student unarchived successfully' });
+                        }}
+                    />
+
+                    <ViewPortfolioModal
+                        isOpen={showPortfolioModal}
+                        onClose={() => setShowPortfolioModal(false)}
+                        student={selectedStudent}
+                    />
+                </>
+            )}
+
             {/* Global CSS for Animations */}
             {/* Global CSS for Animations - Moved to globals.css */}
-        </div >
+        </div>
     );
 }
 
