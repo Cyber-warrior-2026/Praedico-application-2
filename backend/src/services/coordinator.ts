@@ -12,6 +12,7 @@ import {
   sendStudentApprovalEmail,
   sendStudentRejectionEmail
 } from "./email";
+import aiTradingService from "./aiTrading";
 
 
 export class CoordinatorService {
@@ -665,6 +666,88 @@ export class CoordinatorService {
     };
   }
 
+
+  // Reconcile All Students — Generate AI Portfolio Reports
+  async reconcileStudents(coordinatorId: string, authToken: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    // Get all non-deleted students in the department
+    const students = await UserModel.find({
+      department: coordinator.department,
+      isDeleted: false,
+      organizationApprovalStatus: 'approved'
+    }).select('_id name email');
+
+    if (students.length === 0) {
+      return { processed: 0, total: 0, message: "No students found in your department" };
+    }
+
+    let processed = 0;
+    const errors: string[] = [];
+
+    // Process students sequentially to avoid overwhelming the AI endpoint
+    for (const student of students) {
+      try {
+        const analysis = await aiTradingService.getPortfolioAnalysis(
+          student._id.toString(),
+          authToken
+        );
+
+        await UserModel.updateOne(
+          { _id: student._id },
+          {
+            $set: {
+              portfolioReport: {
+                analysis,
+                generatedAt: new Date()
+              }
+            }
+          }
+        );
+
+        processed++;
+      } catch (err: any) {
+        errors.push(`${student.name}: ${err.message}`);
+      }
+    }
+
+    return {
+      processed,
+      total: students.length,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully generated reports for ${processed}/${students.length} students`
+    };
+  }
+
+  // Get Student Report (Department Restricted)
+  async getStudentReport(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    }).select('name email portfolioReport');
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    if (!student.portfolioReport?.analysis) {
+      throw new Error("No report available for this student. Run Reconciliation first.");
+    }
+
+    return {
+      student: { id: student._id, name: student.name, email: student.email },
+      report: student.portfolioReport
+    };
+  }
 
   // Bulk Archive Students (Department Restricted)
   async bulkArchiveStudents(coordinatorId: string, studentIds: string[]) {

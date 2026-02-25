@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { MoreVertical, Edit, Trash2, PieChart, RefreshCw } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, PieChart, RefreshCw, FileText } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 interface StudentActionMenuProps {
@@ -10,9 +10,11 @@ interface StudentActionMenuProps {
     onArchive: (student: any) => void;
     onUnarchive: (student: any) => void;
     onViewPortfolio: (student: any) => void;
+    onDownloadReport?: (student: any) => void;
+    hasReport?: boolean;
 }
 
-export default function StudentActionMenu({ student, onEdit, onArchive, onUnarchive, onViewPortfolio }: StudentActionMenuProps) {
+export default function StudentActionMenu({ student, onEdit, onArchive, onUnarchive, onViewPortfolio, onDownloadReport, hasReport }: StudentActionMenuProps) {
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -48,6 +50,16 @@ export default function StudentActionMenu({ student, onEdit, onArchive, onUnarch
                         <PieChart className="w-4 h-4 mr-2 text-indigo-400 group-hover:text-indigo-300" />
                         View Portfolio
                     </DropdownMenu.Item>
+
+                    {hasReport && onDownloadReport && (
+                        <DropdownMenu.Item
+                            onSelect={() => onDownloadReport(student)}
+                            className="flex items-center px-2 py-2 text-sm text-slate-200 rounded-md cursor-pointer hover:bg-slate-800 focus:bg-slate-800 focus:text-white outline-none group mb-1"
+                        >
+                            <FileText className="w-4 h-4 mr-2 text-amber-400 group-hover:text-amber-300" />
+                            Download Report
+                        </DropdownMenu.Item>
+                    )}
 
                     <DropdownMenu.Separator className="h-px bg-slate-800 my-1" />
 

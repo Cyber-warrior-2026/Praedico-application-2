@@ -6,7 +6,7 @@ import {
     GraduationCap, Search, Filter, MoreVertical,
     ChevronRight, Mail, Phone, Calendar,
     RefreshCcw, Loader2, Users, UserPlus, FileSpreadsheet,
-    Download, Upload, X, CheckCircle, AlertCircle
+    Download, Upload, X, CheckCircle, AlertCircle, Brain
 } from 'lucide-react';
 import { coordinatorApi } from '@/lib/api';
 // Using coordinator-specific components
@@ -27,6 +27,10 @@ interface Student {
     organizationApprovalStatus: 'pending' | 'approved' | 'rejected';
     createdAt: string;
     isDeleted?: boolean;
+    portfolioReport?: {
+        analysis: string;
+        generatedAt: string;
+    };
 }
 
 export default function CoordinatorAllStudentsPage() {
@@ -56,6 +60,9 @@ export default function CoordinatorAllStudentsPage() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [bulkAction, setBulkAction] = useState<'archive' | 'unarchive' | null>(null);
     const [bulkLoading, setBulkLoading] = useState(false);
+
+    // Reconciliation States
+    const [reconciling, setReconciling] = useState(false);
 
     useEffect(() => {
         fetchStudents();
@@ -270,6 +277,81 @@ export default function CoordinatorAllStudentsPage() {
         }
     };
 
+    // Reconciliation Handler
+    const handleReconcile = async () => {
+        setReconciling(true);
+        try {
+            const result = await coordinatorApi.reconcileStudents();
+            if (result.success) {
+                setNotification({ type: 'success', message: result.message || `Reports generated for ${result.processed}/${result.total} students` });
+                fetchStudents(); // Refresh to get updated portfolioReport flags
+            }
+        } catch (e: any) {
+            setNotification({ type: 'error', message: e.response?.data?.message || 'Reconciliation failed' });
+        } finally {
+            setReconciling(false);
+        }
+    };
+
+    // Download Report Handler
+    const handleDownloadReport = async (student: Student) => {
+        try {
+            const result = await coordinatorApi.getStudentReport(student._id);
+            if (result.success && result.report) {
+                const reportDate = new Date(result.report.generatedAt).toLocaleDateString('en-IN', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Portfolio Report - ${result.student.name}</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: 'Inter', sans-serif; background: #fff; color: #1a1a2e; padding: 48px; line-height: 1.7; }
+                            .header { border-bottom: 3px solid #4f46e5; padding-bottom: 24px; margin-bottom: 32px; }
+                            .header h1 { font-size: 28px; font-weight: 700; color: #1e1b4b; margin-bottom: 4px; }
+                            .header .subtitle { font-size: 14px; color: #64748b; font-weight: 500; }
+                            .meta { display: flex; gap: 32px; margin-bottom: 32px; padding: 16px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+                            .meta-item { font-size: 13px; color: #475569; }
+                            .meta-item strong { color: #1e293b; font-weight: 600; }
+                            .section-title { font-size: 18px; font-weight: 600; color: #312e81; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+                            .analysis { font-size: 15px; color: #334155; white-space: pre-wrap; line-height: 1.8; }
+                            .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+                            @media print { body { padding: 24px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>AI Portfolio Analysis Report</h1>
+                            <div class="subtitle">Praedico Trading Platform — Student Performance Report</div>
+                        </div>
+                        <div class="meta">
+                            <div class="meta-item"><strong>Student:</strong> ${result.student.name}</div>
+                            <div class="meta-item"><strong>Email:</strong> ${result.student.email}</div>
+                            <div class="meta-item"><strong>Generated:</strong> ${reportDate}</div>
+                        </div>
+                        <div class="section-title">Portfolio Analysis & Insights</div>
+                        <div class="analysis">${result.report.analysis}</div>
+                        <div class="footer">This report was auto-generated by Praedico AI • ${reportDate}</div>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
+                    setTimeout(() => printWindow.print(), 800);
+                }
+            }
+        } catch (e: any) {
+            setNotification({ type: 'error', message: e.response?.data?.message || 'Failed to download report' });
+        }
+    };
+
     return (
         <div className="min-h-screen w-full bg-[#030712] text-slate-200 font-sans selection:bg-indigo-500/30 relative overflow-hidden p-6 md:p-10">
             {/* Background Effects */}
@@ -301,6 +383,19 @@ export default function CoordinatorAllStudentsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleReconcile}
+                            disabled={reconciling || students.length === 0}
+                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {reconciling ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Brain className="w-4 h-4" />
+                            )}
+                            {reconciling ? 'Reconciling...' : 'Reconcile'}
+                        </button>
+
                         <div className="bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20 flex items-center gap-2">
                             <Users className="w-5 h-5 text-blue-400" />
                             <span className="text-blue-400 font-bold">{students.length} Total</span>
@@ -458,6 +553,8 @@ export default function CoordinatorAllStudentsPage() {
                                                         onArchive={(s) => { setSelectedStudent(s); setShowArchiveModal(true); }}
                                                         onUnarchive={(s) => { setSelectedStudent(s); setShowUnarchiveModal(true); }}
                                                         onViewPortfolio={(s) => { setSelectedStudent(s); setShowPortfolioModal(true); }}
+                                                        onDownloadReport={(s) => handleDownloadReport(s)}
+                                                        hasReport={!!student.portfolioReport?.analysis}
                                                     />
                                                 </td>
                                             </tr>

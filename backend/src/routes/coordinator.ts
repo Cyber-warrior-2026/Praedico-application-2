@@ -32,6 +32,8 @@ router.put("/students/:studentId", authorize(["department_coordinator"]), coordi
 router.delete("/students/:studentId", authorize(["department_coordinator"]), coordinatorController.archiveStudent);
 router.patch("/students/:studentId/unarchive", authorize(["department_coordinator"]), coordinatorController.unarchiveStudent);
 router.get("/students/:studentId/portfolio", authorize(["department_coordinator"]), coordinatorController.getStudentPortfolio);
+router.get("/students/:studentId/report", authorize(["department_coordinator"]), coordinatorController.getStudentReport);
+router.post("/reconcile", authorize(["department_coordinator"]), coordinatorController.reconcileStudents);
 
 
 

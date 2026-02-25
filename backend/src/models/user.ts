@@ -49,6 +49,12 @@ RejectedReason?: string;
   bestPaperTrade?: number;
   worstPaperTrade?: number;
   tradingLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+
+  // Reconciliation Report
+  portfolioReport?: {
+    analysis: string;
+    generatedAt: Date;
+  };
 }
 
 
@@ -140,6 +146,12 @@ tradingLevel: {
   type: String, 
   enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
   default: 'BEGINNER'
+},
+
+// Reconciliation Report
+portfolioReport: {
+  analysis: { type: String },
+  generatedAt: { type: Date }
 },
 }, 
 

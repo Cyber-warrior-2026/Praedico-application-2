@@ -143,6 +143,16 @@ export const coordinatorApi = {
         return response.data;
     },
 
+    reconcileStudents: async () => {
+        const response = await axiosInstance.post(API_ENDPOINTS.COORDINATOR.RECONCILE);
+        return response.data;
+    },
+
+    getStudentReport: async (studentId: string) => {
+        const response = await axiosInstance.get(API_ENDPOINTS.COORDINATOR.STUDENT_REPORT(studentId));
+        return response.data;
+    },
+
     // ============================================
     // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
     // ============================================

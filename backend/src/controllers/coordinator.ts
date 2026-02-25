@@ -224,6 +224,24 @@ export class CoordinatorController {
     res.status(200).json({ success: true, ...result });
   });
 
+  // Reconcile Students — Generate AI Reports
+  reconcileStudents = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const authToken = (req.headers.authorization as string) || req.cookies?.accessToken || '';
+
+    const result = await coordinatorService.reconcileStudents(coordinatorId, authToken);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Get Student Report
+  getStudentReport = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const { studentId } = req.params;
+
+    const result = await coordinatorService.getStudentReport(coordinatorId, studentId as string);
+    res.status(200).json({ success: true, ...result });
+  });
+
   // Logout
   logout = asyncHandler(async (req: Request, res: Response) => {
     const isProduction = process.env.NODE_ENV === "production";
