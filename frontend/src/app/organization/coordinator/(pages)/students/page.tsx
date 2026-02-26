@@ -18,6 +18,7 @@ import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
 import BulkActionBar from '@/shared-components/BulkActionBar';
 import BulkConfirmModal from '@/shared-components/BulkConfirmModal';
 import { ReconcileLoader } from '../../_components/ReconcileLoader';
+import StudentAnalysisModal from '../../_components/StudentAnalysisModal';
 
 interface Student {
     _id: string;
@@ -59,6 +60,7 @@ export default function CoordinatorAllStudentsPage() {
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+    const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
     // Form States
     const [newStudent, setNewStudent] = useState({ name: '', email: '' });
@@ -106,6 +108,11 @@ export default function CoordinatorAllStudentsPage() {
     const handleViewPortfolio = (student: any) => {
         setSelectedStudent(student);
         setShowPortfolioModal(true);
+    };
+
+    const handleRowClick = (student: any) => {
+        setSelectedStudent(student);
+        setShowAnalysisModal(true);
     };
 
     const handleAddStudent = async (e: React.FormEvent) => {
@@ -495,7 +502,8 @@ export default function CoordinatorAllStudentsPage() {
                                         {filteredStudents.map((student, index) => (
                                             <tr
                                                 key={student._id}
-                                                className="group hover:bg-white/[0.02] transition-colors"
+                                                onClick={() => handleRowClick(student)}
+                                                className="group hover:bg-white/[0.02] cursor-pointer transition-colors"
                                                 style={{ animation: `slideUp 0.3s ease-out ${index * 0.05}s backwards` }}
                                             >
                                                 <td className="py-4 pl-4 w-10">
@@ -571,7 +579,7 @@ export default function CoordinatorAllStudentsPage() {
                                                         {new Date(student.createdAt).toLocaleDateString()}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-right">
+                                                <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                     <StudentActionMenu
                                                         student={student}
                                                         onEdit={(s) => { setSelectedStudent(s); setShowEditModal(true); }}
@@ -800,7 +808,6 @@ export default function CoordinatorAllStudentsPage() {
                             setNotification({ type: 'success', message: 'Student updated successfully' });
                         }}
                     />
-
                     <ArchiveStudentModal
                         isOpen={showArchiveModal}
                         onClose={() => setShowArchiveModal(false)}
@@ -808,10 +815,10 @@ export default function CoordinatorAllStudentsPage() {
                         onSuccess={() => {
                             setShowArchiveModal(false);
                             fetchStudents();
+                            setSelectedIds(new Set()); // clear selection if any
                             setNotification({ type: 'success', message: 'Student archived successfully' });
                         }}
                     />
-
                     <UnarchiveStudentModal
                         isOpen={showUnarchiveModal}
                         onClose={() => setShowUnarchiveModal(false)}
@@ -819,13 +826,18 @@ export default function CoordinatorAllStudentsPage() {
                         onSuccess={() => {
                             setShowUnarchiveModal(false);
                             fetchStudents();
+                            setSelectedIds(new Set());
                             setNotification({ type: 'success', message: 'Student unarchived successfully' });
                         }}
                     />
-
                     <ViewPortfolioModal
                         isOpen={showPortfolioModal}
                         onClose={() => setShowPortfolioModal(false)}
+                        student={selectedStudent}
+                    />
+                    <StudentAnalysisModal
+                        isOpen={showAnalysisModal}
+                        onClose={() => setShowAnalysisModal(false)}
                         student={selectedStudent}
                     />
                 </>
