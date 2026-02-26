@@ -46,6 +46,8 @@ export interface IUser extends Document {
   totalPaperTradesCount: number;
   profitablePaperTrades: number;
   totalPaperPL: number;
+  portfolioTurnover: number;
+  maxDrawdown: number;
   bestPaperTrade?: number;
   worstPaperTrade?: number;
   tradingLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
@@ -151,6 +153,8 @@ const UserSchema: Schema = new Schema({
   totalPaperTradesCount: { type: Number, default: 0 },
   profitablePaperTrades: { type: Number, default: 0 },
   totalPaperPL: { type: Number, default: 0 },
+  portfolioTurnover: { type: Number, default: 0 },
+  maxDrawdown: { type: Number, default: 0 },
   bestPaperTrade: { type: Number },
   worstPaperTrade: { type: Number },
   tradingLevel: {

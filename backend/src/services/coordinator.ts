@@ -186,8 +186,16 @@ export class CoordinatorService {
         const studentHoldings = holdingsByUser[student._id.toString()] || [];
         const totalInvested = studentHoldings.reduce((sum, h) => sum + h.totalInvested, 0);
         const currentValue = studentHoldings.reduce((sum, h) => sum + h.currentValue, 0);
+        const unrealizedPL = studentHoldings.reduce((sum, h) => sum + (h.unrealizedPL || 0), 0);
         const totalPL = currentValue - totalInvested;
         const totalPLPercent = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
+
+        // Portfolio Allocation by Category
+        const allocation: Record<string, number> = {};
+        for (const h of studentHoldings) {
+            const cat = h.category || 'OTHER';
+            allocation[cat] = (allocation[cat] || 0) + h.totalInvested;
+        }
 
         return {
           ...student,
@@ -195,7 +203,12 @@ export class CoordinatorService {
             totalInvested,
             currentValue,
             totalPL,
-            totalPLPercent: parseFloat(totalPLPercent.toFixed(2))
+            totalPLPercent: parseFloat(totalPLPercent.toFixed(2)),
+            unrealizedPL,
+            realizedPL: student.totalPaperPL || 0,
+            portfolioAllocation: allocation,
+            portfolioTurnover: student.portfolioTurnover || 0,
+            maxDrawdown: student.maxDrawdown || 0
           }
         };
       });
