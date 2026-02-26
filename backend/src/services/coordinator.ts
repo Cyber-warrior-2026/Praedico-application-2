@@ -12,7 +12,7 @@ import {
   sendStudentApprovalEmail,
   sendStudentRejectionEmail
 } from "./email";
-import aiTradingService from "./aiTrading";
+import aiChatbotService from "./aiChatbot";
 
 
 export class CoordinatorService {
@@ -691,10 +691,61 @@ export class CoordinatorService {
     // Process students sequentially to avoid overwhelming the AI endpoint
     for (const student of students) {
       try {
-        const analysis = await aiTradingService.getPortfolioAnalysis(
-          student._id.toString(),
-          authToken
-        );
+        // Fetch the student's portfolio directly
+        const portfolio = await PortfolioHolding.find({ userId: student._id.toString() }).lean();
+
+        let analysis: string;
+
+        if (portfolio.length === 0) {
+          analysis = "Your portfolio is empty. Start by making your first paper trade!";
+        } else {
+          const portfolioSummary = portfolio.map(h => ({
+            stock: `${h.stockName} (${h.symbol})`,
+            quantity: h.quantity,
+            invested: h.totalInvested,
+            current: h.currentValue,
+            pl: h.unrealizedPL,
+            plPercent: h.unrealizedPLPercent.toFixed(2)
+          }));
+
+          const prompt = `You are a portfolio analyst. Analyze this paper trading portfolio and provide insights:
+
+Portfolio Holdings:
+${JSON.stringify(portfolioSummary, null, 2)}
+
+Provide EXACTLY these 7 sections IN ORDER, using this format:
+
+1. Overall portfolio health assessment
+[content]
+
+2. Diversification analysis
+[content]
+
+3. Risk assessment
+[content]
+
+4. Recommendations for rebalancing
+[content]
+
+5. Which stocks to consider selling
+[content]
+
+6. Which categories to invest more in
+[content]
+
+7. Overall strategy suggestions
+[content]
+
+Keep each section concise (2-3 sentences). Keep response under 350 words.`;
+
+          // Call the AI chatbot service directly (no HTTP, no auth issues)
+          const result = await aiChatbotService.chat(
+            student._id.toString(),
+            prompt,
+            { maxHistory: 0, includeMarketContext: false }
+          );
+          analysis = result.response || 'Portfolio analysis unavailable';
+        }
 
         await UserModel.updateOne(
           { _id: student._id },
@@ -710,6 +761,7 @@ export class CoordinatorService {
 
         processed++;
       } catch (err: any) {
+        console.error(`Reconcile error for ${student.name}:`, err.message);
         errors.push(`${student.name}: ${err.message}`);
       }
     }
@@ -746,6 +798,67 @@ export class CoordinatorService {
     return {
       student: { id: student._id, name: student.name, email: student.email },
       report: student.portfolioReport
+    };
+  }
+
+  // Submit Teacher Review for a Student
+  async submitTeacherReview(coordinatorId: string, studentId: string, reviewData: {
+    factor1Rating: number;
+    factor2Rating: number;
+    factor3Rating: number;
+    suggestions?: string;
+  }) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error('Coordinator not found');
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    if (!student.portfolioReport?.analysis) {
+      throw new Error('No AI report found for this student. Run Reconciliation first.');
+    }
+
+    // Validate ratings are 1–5
+    const ratings = [reviewData.factor1Rating, reviewData.factor2Rating, reviewData.factor3Rating];
+    for (const rating of ratings) {
+      if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+        throw new Error('Each rating must be an integer between 1 and 5');
+      }
+    }
+
+    // Aggregate score: average of 3 ratings scaled to 100
+    const avg = (reviewData.factor1Rating + reviewData.factor2Rating + reviewData.factor3Rating) / 3;
+    const aggregateScore = parseFloat((avg * 20).toFixed(1));
+
+    await UserModel.updateOne(
+      { _id: studentId },
+      {
+        $set: {
+          teacherReview: {
+            factor1Rating: reviewData.factor1Rating,
+            factor2Rating: reviewData.factor2Rating,
+            factor3Rating: reviewData.factor3Rating,
+            aggregateScore,
+            suggestions: reviewData.suggestions || '',
+            reviewedAt: new Date(),
+            reviewedBy: coordinatorId as any
+          }
+        }
+      }
+    );
+
+    return {
+      message: 'Review submitted successfully',
+      aggregateScore
     };
   }
 

@@ -51,6 +51,13 @@ const bulkActionSchema = z.object({
   action: z.enum(['archive', 'unarchive'])
 });
 
+const teacherReviewSchema = z.object({
+  factor1Rating: z.number().int().min(1).max(5),
+  factor2Rating: z.number().int().min(1).max(5),
+  factor3Rating: z.number().int().min(1).max(5),
+  suggestions: z.string().optional()
+});
+
 
 
 export class CoordinatorController {
@@ -239,6 +246,16 @@ export class CoordinatorController {
     const { studentId } = req.params;
 
     const result = await coordinatorService.getStudentReport(coordinatorId, studentId as string);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Submit Teacher Review for a Student
+  submitTeacherReview = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const { studentId } = req.params;
+    const reviewData = teacherReviewSchema.parse(req.body);
+
+    const result = await coordinatorService.submitTeacherReview(coordinatorId, studentId as string, reviewData);
     res.status(200).json({ success: true, ...result });
   });
 

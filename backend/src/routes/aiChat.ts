@@ -6,7 +6,7 @@ import {
   recommendPortfolio,
   getChatHistory,
   clearChatHistory,
-  
+
   // Admin Controllers
   getAllConversations,
   getUserChatHistory,
@@ -32,11 +32,11 @@ const router = express.Router();
 /**
  * @route   POST /api/chat/message
  * @desc    Send a chat message and get AI response
- * @access  Private (user, admin, super_admin)
+ * @access  Private (user, admin, super_admin, department_coordinator)
  */
 router.post(
   '/chat/message',
-  authorize(['user', 'admin', 'super_admin']),
+  authorize(['user', 'admin', 'super_admin', 'department_coordinator']),
   aiChatLimiter,
   sendMessage
 );

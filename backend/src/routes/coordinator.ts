@@ -33,6 +33,7 @@ router.delete("/students/:studentId", authorize(["department_coordinator"]), coo
 router.patch("/students/:studentId/unarchive", authorize(["department_coordinator"]), coordinatorController.unarchiveStudent);
 router.get("/students/:studentId/portfolio", authorize(["department_coordinator"]), coordinatorController.getStudentPortfolio);
 router.get("/students/:studentId/report", authorize(["department_coordinator"]), coordinatorController.getStudentReport);
+router.post("/students/:studentId/review", authorize(["department_coordinator"]), coordinatorController.submitTeacherReview);
 router.post("/reconcile", authorize(["department_coordinator"]), coordinatorController.reconcileStudents);
 
 
