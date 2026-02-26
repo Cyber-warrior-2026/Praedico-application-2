@@ -120,6 +120,7 @@ export const API_ENDPOINTS = {
     UNARCHIVE_STUDENT: (studentId: string) => `/api/coordinator/students/${studentId}/unarchive`,
     STUDENT_PORTFOLIO: (studentId: string) => `/api/coordinator/students/${studentId}/portfolio`,
     STUDENT_REPORT: (studentId: string) => `/api/coordinator/students/${studentId}/report`,
+    STUDENT_REVIEW: (studentId: string) => `/api/coordinator/students/${studentId}/review`,
     RECONCILE: '/api/coordinator/reconcile',
     BULK_ACTION: '/api/coordinator/students/bulk-action',
 

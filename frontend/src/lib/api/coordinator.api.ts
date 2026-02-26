@@ -153,6 +153,11 @@ export const coordinatorApi = {
         return response.data;
     },
 
+    submitReview: async (studentId: string, data: { factor1Rating: number; factor2Rating: number; factor3Rating: number; suggestions?: string; }) => {
+        const response = await axiosInstance.post(API_ENDPOINTS.COORDINATOR.STUDENT_REVIEW(studentId), data);
+        return response.data;
+    },
+
     // ============================================
     // ORGANIZATION ADMIN ROUTES (Manage Coordinators)
     // ============================================

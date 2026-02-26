@@ -23,7 +23,6 @@ interface Student {
     name: string;
     email: string;
     mobile: string;
-    registrationNumber?: string;
     organizationApprovalStatus: 'pending' | 'approved' | 'rejected';
     createdAt: string;
     isDeleted?: boolean;
@@ -31,12 +30,23 @@ interface Student {
         analysis: string;
         generatedAt: string;
     };
+    teacherReview?: {
+        factor1Rating: number;
+        factor2Rating: number;
+        factor3Rating: number;
+        aggregateScore: number;
+        suggestions: string;
+    };
 }
+
+// Ensure useRouter is imported for redirection
+import { useRouter } from 'next/navigation';
 
 export default function CoordinatorAllStudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const router = useRouter();
 
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
@@ -235,8 +245,7 @@ export default function CoordinatorAllStudentsPage() {
 
     const filteredStudents = students.filter((student) =>
         student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (student.registrationNumber && student.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()))
+        student.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Clear selection when search changes
@@ -285,6 +294,11 @@ export default function CoordinatorAllStudentsPage() {
             if (result.success) {
                 setNotification({ type: 'success', message: result.message || `Reports generated for ${result.processed}/${result.total} students` });
                 fetchStudents(); // Refresh to get updated portfolioReport flags
+
+                // Redirect to review page after brief delay to show success toast
+                setTimeout(() => {
+                    router.push('/organization/coordinator/reconcile-review');
+                }, 1500);
             }
         } catch (e: any) {
             setNotification({ type: 'error', message: e.response?.data?.message || 'Reconciliation failed' });
@@ -471,7 +485,7 @@ export default function CoordinatorAllStudentsPage() {
                                             </th>
                                             <th className="pb-4 pt-4 pl-4 font-semibold">Student Name</th>
                                             <th className="pb-4 pt-4 font-semibold">Contact Info</th>
-                                            <th className="pb-4 pt-4 font-semibold">Registration Info</th>
+                                            <th className="pb-4 pt-4 font-semibold">Score</th>
                                             <th className="pb-4 pt-4 font-semibold">Status</th>
                                             <th className="pb-4 pt-4 font-semibold">Joined Date</th>
                                             <th className="pb-4 pt-4 pr-8 text-right">Action</th>
@@ -495,8 +509,15 @@ export default function CoordinatorAllStudentsPage() {
                                                 </td>
                                                 <td className="py-4 pl-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex-shrink-0 shadow-lg flex items-center justify-center text-sm font-bold text-white border border-white/10">
-                                                            {student.name.charAt(0).toUpperCase()}
+                                                        <div className="relative">
+                                                            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex-shrink-0 shadow-lg flex items-center justify-center text-sm font-bold text-white border border-white/10">
+                                                                {student.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            {student.teacherReview?.aggregateScore !== undefined && (
+                                                                <div className="absolute -top-1 -left-1 bg-red-600 p-[2px] rounded-full border border-white" title="Reviewed by Teacher">
+                                                                    <CheckCircle className="w-3 h-3 text-white" />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <div className="font-bold text-slate-200 group-hover:text-white transition-colors">{student.name}</div>
@@ -514,14 +535,18 @@ export default function CoordinatorAllStudentsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="py-4">
-                                                    {student.registrationNumber ? (
+                                                    {student.teacherReview?.aggregateScore !== undefined ? (
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs font-mono border border-slate-700">
-                                                                {student.registrationNumber}
+                                                            <span className={`px-2.5 py-1 rounded text-xs font-bold border ${student.teacherReview.aggregateScore >= 80 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                                student.teacherReview.aggregateScore >= 60 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                                    student.teacherReview.aggregateScore >= 40 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                                        'bg-red-500/10 text-red-500 border-red-500/20'
+                                                                }`}>
+                                                                {student.teacherReview.aggregateScore}/100
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-slate-600 italic">Not provided</span>
+                                                        <span className="text-slate-600 italic">—</span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
