@@ -17,6 +17,7 @@ import ViewPortfolioModal from '../../_components/ViewPortfolioModal';
 import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
 import BulkActionBar from '@/shared-components/BulkActionBar';
 import BulkConfirmModal from '@/shared-components/BulkConfirmModal';
+import { ReconcileLoader } from '../../_components/ReconcileLoader';
 
 interface Student {
     _id: string;
@@ -368,8 +369,11 @@ export default function CoordinatorAllStudentsPage() {
 
     return (
         <div className="min-h-screen w-full bg-[#030712] text-slate-200 font-sans selection:bg-indigo-500/30 relative overflow-hidden p-6 md:p-10">
+            {/* Global Loader for Reconciliation */}
+            <ReconcileLoader isReconciling={reconciling} text="Analyzing Portfolios with AI..." />
+
             {/* Background Effects */}
-            <div className="fixed inset-0 pointer-events-none">
+            <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] animate-pulse-slow" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] animate-pulse-slow delay-1000" />
             </div>
@@ -402,12 +406,8 @@ export default function CoordinatorAllStudentsPage() {
                             disabled={reconciling || students.length === 0}
                             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {reconciling ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Brain className="w-4 h-4" />
-                            )}
-                            {reconciling ? 'Reconciling...' : 'Reconcile'}
+                            <Brain className="w-4 h-4" />
+                            Reconcile
                         </button>
 
                         <div className="bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20 flex items-center gap-2">
