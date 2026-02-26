@@ -708,43 +708,8 @@ export class CoordinatorService {
             plPercent: h.unrealizedPLPercent.toFixed(2)
           }));
 
-          const prompt = `You are a portfolio analyst. Analyze this paper trading portfolio and provide insights:
-
-Portfolio Holdings:
-${JSON.stringify(portfolioSummary, null, 2)}
-
-Provide EXACTLY these 7 sections IN ORDER, using this format:
-
-1. Overall portfolio health assessment
-[content]
-
-2. Diversification analysis
-[content]
-
-3. Risk assessment
-[content]
-
-4. Recommendations for rebalancing
-[content]
-
-5. Which stocks to consider selling
-[content]
-
-6. Which categories to invest more in
-[content]
-
-7. Overall strategy suggestions
-[content]
-
-Keep each section concise (2-3 sentences). Keep response under 350 words.`;
-
-          // Call the AI chatbot service directly (no HTTP, no auth issues)
-          const result = await aiChatbotService.chat(
-            student._id.toString(),
-            prompt,
-            { maxHistory: 0, includeMarketContext: false }
-          );
-          analysis = result.response || 'Portfolio analysis unavailable';
+          // Call the dedicated portfolio report generator (calls Gemini directly, no auth/history issues)
+          analysis = await aiChatbotService.generatePortfolioReport(portfolioSummary);
         }
 
         await UserModel.updateOne(

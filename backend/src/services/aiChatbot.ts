@@ -78,8 +78,8 @@ class AIChatbotService {
   /**
    * ✅ NEW: Educational framing system prompt
    */
-private getSystemPrompt(): string {
-  return `You are a knowledgeable stock market education assistant for Praedico, an Indian stock trading learning platform.
+  private getSystemPrompt(): string {
+    return `You are a knowledgeable stock market education assistant for Praedico, an Indian stock trading learning platform.
 
 Your role is to EDUCATE users comprehensively about:
 - How Nifty 50, Sensex, and other indices work
@@ -136,7 +136,7 @@ However, whether you should invest depends on several personal factors:
 For personalized investment decisions aligned with your specific financial goals, age, income, and risk profile, I'd recommend consulting a SEBI-registered financial advisor. They can assess your complete financial situation and provide tailored advice."
 
 Remember: Your goal is to EDUCATE thoroughly, not just answer briefly. Be helpful and informative!`;
-}
+  }
 
 
   /**
@@ -323,6 +323,43 @@ Format clearly. Under 250 words. Remember: This is for LEARNING, not actual fina
     } catch (error: any) {
       throw new Error('Failed to generate portfolio recommendation.');
     }
+  }
+
+  /**
+   * Generate a structured 7-section portfolio report for reconciliation.
+   * Uses generateContent() directly — no chat history, no system prompt injection.
+   */
+  async generatePortfolioReport(portfolioSummary: object[]): Promise<string> {
+    const prompt = `You are a portfolio analyst for an Indian paper trading learning platform.
+
+Analyze the following portfolio holdings:
+${JSON.stringify(portfolioSummary, null, 2)}
+
+Respond with EXACTLY 7 sections numbered 1 through 7. Each section must start on a new line with the number and a period. Do NOT merge sections. Do NOT add commentary outside the sections.
+
+1. Overall portfolio health assessment
+Write 2-3 sentences assessing the overall health of the portfolio.
+
+2. Diversification analysis
+Write 2-3 sentences on how well diversified the portfolio is.
+
+3. Risk assessment
+Write 2-3 sentences on the risk level and exposure.
+
+4. Recommendations for rebalancing
+Write 2-3 sentences with specific rebalancing suggestions.
+
+5. Which stocks to consider selling
+Write 2-3 sentences identifying any weak or overexposed stocks to consider selling.
+
+6. Which categories to invest more in
+Write 2-3 sentences on sectors or categories that should get more allocation.
+
+7. Overall strategy suggestions
+Write 2-3 sentences with a high-level strategy for the student going forward.`;
+
+    const result = await this.model.generateContent(prompt);
+    return result.response.text();
   }
 }
 
