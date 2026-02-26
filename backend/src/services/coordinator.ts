@@ -147,7 +147,7 @@ export class CoordinatorService {
   }
 
   // Get Students in Coordinator's Department
-  async getMyDepartmentStudents(coordinatorId: string, status?: string) {
+  async getMyDepartmentStudents(coordinatorId: string, status?: string, includePortfolio: boolean = false) {
     const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
 
     if (!coordinator) {
@@ -162,9 +162,44 @@ export class CoordinatorService {
       filter.organizationApprovalStatus = status;
     }
 
-    const students = await UserModel.find(filter)
+    let students = await UserModel.find(filter)
       .select('-passwordHash')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (includePortfolio) {
+      const studentIds = students.map(s => s._id.toString());
+      const holdings = await PortfolioHolding.find({ userId: { $in: studentIds } }).lean();
+
+      // Group holdings by userId
+      const holdingsByUser: Record<string, any[]> = {};
+      for (const holding of holdings) {
+        const uid = holding.userId.toString();
+        if (!holdingsByUser[uid]) {
+          holdingsByUser[uid] = [];
+        }
+        holdingsByUser[uid].push(holding);
+      }
+
+      // Compute summary for each student
+      students = students.map((student: any) => {
+        const studentHoldings = holdingsByUser[student._id.toString()] || [];
+        const totalInvested = studentHoldings.reduce((sum, h) => sum + h.totalInvested, 0);
+        const currentValue = studentHoldings.reduce((sum, h) => sum + h.currentValue, 0);
+        const totalPL = currentValue - totalInvested;
+        const totalPLPercent = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
+
+        return {
+          ...student,
+          portfolioSummary: {
+            totalInvested,
+            currentValue,
+            totalPL,
+            totalPLPercent: parseFloat(totalPLPercent.toFixed(2))
+          }
+        };
+      });
+    }
 
     return students;
   }

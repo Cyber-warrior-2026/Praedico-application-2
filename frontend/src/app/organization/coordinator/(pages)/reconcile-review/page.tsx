@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Star, CheckCircle, AlertCircle, RefreshCcw, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, Star, CheckCircle, AlertCircle, RefreshCcw, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { coordinatorApi } from '@/lib/api';
 
 interface Student {
@@ -19,6 +19,12 @@ interface Student {
         factor3Rating: number;
         aggregateScore: number;
         suggestions: string;
+    };
+    portfolioSummary?: {
+        totalInvested: number;
+        currentValue: number;
+        totalPL: number;
+        totalPLPercent: number;
     };
 }
 
@@ -66,6 +72,7 @@ export default function ReconcileReviewPage() {
     const [loading, setLoading] = useState(true);
     const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
     // Form state (mapped by student ID)
     const [reviews, setReviews] = useState<Record<string, { f1: number, f2: number, f3: number, suggestions: string }>>({});
@@ -77,7 +84,7 @@ export default function ReconcileReviewPage() {
     const fetchStudents = async () => {
         setLoading(true);
         try {
-            const data = await coordinatorApi.getMyStudents();
+            const data = await coordinatorApi.getMyStudents({ includePortfolio: true });
             if (data.success && data.students) {
                 // Only show students who have a report
                 const studentsWithReports = data.students.filter((s: Student) => !!s.portfolioReport?.analysis);
@@ -223,103 +230,171 @@ export default function ReconcileReviewPage() {
                         <table className="w-full text-left border-collapse whitespace-nowrap lg:whitespace-normal min-w-[2000px]">
                             <thead>
                                 <tr className="text-slate-400 text-xs font-bold uppercase tracking-wider bg-[#020617]/50 border-b border-white/10">
-                                    <th className="p-4 w-64 border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student</th>
-                                    <th className="p-4 w-80 border-r border-white/5">1. Health Assessment</th>
-                                    <th className="p-4 w-80 border-r border-white/5">2. Diversification</th>
-                                    <th className="p-4 w-80 border-r border-white/5">3. Risk Assessment</th>
-                                    <th className="p-4 w-64 border-r border-white/5">4. Rebalancing</th>
-                                    <th className="p-4 w-64 border-r border-white/5">5. Consider Selling</th>
-                                    <th className="p-4 w-64 border-r border-white/5">6. Invest More In</th>
-                                    <th className="p-4 w-64 border-r border-white/5">7. Overall Strategy</th>
-                                    <th className="p-4 w-80">Teacher Suggestion & Submit</th>
+                                    <th className="p-4 w-1/4 border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student</th>
+                                    <th className="p-4 w-1/5 border-r border-white/5">Score / Status</th>
+                                    <th className="p-4 w-1/5 border-r border-white/5">Portfolio</th>
+                                    <th className="p-4 w-1/5 border-r border-white/5">Return</th>
+                                    <th className="p-4 w-16 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 relative">
                                 {students.map((student, idx) => {
+                                    const expanded = expandedRows.has(student._id);
                                     const sections = parseReportSections(student.portfolioReport?.analysis || "");
                                     const isReviewed = student.teacherReview?.aggregateScore !== undefined;
                                     const reviewState = reviews[student._id] || { f1: 0, f2: 0, f3: 0, suggestions: '' };
                                     const isSubmitting = submittingIds.has(student._id);
+                                    const summary = student.portfolioSummary || { totalInvested: 0, currentValue: 0, totalPL: 0, totalPLPercent: 0 };
+                                    const isProfitable = summary.totalPL >= 0;
 
                                     return (
-                                        <tr key={student._id} className="hover:bg-white/[0.02] transition-colors group">
-                                            {/* Column: Student Info (Sticky) */}
-                                            <td className="p-4 border-r border-white/5 sticky left-0 bg-[#0F172A] group-hover:bg-[#151e32] z-10 align-top shadow-sm shadow-black/50 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg">
-                                                            {student.name.charAt(0).toUpperCase()}
+                                        <React.Fragment key={student._id}>
+                                            <tr
+                                                onClick={() => {
+                                                    setExpandedRows(prev => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(student._id)) next.delete(student._id);
+                                                        else next.add(student._id);
+                                                        return next;
+                                                    });
+                                                }}
+                                                className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                                            >
+                                                {/* Column: Student Info (Sticky) */}
+                                                <td className="p-4 border-r border-white/5 sticky left-0 bg-[#0F172A] group-hover:bg-[#151e32] z-10 align-middle shadow-sm shadow-black/50 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg">
+                                                                {student.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            {isReviewed && (
+                                                                <div className="absolute -top-1 -right-1 bg-emerald-500 p-[2px] rounded-full border border-white" title="Reviewed">
+                                                                    <CheckCircle className="w-3 h-3 text-white" />
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        {isReviewed && (
-                                                            <div className="absolute -top-1 -right-1 bg-emerald-500 p-[2px] rounded-full border border-white" title="Reviewed">
-                                                                <CheckCircle className="w-3 h-3 text-white" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="overflow-hidden">
-                                                        <p className="font-bold text-slate-200 truncate" title={student.name}>{student.name}</p>
-                                                        <p className="text-xs text-slate-500 truncate">{student.email}</p>
-                                                        {isReviewed && (
-                                                            <div className="mt-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 inline-block px-2 py-0.5 rounded-md">
-                                                                Score: {student.teacherReview!.aggregateScore}/100
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Columns 1-3: Ratable Factors */}
-                                            {(['f1', 'f2', 'f3'] as const).map((factor, i) => (
-                                                <td key={factor} className="p-4 border-r border-white/5 align-top">
-                                                    <div className="h-40 overflow-y-auto pr-2 custom-scrollbar text-sm text-slate-400 mb-3 bg-[#020617]/50 border border-white/5 rounded-lg p-3">
-                                                        {sections[i]}
-                                                    </div>
-                                                    <div className="flex items-center justify-between mt-auto">
-                                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rate</span>
-                                                        {renderStars(student._id, factor, reviewState[factor])}
+                                                        <div className="overflow-hidden">
+                                                            <p className="font-bold text-slate-200 truncate" title={student.name}>{student.name}</p>
+                                                            <p className="text-xs text-slate-500 truncate">{student.email}</p>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                            ))}
 
-                                            {/* Columns 4-7: Read-only AI recommendations */}
-                                            {[3, 4, 5, 6].map(i => (
-                                                <td key={`sec-${i}`} className="p-4 border-r border-white/5 align-top">
-                                                    <div className="h-52 overflow-y-auto pr-2 custom-scrollbar text-sm text-slate-400 bg-[#020617]/50 border border-white/5 rounded-lg p-3">
-                                                        {sections[i]}
+                                                {/* Column: Score / Status */}
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    {isReviewed ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm">
+                                                            <span>Score: {student.teacherReview!.aggregateScore}/100</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-sm">
+                                                            <span>Pending Review</span>
+                                                        </div>
+                                                    )}
+                                                </td>
+
+                                                {/* Column: Portfolio Details */}
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-xs text-slate-400">Total Invested: <span className="text-slate-200 font-medium font-mono">₹{summary.totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></span>
+                                                        <span className="text-xs text-slate-400">Current Value: <span className="text-slate-200 font-medium font-mono">₹{summary.currentValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></span>
                                                     </div>
                                                 </td>
-                                            ))}
 
-                                            {/* Last Column: Suggestions and Submit */}
-                                            <td className="p-4 align-top">
-                                                <div className="h-full flex flex-col">
-                                                    <textarea
-                                                        className="w-full flex-grow h-40 resize-none bg-[#020617] border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 outline-none custom-scrollbar"
-                                                        placeholder="Provide helpful suggestions based on the AI recommendations..."
-                                                        value={reviewState.suggestions}
-                                                        onChange={(e) => handleSuggestionChange(student._id, e.target.value)}
-                                                    ></textarea>
+                                                {/* Column: Return */}
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className={`flex flex-col gap-1 ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        <span className="font-bold font-mono">
+                                                            {isProfitable ? '+' : ''}₹{summary.totalPL.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                        </span>
+                                                        <span className="text-xs font-medium bg-current/10 self-start px-1.5 py-0.5 rounded">
+                                                            {isProfitable ? '+' : ''}{summary.totalPLPercent}%
+                                                        </span>
+                                                    </div>
+                                                </td>
 
-                                                    <button
-                                                        onClick={() => handleSubmitReview(student._id)}
-                                                        disabled={isSubmitting || reviewState.f1 === 0 || reviewState.f2 === 0 || reviewState.f3 === 0}
-                                                        className={`mt-3 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${isReviewed
-                                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
-                                                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500'
-                                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                    >
-                                                        {isSubmitting ? (
-                                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                                        ) : isReviewed ? (
-                                                            <CheckCircle className="w-4 h-4" />
-                                                        ) : (
-                                                            <Send className="w-4 h-4" />
-                                                        )}
-                                                        {isSubmitting ? "Submitting..." : isReviewed ? "Update Review" : "Submit Review"}
+                                                {/* Column: Action Toggle */}
+                                                <td className="p-4 align-middle text-center">
+                                                    <button className="text-slate-400 group-hover:text-white transition-colors">
+                                                        {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                                                     </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                            </tr>
+
+                                            {/* Expanded Content: AI Analysis and Review Form */}
+                                            {expanded && (
+                                                <tr className="bg-[#020617]/40 border-b border-white/5">
+                                                    <td colSpan={5} className="p-0">
+                                                        <div className="p-6 animate-in slide-in-from-top-2 duration-300">
+                                                            <div className="flex overflow-x-auto gap-4 pb-4 w-full">
+                                                                {/* AI Sections 1-3 (Ratable) */}
+                                                                {(['f1', 'f2', 'f3'] as const).map((factor, i) => (
+                                                                    <div key={factor} className="w-80 flex-shrink-0 flex flex-col bg-white/5 border border-white/10 rounded-xl p-4">
+                                                                        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">
+                                                                            {i + 1}. {['Health Assessment', 'Diversification', 'Risk Assessment'][i]}
+                                                                        </h4>
+                                                                        <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar text-sm text-slate-400 mb-4 h-40">
+                                                                            {sections[i]}
+                                                                        </div>
+                                                                        <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-3">
+                                                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rate</span>
+                                                                            {renderStars(student._id, factor, reviewState[factor])}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+
+                                                                {/* AI Sections 4-7 (Read only) */}
+                                                                {[3, 4, 5, 6].map(i => (
+                                                                    <div key={`sec-${i}`} className="w-72 flex-shrink-0 flex flex-col bg-white/5 border border-white/10 rounded-xl p-4">
+                                                                        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">
+                                                                            {i + 1}. {['Rebalancing', 'Consider Selling', 'Invest More In', 'Overall Strategy'][i - 3]}
+                                                                        </h4>
+                                                                        <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar text-sm text-slate-400 h-40">
+                                                                            {sections[i]}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+
+                                                                {/* Submit Form */}
+                                                                <div className="w-96 flex-shrink-0 flex flex-col bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+                                                                    <h4 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-3 border-b border-indigo-500/20 pb-2">
+                                                                        Teacher Suggestion & Submit
+                                                                    </h4>
+                                                                    <textarea
+                                                                        className="w-full flex-grow h-32 resize-none bg-[#020617] border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 outline-none custom-scrollbar"
+                                                                        placeholder="Provide helpful suggestions based on the AI recommendations..."
+                                                                        value={reviewState.suggestions}
+                                                                        onChange={(e) => handleSuggestionChange(student._id, e.target.value)}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    ></textarea>
+
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleSubmitReview(student._id);
+                                                                        }}
+                                                                        disabled={isSubmitting || reviewState.f1 === 0 || reviewState.f2 === 0 || reviewState.f3 === 0}
+                                                                        className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${isReviewed
+                                                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                                                                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500'
+                                                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                    >
+                                                                        {isSubmitting ? (
+                                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                                        ) : isReviewed ? (
+                                                                            <CheckCircle className="w-4 h-4" />
+                                                                        ) : (
+                                                                            <Send className="w-4 h-4" />
+                                                                        )}
+                                                                        {isSubmitting ? "Submitting..." : isReviewed ? "Update Review" : "Submit Review"}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </tbody>

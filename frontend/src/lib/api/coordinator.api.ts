@@ -74,7 +74,7 @@ export const coordinatorApi = {
         return response.data;
     },
 
-    getMyStudents: async (params?: { status?: string }) => {
+    getMyStudents: async (params?: { status?: string, includePortfolio?: boolean }) => {
         const response = await axiosInstance.get(API_ENDPOINTS.COORDINATOR.STUDENTS, { params });
         return response.data;
     },

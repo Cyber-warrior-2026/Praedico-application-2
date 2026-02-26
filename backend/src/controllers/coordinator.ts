@@ -111,8 +111,9 @@ export class CoordinatorController {
   getMyStudents = asyncHandler(async (req: Request, res: Response) => {
     const coordinatorId = (req as any).user.id;
     const status = req.query.status as string | undefined;
+    const includePortfolio = req.query.includePortfolio === 'true';
 
-    const students = await coordinatorService.getMyDepartmentStudents(coordinatorId, status);
+    const students = await coordinatorService.getMyDepartmentStudents(coordinatorId, status, includePortfolio);
     res.status(200).json({
       success: true,
       students,
