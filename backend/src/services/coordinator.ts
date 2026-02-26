@@ -998,4 +998,120 @@ export class CoordinatorService {
 
     return coordinators;
   }
+
+  // ============================================
+  // Get Student Portfolio Metrics (for Accordion)
+  // ============================================
+  async getStudentPortfolioMetrics(coordinatorId: string, studentId: string) {
+    const coordinator = await DepartmentCoordinatorModel.findById(coordinatorId);
+    if (!coordinator) {
+      throw new Error("Coordinator not found");
+    }
+
+    // Verify student belongs to coordinator's department
+    const student = await UserModel.findOne({
+      _id: studentId,
+      department: coordinator.department,
+      isDeleted: false
+    });
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your department");
+    }
+
+    // ── 1. Fetch open holdings ──
+    const holdings = await PortfolioHolding.find({ userId: studentId }).lean();
+
+    // ── 2. Core Valuations ──
+    const totalInvestedValue = holdings.reduce((sum, h) => sum + (h.totalInvested || 0), 0);
+    const holdingsCurrentValue = holdings.reduce((sum, h) => sum + (h.currentValue || 0), 0);
+    const currentPortfolioValue = (student.virtualBalance || 0) + holdingsCurrentValue;
+    const initialBalance = student.initialVirtualBalance || 100000;
+    const absoluteROI = currentPortfolioValue - initialBalance;
+    const percentageROI = initialBalance > 0 ? parseFloat(((absoluteROI / initialBalance) * 100).toFixed(2)) : 0;
+
+    // ── 3. Profit & Loss ──
+    // Realized P&L: aggregate from all EXECUTED SELL trades
+    const realizedAgg = await PaperTradeModel.aggregate([
+      { $match: { userId: student._id, type: 'SELL', status: 'EXECUTED' } },
+      { $group: { _id: null, totalRealizedPL: { $sum: { $ifNull: ['$realizedPL', 0] } } } }
+    ]);
+    const realizedPL = realizedAgg.length > 0 ? realizedAgg[0].totalRealizedPL : 0;
+
+    // Unrealized P&L: sum from open holdings
+    const unrealizedPL = holdings.reduce((sum, h) => sum + (h.unrealizedPL || 0), 0);
+
+    // ── 4. Activity & Risk Metrics ──
+    // Trade Volume: count all executed orders (buy + sell)
+    const tradeVolume = await PaperTradeModel.countDocuments({
+      userId: student._id,
+      status: 'EXECUTED'
+    });
+
+    // Turnover Rate: (total sold value in last 30 days) / currentPortfolioValue * 100
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const turnoverAgg = await PaperTradeModel.aggregate([
+      {
+        $match: {
+          userId: student._id,
+          type: 'SELL',
+          status: 'EXECUTED',
+          executedAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      { $group: { _id: null, totalSoldValue: { $sum: '$totalAmount' } } }
+    ]);
+    const totalSoldValue30d = turnoverAgg.length > 0 ? turnoverAgg[0].totalSoldValue : 0;
+    const turnoverRate = currentPortfolioValue > 0
+      ? parseFloat(((totalSoldValue30d / currentPortfolioValue) * 100).toFixed(2))
+      : 0;
+
+    // Max Drawdown: read from user record
+    // TODO: For true max drawdown, create a `PortfolioSnapshot` schema with daily
+    // { userId, date, totalValue } records. Then calculate drawdown as the largest
+    // peak-to-trough percentage drop. For now we use the stored value.
+    const maxDrawdown = student.maxDrawdown || 0;
+
+    // ── 5. Portfolio Allocation (% by category) ──
+    const allocationByCategory: Record<string, number> = {};
+    for (const h of holdings) {
+      const cat = h.category || 'OTHER';
+      allocationByCategory[cat] = (allocationByCategory[cat] || 0) + (h.totalInvested || 0);
+    }
+
+    const portfolioAllocation: Record<string, number> = {};
+    if (totalInvestedValue > 0) {
+      for (const [cat, amount] of Object.entries(allocationByCategory)) {
+        portfolioAllocation[cat] = parseFloat(((amount / totalInvestedValue) * 100).toFixed(1));
+      }
+    }
+
+    return {
+      student: {
+        id: student._id,
+        name: student.name,
+        email: student.email,
+        tradingLevel: student.tradingLevel || 'BEGINNER'
+      },
+      coreValuations: {
+        totalInvestedValue: parseFloat(totalInvestedValue.toFixed(2)),
+        currentPortfolioValue: parseFloat(currentPortfolioValue.toFixed(2)),
+        cashBalance: parseFloat((student.virtualBalance || 0).toFixed(2)),
+        absoluteROI: parseFloat(absoluteROI.toFixed(2)),
+        percentageROI
+      },
+      profitLoss: {
+        realizedPL: parseFloat(realizedPL.toFixed(2)),
+        unrealizedPL: parseFloat(unrealizedPL.toFixed(2)),
+        totalPL: parseFloat((realizedPL + unrealizedPL).toFixed(2))
+      },
+      activityRisk: {
+        tradeVolume,
+        turnoverRate,
+        maxDrawdown
+      },
+      portfolioAllocation
+    };
+  }
 }

@@ -294,6 +294,14 @@ export class CoordinatorController {
     const result = await coordinatorService.deleteCoordinator(coordinatorId, organizationId);
     res.status(200).json({ success: true, ...result });
   });
+  // Get Student Portfolio Metrics (for Accordion)
+  getStudentPortfolioMetrics = asyncHandler(async (req: Request, res: Response) => {
+    const coordinatorId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const metrics = await coordinatorService.getStudentPortfolioMetrics(coordinatorId, studentId);
+    res.status(200).json({ success: true, metrics });
+  });
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
     const isProduction = process.env.NODE_ENV === "production";
