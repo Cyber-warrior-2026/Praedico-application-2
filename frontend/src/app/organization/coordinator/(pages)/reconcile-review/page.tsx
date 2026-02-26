@@ -242,14 +242,14 @@ export default function ReconcileReviewPage() {
                     </div>
                 ) : (
                     <div className="bg-[#0F172A]/80 border border-white/5 rounded-2xl shadow-2xl overflow-hidden overflow-x-auto w-full">
-                        <table className="w-full text-left border-collapse whitespace-nowrap lg:whitespace-normal min-w-[2000px]">
+                        <table className="w-full text-left border-collapse whitespace-nowrap lg:whitespace-normal min-w-[1000px]">
                             <thead>
                                 <tr className="text-slate-400 text-xs font-bold uppercase tracking-wider bg-[#020617]/50 border-b border-white/10">
-                                    <th className="p-4 w-1/4 border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student</th>
-                                    <th className="p-4 w-1/5 border-r border-white/5">Score / Status</th>
-                                    <th className="p-4 w-1/5 border-r border-white/5">Portfolio</th>
-                                    <th className="p-4 w-1/5 border-r border-white/5">Return</th>
-                                    <th className="p-4 w-16 text-center">Action</th>
+                                    <th className="py-3 px-4 w-1/4 border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student</th>
+                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Score / Status</th>
+                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Portfolio</th>
+                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Return</th>
+                                    <th className="py-3 px-4 w-16 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 relative">
@@ -276,36 +276,36 @@ export default function ReconcileReviewPage() {
                                                 className={`group cursor-pointer transition-all duration-300 ${expanded ? 'bg-[#0f172a] shadow-inner' : 'hover:bg-white/[0.04] bg-white/[0.01]'}`}
                                             >
                                                 {/* Column: Student Info (Sticky) */}
-                                                <td className={`p-5 min-w-[300px] border-r border-white/5 sticky left-0 z-10 align-middle shadow-sm transition-colors duration-300 ${expanded ? 'bg-[#0f172a]' : 'bg-[#0F172A] group-hover:bg-[#151e32]'}`}>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="relative">
-                                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/10">
+                                                <td className={`p-4 min-w-[250px] border-r border-white/5 sticky left-0 z-10 align-middle shadow-sm transition-colors duration-300 ${expanded ? 'bg-[#0f172a]' : 'bg-[#0F172A] group-hover:bg-[#151e32]'}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative flex-shrink-0">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-sm shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/10">
                                                                 {student.name.charAt(0).toUpperCase()}
                                                             </div>
                                                             {isReviewed && (
                                                                 <div className="absolute -top-1 -right-1 bg-emerald-500 p-0.5 rounded-full border-2 border-[#0F172A]" title="Reviewed">
-                                                                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                                                    <CheckCircle className="w-3 h-3 text-white" />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="overflow-hidden">
-                                                            <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 truncate text-base" title={student.name}>{student.name}</p>
-                                                            <p className="text-sm text-slate-500 truncate mt-0.5">{student.email}</p>
+                                                            <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200 truncate text-sm" title={student.name}>{student.name}</p>
+                                                            <p className="text-xs text-slate-500 truncate mt-0.5">{student.email}</p>
                                                         </div>
                                                     </div>
                                                 </td>
 
                                                 {/* Column: Score / Status */}
-                                                <td className="p-5 border-r border-white/5 align-middle">
+                                                <td className="p-4 border-r border-white/5 align-middle">
                                                     {isReviewed ? (
-                                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                                                             <span>Score: <span className="text-emerald-300">{student.teacherReview!.aggregateScore}/100</span></span>
                                                         </div>
                                                     ) : (
-                                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                                                            <span className="relative flex h-2 w-2">
+                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                                                            <span className="relative flex h-1.5 w-1.5">
                                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                                                             </span>
                                                             <span>Pending Review</span>
                                                         </div>
@@ -313,13 +313,13 @@ export default function ReconcileReviewPage() {
                                                 </td>
 
                                                 {/* Column: Portfolio Details */}
-                                                <td className="p-5 border-r border-white/5 align-middle">
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <div className="flex justify-between items-center text-sm w-48">
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className="flex flex-col gap-1 w-40">
+                                                        <div className="flex justify-between items-center text-xs">
                                                             <span className="text-slate-500">Invested:</span>
                                                             <span className="text-slate-200 font-medium font-mono">₹{summary.totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                                                         </div>
-                                                        <div className="flex justify-between items-center text-sm w-48">
+                                                        <div className="flex justify-between items-center text-xs">
                                                             <span className="text-slate-500">Current:</span>
                                                             <span className="text-slate-200 font-medium font-mono">₹{summary.currentValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                                                         </div>
@@ -327,26 +327,26 @@ export default function ReconcileReviewPage() {
                                                 </td>
 
                                                 {/* Column: Return (Combined Absolute & %) */}
-                                                <td className="p-5 border-r border-white/5 align-middle">
-                                                    <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border flex-col items-start shadow-sm
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border flex-col items-start shadow-sm
                                                         ${isProfitable
                                                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.05)]'
                                                             : summary.totalPL < 0
                                                                 ? 'bg-rose-500/10 border-rose-500/20 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.05)]'
                                                                 : 'bg-slate-500/10 border-slate-500/20 text-slate-400'}`}>
-                                                        <span className="font-bold font-mono text-base tracking-wide">
+                                                        <span className="font-bold font-mono text-sm tracking-wide">
                                                             {isProfitable ? '+' : ''}₹{Math.abs(summary.totalPL).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                                         </span>
-                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${isProfitable ? 'bg-emerald-500/20 text-emerald-300' : summary.totalPL < 0 ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-500/20 text-slate-300'}`}>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${isProfitable ? 'bg-emerald-500/20 text-emerald-300' : summary.totalPL < 0 ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-500/20 text-slate-300'}`}>
                                                             {isProfitable ? '↑' : summary.totalPL < 0 ? '↓' : ''} {isProfitable ? '+' : ''}{summary.totalPLPercent}%
                                                         </span>
                                                     </div>
                                                 </td>
 
                                                 {/* Column: Action Toggle */}
-                                                <td className="p-5 align-middle text-center">
-                                                    <button className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto transition-all duration-300 ${expanded ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'}`}>
-                                                        <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+                                                <td className="p-4 align-middle text-center">
+                                                    <button className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300 ${expanded ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'}`}>
+                                                        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -354,24 +354,24 @@ export default function ReconcileReviewPage() {
                                             {/* Expanded Content: Premium Deep Glassmorphism Panel */}
                                             {expanded && (
                                                 <tr className="bg-[#020617]/80 border-b border-indigo-500/20 relative shadow-inner overflow-hidden">
-                                                    <td colSpan={5} className="p-0 border-none m-0">
+                                                    <td colSpan={5} className="p-0 border-none m-0 max-w-0">
                                                         <div className="absolute inset-0 bg-indigo-500/5 backdrop-blur-3xl pointer-events-none"></div>
-                                                        <div className="p-8 animate-in slide-in-from-top-4 fade-in duration-500 relative z-10 w-full">
+                                                        <div className="p-6 animate-in slide-in-from-top-4 fade-in duration-500 relative z-10 w-full">
 
                                                             {/* Portfolio Quick Metrics Bar (Grid Layout) */}
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
 
                                                                 {/* Cell 1: Realized vs Unrealized P&L */}
-                                                                <div className="p-4 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
-                                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Realized vs. Unrealized</p>
-                                                                    <div className="space-y-2">
-                                                                        <div className="flex justify-between items-center text-sm">
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
+                                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Realized vs. Unrealized</p>
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="flex justify-between items-center text-xs">
                                                                             <span className="text-slate-400">Realized:</span>
                                                                             <span className={`font-mono font-medium ${(summary.realizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                                                 {(summary.realizedPL || 0) >= 0 ? '+' : ''}₹{(summary.realizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="flex justify-between items-center text-sm">
+                                                                        <div className="flex justify-between items-center text-xs">
                                                                             <span className="text-slate-400">Unrealized:</span>
                                                                             <span className={`font-mono font-medium ${(summary.unrealizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                                                 {(summary.unrealizedPL || 0) >= 0 ? '+' : ''}₹{(summary.unrealizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
@@ -381,70 +381,70 @@ export default function ReconcileReviewPage() {
                                                                 </div>
 
                                                                 {/* Cell 2: Volume & Turnover */}
-                                                                <div className="p-4 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
-                                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Volume & Turnover</p>
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
+                                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Volume & Turnover</p>
                                                                     <div className="flex items-end justify-between">
                                                                         <div>
-                                                                            <p className="text-2xl font-bold font-mono text-slate-200">{student.totalPaperTradesCount || 0}</p>
-                                                                            <p className="text-xs text-slate-500">Orders</p>
+                                                                            <p className="text-xl font-bold font-mono text-slate-200">{student.totalPaperTradesCount || 0}</p>
+                                                                            <p className="text-[10px] text-slate-500">Orders</p>
                                                                         </div>
                                                                         <div className="text-right">
-                                                                            <p className="text-xl font-bold font-mono text-indigo-400">{summary.portfolioTurnover || 0}%</p>
-                                                                            <p className="text-xs text-slate-500">Turnover</p>
+                                                                            <p className="text-lg font-bold font-mono text-indigo-400">{summary.portfolioTurnover || 0}%</p>
+                                                                            <p className="text-[10px] text-slate-500">Turnover</p>
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Cell 3: Maximum Drawdown */}
-                                                                <div className="p-4 bg-[#0F172A]/80 border border-rose-500/20 rounded-2xl shadow-[0_0_15px_rgba(244,63,94,0.05)] backdrop-blur-md flex flex-col justify-between">
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-rose-500/20 rounded-2xl shadow-[0_0_15px_rgba(244,63,94,0.05)] backdrop-blur-md flex flex-col justify-between">
                                                                     <div className="flex justify-between items-start">
-                                                                        <p className="text-xs font-bold text-rose-500/80 uppercase tracking-wider mb-2">Risk: Max Drawdown</p>
-                                                                        <AlertCircle className="w-4 h-4 text-rose-500/50" />
+                                                                        <p className="text-[10px] font-bold text-rose-500/80 uppercase tracking-wider mb-2">Risk: Max Drawdown</p>
+                                                                        <AlertCircle className="w-3.5 h-3.5 text-rose-500/50" />
                                                                     </div>
                                                                     <div className="flex items-baseline gap-1 mt-auto">
-                                                                        <p className="text-2xl font-bold font-mono text-rose-400">-{summary.maxDrawdown || 0}%</p>
+                                                                        <p className="text-xl font-bold font-mono text-rose-400">-{summary.maxDrawdown || 0}%</p>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Cell 4: Compact Portfolio Allocation */}
-                                                                <div className="p-4 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between overflow-hidden">
-                                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Compact Allocation</p>
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between overflow-hidden">
+                                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Compact Allocation</p>
                                                                     {summary.totalInvested > 0 && summary.portfolioAllocation ? (
-                                                                        <div className="flex flex-wrap gap-2">
+                                                                        <div className="flex flex-wrap gap-1.5">
                                                                             {Object.entries(summary.portfolioAllocation).map(([cat, amount]) => {
                                                                                 const catPercent = Math.round(((amount as number) / summary.totalInvested) * 100);
                                                                                 return (
-                                                                                    <div key={cat} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/10">
+                                                                                    <div key={cat} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10">
                                                                                         <span className="text-[10px] font-bold text-slate-400">{cat}</span>
-                                                                                        <span className="text-xs font-bold text-slate-200 font-mono">{catPercent}%</span>
+                                                                                        <span className="text-[11px] font-bold text-slate-200 font-mono">{catPercent}%</span>
                                                                                     </div>
                                                                                 )
                                                                             })}
                                                                         </div>
                                                                     ) : (
-                                                                        <p className="text-sm text-slate-500">No active allocations</p>
+                                                                        <p className="text-xs text-slate-500">No active allocations</p>
                                                                     )}
                                                                 </div>
 
                                                             </div>
 
-                                                            <div className="flex overflow-x-auto gap-6 pb-4 w-full snap-x pt-2">
+                                                            <div className="flex overflow-x-auto gap-4 pb-4 w-full snap-x pt-2">
                                                                 {/* AI Sections 1-3 (Ratable Core Metrics) */}
                                                                 {(['f1', 'f2', 'f3'] as const).map((factor, i) => (
-                                                                    <div key={factor} className="w-[340px] flex-shrink-0 flex flex-col bg-[#0f172a]/90 backdrop-blur-xl border border-indigo-500/20 rounded-2xl p-5 shadow-lg shadow-indigo-900/10 hover:border-indigo-500/40 transition-colors group snap-start relative overflow-hidden">
-                                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/20 transition-colors"></div>
-                                                                        <h4 className="text-sm font-bold text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
-                                                                            <span className="w-6 h-6 rounded-md bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
+                                                                    <div key={factor} className="w-[280px] flex-shrink-0 flex flex-col bg-[#0f172a]/90 backdrop-blur-xl border border-indigo-500/20 rounded-2xl p-4 shadow-lg shadow-indigo-900/10 hover:border-indigo-500/40 transition-colors group snap-start relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/20 transition-colors"></div>
+                                                                        <h4 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-3 flex items-center gap-2 relative z-10">
+                                                                            <span className="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
                                                                                 {i + 1}
                                                                             </span>
                                                                             {['Health Assessment', 'Diversification', 'Risk Assessment'][i]}
                                                                         </h4>
-                                                                        <div className="flex-grow overflow-y-auto pr-3 custom-scrollbar text-sm text-slate-300/90 leading-relaxed mb-6 h-48 relative z-10">
+                                                                        <div className="flex-grow overflow-y-auto pr-3 custom-scrollbar text-[13px] text-slate-300/90 leading-relaxed mb-4 h-40 relative z-10">
                                                                             {sections[i]}
                                                                         </div>
-                                                                        <div className="mt-auto bg-[#020617]/50 rounded-xl p-3 border border-indigo-500/10 relative z-10 flex flex-col gap-2">
+                                                                        <div className="mt-auto bg-[#020617]/50 rounded-xl p-3 border border-indigo-500/10 relative z-10 flex flex-col gap-1.5">
                                                                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center w-full block">Your Rating</span>
-                                                                            <div className="flex justify-center">
+                                                                            <div className="flex justify-center flex-wrap">
                                                                                 {renderStars(student._id, factor, reviewState[factor])}
                                                                             </div>
                                                                         </div>
@@ -453,30 +453,30 @@ export default function ReconcileReviewPage() {
 
                                                                 {/* AI Sections 4-7 (Read only Insights) */}
                                                                 {[3, 4, 5, 6].map(i => (
-                                                                    <div key={`sec-${i}`} className="w-[300px] flex-shrink-0 flex flex-col bg-[#0F172A]/60 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg hover:border-white/20 transition-colors snap-start relative overflow-hidden">
-                                                                        <h4 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
-                                                                            <span className="w-6 h-6 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+                                                                    <div key={`sec-${i}`} className="w-[260px] flex-shrink-0 flex flex-col bg-[#0F172A]/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg hover:border-white/20 transition-colors snap-start relative overflow-hidden">
+                                                                        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2 relative z-10">
+                                                                            <span className="w-5 h-5 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
                                                                                 {i + 1}
                                                                             </span>
                                                                             {['Rebalancing', 'Consider Selling', 'Invest More In', 'Overall Strategy'][i - 3]}
                                                                         </h4>
-                                                                        <div className="flex-grow overflow-y-auto pr-3 custom-scrollbar text-sm text-slate-400 leading-relaxed h-48 relative z-10 p-1">
+                                                                        <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar text-[13px] text-slate-400 leading-relaxed h-40 relative z-10">
                                                                             {sections[i]}
                                                                         </div>
                                                                     </div>
                                                                 ))}
 
                                                                 {/* Submit Form (Premium Design) */}
-                                                                <div className="w-[400px] flex-shrink-0 flex flex-col bg-gradient-to-br from-[#0F172A] to-[#020617] border border-emerald-500/20 rounded-2xl p-6 shadow-2xl shadow-emerald-900/10 snap-start relative overflow-hidden group">
-                                                                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
-                                                                    <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                                                                <div className="w-[320px] flex-shrink-0 flex flex-col bg-gradient-to-br from-[#0F172A] to-[#020617] border border-emerald-500/20 rounded-2xl p-5 shadow-2xl shadow-emerald-900/10 snap-start relative overflow-hidden group">
+                                                                    <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                                                                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
                                                                         <Send className="w-4 h-4" /> Final Evaluation
                                                                     </h4>
 
                                                                     <div className="flex-grow flex flex-col relative z-10">
-                                                                        <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Teacher Remarks & Suggestions</label>
+                                                                        <label className="text-[10px] font-bold text-slate-400 mb-2 block uppercase tracking-wider">Teacher Remarks & Suggestions</label>
                                                                         <textarea
-                                                                            className="w-full flex-grow h-32 resize-none bg-[#0F172A]/80 border border-white/10 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none custom-scrollbar shadow-inner placeholder:text-slate-600 focus:bg-[#020617] transition-all"
+                                                                            className="w-full flex-grow h-28 resize-none bg-[#0F172A]/80 border border-white/10 rounded-xl p-3 text-xs text-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none custom-scrollbar shadow-inner placeholder:text-slate-600 focus:bg-[#020617] transition-all"
                                                                             placeholder="Type your feedback here. Mention specific areas for improvement based on the AI analysis..."
                                                                             value={reviewState.suggestions}
                                                                             onChange={(e) => handleSuggestionChange(student._id, e.target.value)}
