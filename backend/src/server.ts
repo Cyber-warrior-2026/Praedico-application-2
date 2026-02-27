@@ -25,6 +25,7 @@ const startServer = async () => {
   // 4. Start Cron Jobs
   cronService.startScraperJob();
   cronService.startNewsScraperJob();
+  cronService.startTradingLevelJob();
   console.log('📊 Stock scraper cron job started');
   console.log('📰 News scraper cron job started');
 
@@ -53,6 +54,7 @@ const startServer = async () => {
       // Stop cron jobs
       cronService.stopScraperJob();
       cronService.stopNewsScraperJob();
+      cronService.stopTradingLevelJob();
       console.log("✅ Cron jobs stopped.");
       
       // Close Database Connection

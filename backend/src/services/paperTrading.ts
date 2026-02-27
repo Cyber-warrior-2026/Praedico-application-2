@@ -3,6 +3,7 @@ import PortfolioHolding from '../models/portfolio';
 import { UserModel } from '../models/user';
 import StockData from '../models/stockData';
 import mongoose from 'mongoose';
+import tradingLevelService from './tradingLevel';
 
 class PaperTradingService {
   
@@ -98,6 +99,17 @@ class PaperTradingService {
       );
 
       await session.commitTransaction();
+
+      // Non-blocking: re-evaluate trading level after every SELL trade
+      if (type === 'SELL') {
+        setImmediate(async () => {
+          try {
+            await tradingLevelService.evaluateAndUpdateUser(userId);
+          } catch (err) {
+            console.error('[TradingLevel] Background evaluation error:', err);
+          }
+        });
+      }
       
       return {
         success: true,
