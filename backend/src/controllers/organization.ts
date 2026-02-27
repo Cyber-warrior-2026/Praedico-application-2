@@ -60,6 +60,13 @@ const importCSVSchema = z.object({
   }))
 });
 
+const submitTeacherReviewSchema = z.object({
+  factor1Rating: z.number().min(1).max(5),
+  factor2Rating: z.number().min(1).max(5),
+  factor3Rating: z.number().min(1).max(5),
+  suggestions: z.string().optional()
+});
+
 const updateStudentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   email: z.string().email("Valid email is required").optional()
@@ -153,10 +160,12 @@ export class OrganizationController {
     const organizationId = (req as any).user.organization;
     const status = req.query.status as string | undefined;
     const departmentId = req.query.departmentId as string | undefined;
+    const includePortfolio = req.query.includePortfolio === 'true';
 
     const students = await organizationService.getStudents(organizationId, {
       status,
-      departmentId
+      departmentId,
+      includePortfolio
     });
     res.status(200).json({ success: true, students, count: students.length });
   });
@@ -225,8 +234,31 @@ export class OrganizationController {
     res.status(200).json({ success: true, portfolio });
   });
 
+  // Reconcile All Students (AI Reports)
+  reconcileStudents = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const result = await organizationService.reconcileStudents(adminId);
+    res.status(200).json({ success: true, ...result });
+  });
 
-  // Bulk Action (Archive / Unarchive)
+  // Get AI Report for a Student
+  getStudentReport = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+
+    const result = await organizationService.getStudentReport(adminId, studentId);
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // Submit Teacher Review
+  submitTeacherReview = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = (req as any).user.id;
+    const studentId = req.params.studentId as string;
+    const reviewData = submitTeacherReviewSchema.parse(req.body);
+
+    const result = await organizationService.submitTeacherReview(adminId, studentId, reviewData);
+    res.status(200).json({ success: true, ...result });
+  });
   bulkAction = asyncHandler(async (req: Request, res: Response) => {
     const adminId = (req as any).user.id;
     const { studentIds, action } = bulkActionSchema.parse(req.body);

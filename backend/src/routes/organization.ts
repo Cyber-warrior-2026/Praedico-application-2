@@ -37,6 +37,10 @@ router.delete("/students/:studentId", authorize(["organization_admin"]), organiz
 router.patch("/students/:studentId/unarchive", authorize(["organization_admin"]), organizationController.unarchiveStudent);
 router.get("/students/:studentId/portfolio", authorize(["organization_admin"]), organizationController.getStudentPortfolio);
 
+// New Routes: Reconciliation & AI Reports (Organization Admin)
+router.post("/students/reconcile", authorize(["organization_admin"]), organizationController.reconcileStudents);
+router.get("/students/:studentId/report", authorize(["organization_admin"]), organizationController.getStudentReport);
+router.post("/students/:studentId/review", authorize(["organization_admin"]), organizationController.submitTeacherReview);
 
 // ============================================
 // PLATFORM ADMIN ROUTES (Manage Organizations)
