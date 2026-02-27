@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Star, CheckCircle, AlertCircle, RefreshCcw, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { organizationApi } from '@/lib/api';
 
 interface Student {
@@ -242,14 +243,15 @@ export default function ReconcileReviewPage() {
                     </div>
                 ) : (
                     <div className="bg-[#0F172A]/80 border border-white/5 rounded-2xl shadow-2xl overflow-hidden overflow-x-auto w-full">
-                        <table className="w-full text-left border-collapse whitespace-nowrap lg:whitespace-normal min-w-[1000px]">
+                        <table className="w-full text-left border-collapse whitespace-nowrap lg:whitespace-normal min-w-[1200px]">
                             <thead>
-                                <tr className="text-slate-400 text-xs font-bold uppercase tracking-wider bg-[#020617]/50 border-b border-white/10">
-                                    <th className="py-3 px-4 w-1/4 border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student</th>
-                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Score / Status</th>
-                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Portfolio</th>
-                                    <th className="py-3 px-4 w-1/5 border-r border-white/5">Return</th>
-                                    <th className="py-3 px-4 w-16 text-center">Action</th>
+                                <tr className="text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-[#020617]/50 border-b border-white/10">
+                                    <th className="py-3 px-4 min-w-[220px] border-r border-white/5 sticky left-0 bg-[#020617] z-20 shadow-sm shadow-black/50">Student & Status</th>
+                                    <th className="py-3 px-4 min-w-[140px] border-r border-white/5">Portfolio</th>
+                                    <th className="py-3 px-4 min-w-[100px] border-r border-white/5">Return</th>
+                                    <th className="py-3 px-4 min-w-[160px] border-r border-white/5">Realized / Unrealized</th>
+                                    <th className="py-3 px-4 min-w-[100px] border-r border-white/5">Vol & Turnover</th>
+                                    <th className="py-3 px-4 min-w-[140px]">Risk</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 relative">
@@ -275,46 +277,46 @@ export default function ReconcileReviewPage() {
                                                 }}
                                                 className={`group cursor-pointer transition-all duration-300 ${expanded ? 'bg-[#0f172a] shadow-inner' : 'hover:bg-white/[0.04] bg-white/[0.01]'}`}
                                             >
-                                                {/* Column: Student Info (Sticky) */}
-                                                <td className={`p-4 min-w-[250px] border-r border-white/5 sticky left-0 z-10 align-middle shadow-sm transition-colors duration-300 ${expanded ? 'bg-[#0f172a]' : 'bg-[#0F172A] group-hover:bg-[#151e32]'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="relative flex-shrink-0">
-                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-sm shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/10">
-                                                                {student.name.charAt(0).toUpperCase()}
+                                                {/* Column: Student Info & Status (Sticky) */}
+                                                <td className={`p-4 min-w-[220px] border-r border-white/5 sticky left-0 z-10 align-middle shadow-sm transition-colors duration-300 ${expanded ? 'bg-[#0f172a]' : 'bg-[#0F172A] group-hover:bg-[#151e32]'}`}>
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="relative flex-shrink-0">
+                                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-sm shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/10">
+                                                                    {student.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                {isReviewed && (
+                                                                    <div className="absolute -top-1 -right-1 bg-emerald-500 p-0.5 rounded-full border-2 border-[#0F172A]" title="Reviewed">
+                                                                        <CheckCircle className="w-3 h-3 text-white" />
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            {isReviewed && (
-                                                                <div className="absolute -top-1 -right-1 bg-emerald-500 p-0.5 rounded-full border-2 border-[#0F172A]" title="Reviewed">
-                                                                    <CheckCircle className="w-3 h-3 text-white" />
+                                                            <div className="overflow-hidden max-w-[110px]">
+                                                                <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200 truncate text-sm" title={student.name}>{student.name}</p>
+                                                                <p className="text-xs text-slate-500 truncate mt-0.5">{student.email}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-shrink-0">
+                                                            {isReviewed ? (
+                                                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-[10px] shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                                                                    <span>Score: <span className="text-emerald-300">{student.teacherReview!.aggregateScore}/100</span></span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-[10px] shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                                                                    <span className="relative flex h-1.5 w-1.5">
+                                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                                                                    </span>
+                                                                    <span>Pending</span>
                                                                 </div>
                                                             )}
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200 truncate text-sm" title={student.name}>{student.name}</p>
-                                                            <p className="text-xs text-slate-500 truncate mt-0.5">{student.email}</p>
                                                         </div>
                                                     </div>
                                                 </td>
 
-                                                {/* Column: Score / Status */}
-                                                <td className="p-4 border-r border-white/5 align-middle">
-                                                    {isReviewed ? (
-                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                                                            <span>Score: <span className="text-emerald-300">{student.teacherReview!.aggregateScore}/100</span></span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                                                            <span className="relative flex h-1.5 w-1.5">
-                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-                                                            </span>
-                                                            <span>Pending Review</span>
-                                                        </div>
-                                                    )}
-                                                </td>
-
                                                 {/* Column: Portfolio Details */}
                                                 <td className="p-4 border-r border-white/5 align-middle">
-                                                    <div className="flex flex-col gap-1 w-40">
+                                                    <div className="flex flex-col gap-1 w-full min-w-[120px]">
                                                         <div className="flex justify-between items-center text-xs">
                                                             <span className="text-slate-500">Invested:</span>
                                                             <span className="text-slate-200 font-medium font-mono">₹{summary.totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
@@ -343,66 +345,101 @@ export default function ReconcileReviewPage() {
                                                     </div>
                                                 </td>
 
-                                                {/* Column: Action Toggle */}
-                                                <td className="p-4 align-middle text-center">
-                                                    <button className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all duration-300 ${expanded ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'}`}>
-                                                        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
-                                                    </button>
+                                                {/* Column: Realized / Unrealized */}
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className="flex flex-col gap-1 w-full min-w-[140px]">
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-slate-500">Realized:</span>
+                                                            <span className={`font-mono font-medium ${(summary.realizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                {(summary.realizedPL || 0) >= 0 ? '+' : ''}₹{(summary.realizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-slate-500">Unrealized:</span>
+                                                            <span className={`font-mono font-medium ${(summary.unrealizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                {(summary.unrealizedPL || 0) >= 0 ? '+' : ''}₹{(summary.unrealizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Column: Vol & Turnover */}
+                                                <td className="p-4 border-r border-white/5 align-middle">
+                                                    <div className="flex items-center gap-4">
+                                                        <div>
+                                                            <p className="text-[13px] font-bold font-mono text-slate-200">{student.totalPaperTradesCount || 0}</p>
+                                                            <p className="text-[9px] text-slate-500 uppercase">Orders</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[13px] font-bold font-mono text-indigo-400">{summary.portfolioTurnover || 0}%</p>
+                                                            <p className="text-[9px] text-slate-500 uppercase">Turnover</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Column: Risk Max Drawdown & Action Display */}
+                                                <td className="p-4 align-middle">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <AlertCircle className="w-3.5 h-3.5 text-rose-500/50 flex-shrink-0" />
+                                                            <p className="text-[13px] font-bold font-mono text-rose-400">-{summary.maxDrawdown || 0}%</p>
+                                                        </div>
+                                                        <button className={`w-7 h-7 flex-shrink-0 rounded-md flex items-center justify-center transition-all duration-300 ${expanded ? 'bg-indigo-500/20 text-indigo-400 shadow-sm shadow-indigo-500/20' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white border border-white/5'}`}>
+                                                            <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
 
                                             {/* Expanded Content: Premium Deep Glassmorphism Panel */}
                                             {expanded && (
                                                 <tr className="bg-[#020617]/80 border-b border-indigo-500/20 relative shadow-inner overflow-hidden">
-                                                    <td colSpan={5} className="p-0 border-none m-0 max-w-0">
+                                                    <td colSpan={6} className="p-0 border-none m-0 max-w-0">
                                                         <div className="absolute inset-0 bg-indigo-500/5 backdrop-blur-3xl pointer-events-none"></div>
                                                         <div className="p-6 animate-in slide-in-from-top-4 fade-in duration-500 relative z-10 w-full">
 
                                                             {/* Portfolio Quick Metrics Bar (Grid Layout) */}
                                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
 
-                                                                {/* Cell 1: Realized vs Unrealized P&L */}
-                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
-                                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Realized vs. Unrealized</p>
-                                                                    <div className="space-y-1.5">
-                                                                        <div className="flex justify-between items-center text-xs">
-                                                                            <span className="text-slate-400">Realized:</span>
-                                                                            <span className={`font-mono font-medium ${(summary.realizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                                                {(summary.realizedPL || 0) >= 0 ? '+' : ''}₹{(summary.realizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex justify-between items-center text-xs">
-                                                                            <span className="text-slate-400">Unrealized:</span>
-                                                                            <span className={`font-mono font-medium ${(summary.unrealizedPL || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                                                {(summary.unrealizedPL || 0) >= 0 ? '+' : ''}₹{(summary.unrealizedPL || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                                                                            </span>
-                                                                        </div>
+                                                                {/* Cell 1: Trading Level */}
+                                                                <div className="p-3.5 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/20 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
+                                                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Trading Level</p>
+                                                                    <div className="flex items-baseline gap-2 mt-auto">
+                                                                        <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{student.tradingLevel || 'Beginner'}</p>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Cell 2: Volume & Turnover */}
-                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
-                                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Volume & Turnover</p>
-                                                                    <div className="flex items-end justify-between">
+                                                                {/* Cell 2: Trade Win Rate */}
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-emerald-500/20 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between">
+                                                                    <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider mb-2">Trade Win Rate</p>
+                                                                    <div className="flex items-end justify-between mt-auto">
                                                                         <div>
-                                                                            <p className="text-xl font-bold font-mono text-slate-200">{student.totalPaperTradesCount || 0}</p>
-                                                                            <p className="text-[10px] text-slate-500">Orders</p>
+                                                                            <p className="text-xl font-bold font-mono text-emerald-400">
+                                                                                {student.totalPaperTradesCount > 0
+                                                                                    ? Math.round((student.profitablePaperTrades / student.totalPaperTradesCount) * 100)
+                                                                                    : 0}%
+                                                                            </p>
+                                                                            <p className="text-[10px] text-slate-500">Win Rate</p>
                                                                         </div>
                                                                         <div className="text-right">
-                                                                            <p className="text-lg font-bold font-mono text-indigo-400">{summary.portfolioTurnover || 0}%</p>
-                                                                            <p className="text-[10px] text-slate-500">Turnover</p>
+                                                                            <p className="text-lg font-bold font-mono text-slate-200">{student.profitablePaperTrades} <span className="text-slate-500 text-sm">/ {student.totalPaperTradesCount}</span></p>
+                                                                            <p className="text-[10px] text-slate-500">Profitable Trades</p>
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Cell 3: Maximum Drawdown */}
-                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-rose-500/20 rounded-2xl shadow-[0_0_15px_rgba(244,63,94,0.05)] backdrop-blur-md flex flex-col justify-between">
-                                                                    <div className="flex justify-between items-start">
-                                                                        <p className="text-[10px] font-bold text-rose-500/80 uppercase tracking-wider mb-2">Risk: Max Drawdown</p>
-                                                                        <AlertCircle className="w-3.5 h-3.5 text-rose-500/50" />
-                                                                    </div>
-                                                                    <div className="flex items-baseline gap-1 mt-auto">
-                                                                        <p className="text-xl font-bold font-mono text-rose-400">-{summary.maxDrawdown || 0}%</p>
+                                                                {/* Cell 3: AI Analysis Status */}
+                                                                <div className="p-3.5 bg-[#0F172A]/80 border border-amber-500/20 rounded-2xl shadow-[0_0_15px_rgba(245,158,11,0.05)] backdrop-blur-md flex flex-col justify-between">
+                                                                    <p className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider mb-2">Analysis Status</p>
+                                                                    <div className="flex items-end justify-between mt-auto">
+                                                                        <div>
+                                                                            <p className="text-lg font-bold text-amber-400">
+                                                                                {student.portfolioReport?.generatedAt ? new Date(student.portfolioReport.generatedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Never'}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="text-[10px] text-slate-500">Last Generated</p>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
 
@@ -410,7 +447,7 @@ export default function ReconcileReviewPage() {
                                                                 <div className="p-3.5 bg-[#0F172A]/80 border border-white/10 rounded-2xl shadow-xl backdrop-blur-md flex flex-col justify-between overflow-hidden">
                                                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Compact Allocation</p>
                                                                     {summary.totalInvested > 0 && summary.portfolioAllocation ? (
-                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                        <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[44px] custom-scrollbar">
                                                                             {Object.entries(summary.portfolioAllocation).map(([cat, amount]) => {
                                                                                 const catPercent = Math.round(((amount as number) / summary.totalInvested) * 100);
                                                                                 return (
