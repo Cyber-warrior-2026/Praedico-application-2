@@ -16,8 +16,7 @@ import {
   sendStudentRejectionEmail,
   sendOrganizationAdminInviteEmail
 } from "./email";
-
-
+import aiChatbotService from "./aiChatbot";
 export class OrganizationService {
 
   // Register Organization (Initial Registration)
@@ -294,6 +293,7 @@ export class OrganizationService {
   async getStudents(organizationId: string, filters?: {
     status?: string;
     departmentId?: string;
+    includePortfolio?: boolean;
   }) {
     const query: any = {
       organization: organizationId
@@ -310,7 +310,70 @@ export class OrganizationService {
     const students = await UserModel.find(query)
       .populate('department', 'departmentName departmentCode')
       .select('-passwordHash')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (filters?.includePortfolio) {
+      const studentIds = students.map(s => s._id.toString());
+      const holdings = await PortfolioHolding.find({ userId: { $in: studentIds } }).lean();
+
+      // Group holdings by userId
+      const holdingsByUser: Record<string, any[]> = {};
+      for (const holding of holdings) {
+        const uid = holding.userId.toString();
+        if (!holdingsByUser[uid]) {
+          holdingsByUser[uid] = [];
+        }
+        holdingsByUser[uid].push(holding);
+      }
+
+      // Compute summary for each student
+      const studentsWithPortfolio = await Promise.all(
+        students.map(async (student: any) => {
+          const studentHoldings = holdingsByUser[student._id.toString()] || [];
+          const totalInvested = studentHoldings.reduce((sum, h) => sum + h.totalInvested, 0);
+          const currentValue = studentHoldings.reduce((sum, h) => sum + h.currentValue, 0);
+          const unrealizedPL = studentHoldings.reduce((sum, h) => sum + (h.unrealizedPL || 0), 0);
+          const totalPL = currentValue - totalInvested;
+          const totalPLPercent = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
+
+          // Portfolio Allocation by Category
+          const allocation: Record<string, number> = {};
+          for (const h of studentHoldings) {
+            const cat = h.category || 'OTHER';
+            allocation[cat] = (allocation[cat] || 0) + h.totalInvested;
+          }
+
+          const portfolioSummary = {
+            totalInvested,
+            currentValue,
+            totalPL,
+            totalPLPercent: parseFloat(totalPLPercent.toFixed(2)),
+            unrealizedPL,
+            realizedPL: student.totalPaperPL || 0,
+            portfolioAllocation: allocation,
+            portfolioTurnover: student.portfolioTurnover || 0,
+            maxDrawdown: student.maxDrawdown || 0
+          };
+
+          // Get paper trade stats
+          const paperTrades = await PaperTradeModel.find({ user: student._id });
+          const profitableTrades = paperTrades.filter(t => {
+            // Support both potential field names for robustness based on schema differences
+            const profit = (t as any).profitLoss ?? (t as any).pnl ?? (t as any).realizedPL ?? 0;
+            return profit > 0;
+          }).length;
+
+          return {
+            ...student,
+            portfolioSummary,
+            totalPaperTradesCount: paperTrades.length,
+            profitablePaperTrades: profitableTrades
+          };
+        })
+      );
+      return studentsWithPortfolio;
+    }
 
     return students;
   }
@@ -903,6 +966,165 @@ export class OrganizationService {
       activeStudents,
       pendingApprovals
     });
+  }
+
+  // ============================================
+  // RECONCILIATION & AI REPORTS
+  // ============================================
+
+  // Reconcile All Students (Organization Level)
+  async reconcileStudents(adminId: string) {
+    const admin = await OrganizationAdminModel.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    // Get all non-deleted, approved students in the organization
+    const students = await UserModel.find({
+      organization: admin.organization,
+      isDeleted: false,
+      organizationApprovalStatus: 'approved'
+    }).select('_id name email');
+
+    if (students.length === 0) {
+      return { processed: 0, total: 0, message: "No approved students found in your organization" };
+    }
+
+    let processed = 0;
+    const errors: string[] = [];
+
+    // Process students sequentially
+    for (const student of students) {
+      try {
+        const portfolio = await PortfolioHolding.find({ userId: student._id.toString() }).lean();
+
+        let analysis: string;
+
+        if (portfolio.length === 0) {
+          analysis = "Your portfolio is empty. Start by making your first paper trade!";
+        } else {
+          const portfolioSummary = portfolio.map(h => ({
+            stock: `${h.stockName} (${h.symbol})`,
+            quantity: h.quantity,
+            invested: h.totalInvested,
+            current: h.currentValue,
+            pl: h.unrealizedPL,
+            plPercent: h.unrealizedPLPercent.toFixed(2)
+          }));
+
+          // Call the dedicated portfolio report generator
+          analysis = await aiChatbotService.generatePortfolioReport(portfolioSummary);
+        }
+
+        await UserModel.updateOne(
+          { _id: student._id },
+          {
+            $set: {
+              portfolioReport: {
+                analysis,
+                generatedAt: new Date()
+              }
+            }
+          }
+        );
+
+        processed++;
+      } catch (err: any) {
+        console.error(`Reconcile error for ${student.name}:`, err.message);
+        errors.push(`${student.name}: ${err.message}`);
+      }
+    }
+
+    return {
+      processed,
+      total: students.length,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully generated reports for ${processed}/${students.length} students`
+    };
+  }
+
+  // Get Student AI Report
+  async getStudentReport(adminId: string, studentId: string) {
+    const admin = await OrganizationAdminModel.findById(adminId);
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      organization: admin.organization,
+      isDeleted: false
+    }).select('name email portfolioReport');
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your organization");
+    }
+
+    if (!student.portfolioReport?.analysis) {
+      throw new Error("No report available for this student. Run Reconciliation first.");
+    }
+
+    return {
+      student: { id: student._id, name: student.name, email: student.email },
+      report: student.portfolioReport
+    };
+  }
+
+  // Submit Teacher Review for a Student
+  async submitTeacherReview(adminId: string, studentId: string, reviewData: {
+    factor1Rating: number;
+    factor2Rating: number;
+    factor3Rating: number;
+    suggestions?: string;
+  }) {
+    const admin = await OrganizationAdminModel.findById(adminId);
+    if (!admin) {
+      throw new Error('Admin not found');
+    }
+
+    const student = await UserModel.findOne({
+      _id: studentId,
+      organization: admin.organization,
+      isDeleted: false
+    });
+
+    if (!student) {
+      throw new Error("Student not found or doesn't belong to your organization");
+    }
+
+    if (!student.portfolioReport?.analysis) {
+      throw new Error('No AI report found for this student. Run Reconciliation first.');
+    }
+
+    // Validate ratings are 1–5
+    const ratings = [reviewData.factor1Rating, reviewData.factor2Rating, reviewData.factor3Rating];
+    for (const rating of ratings) {
+      if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+        throw new Error('Each rating must be an integer between 1 and 5');
+      }
+    }
+
+    // Calculate aggregate score out of 100
+    // (Factor 1 + Factor 2 + Factor 3) / 15 * 100
+    const totalScore = reviewData.factor1Rating + reviewData.factor2Rating + reviewData.factor3Rating;
+    const aggregateScore = parseFloat(((totalScore / 15) * 100).toFixed(1));
+
+    student.teacherReview = {
+      factor1Rating: reviewData.factor1Rating,
+      factor2Rating: reviewData.factor2Rating,
+      factor3Rating: reviewData.factor3Rating,
+      aggregateScore,
+      suggestions: reviewData.suggestions || '',
+      reviewedBy: admin._id as any,
+      reviewedAt: new Date()
+    };
+
+    await student.save();
+
+    return {
+      message: 'Review submitted successfully',
+      aggregateScore
+    };
   }
 
   // Update Department Stats

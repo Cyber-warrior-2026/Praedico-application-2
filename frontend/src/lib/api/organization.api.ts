@@ -112,7 +112,7 @@ export const organizationApi = {
     return response.data;
   },
 
-  getStudents: async (params?: { status?: string; departmentId?: string }) => {
+  getStudents: async (params?: { status?: string; departmentId?: string; includePortfolio?: boolean }) => {
     const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.STUDENTS, { params });
     return response.data;
   },
@@ -172,6 +172,26 @@ export const organizationApi = {
 
   getStudentPortfolio: async (studentId: string) => {
     const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.STUDENT_PORTFOLIO(studentId));
+    return response.data;
+  },
+
+  reconcileStudents: async () => {
+    const response = await axiosInstance.post(API_ENDPOINTS.ORGANIZATION.RECONCILE);
+    return response.data;
+  },
+
+  getStudentReport: async (studentId: string) => {
+    const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.STUDENT_REPORT(studentId));
+    return response.data;
+  },
+
+  submitReview: async (studentId: string, data: {
+    factor1Rating: number;
+    factor2Rating: number;
+    factor3Rating: number;
+    suggestions?: string;
+  }) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.ORGANIZATION.STUDENT_REVIEW(studentId), data);
     return response.data;
   },
 

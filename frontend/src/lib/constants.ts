@@ -90,6 +90,9 @@ export const API_ENDPOINTS = {
     ARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}`,
     UNARCHIVE_STUDENT: (studentId: string) => `/api/organization/students/${studentId}/unarchive`,
     STUDENT_PORTFOLIO: (studentId: string) => `/api/organization/students/${studentId}/portfolio`,
+    STUDENT_REPORT: (studentId: string) => `/api/organization/students/${studentId}/report`,
+    STUDENT_REVIEW: (studentId: string) => `/api/organization/students/${studentId}/review`,
+    RECONCILE: '/api/organization/students/reconcile',
     BULK_ACTION: '/api/organization/students/bulk-action',
 
     // Platform Admin
