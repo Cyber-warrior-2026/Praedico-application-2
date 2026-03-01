@@ -4,7 +4,7 @@ import { DepartmentCoordinatorModel } from "../models/departmentCoordinator";
 import { OrganizationModel } from "../models/organization";
 
 export class DepartmentService {
-  
+
   // Create Department (by Organization Admin)
   async createDepartment(organizationId: string, data: {
     departmentName: string;
@@ -41,7 +41,33 @@ export class DepartmentService {
       isDeleted: false
     }).sort({ departmentName: 1 });
 
-    return departments;
+    // Auto-calculate stats correctly mapping to frontend expectations
+    const departmentsWithCounts = await Promise.all(departments.map(async (dept) => {
+      const studentCount = await UserModel.countDocuments({
+        department: dept._id,
+        isDeleted: false
+      });
+      const coordinatorCount = await DepartmentCoordinatorModel.countDocuments({
+        department: dept._id,
+        isDeleted: false,
+        isActive: true
+      });
+
+      // We can also sync the stats while we're here
+      if (dept.totalStudents !== studentCount || dept.totalCoordinators !== coordinatorCount) {
+        dept.totalStudents = studentCount;
+        dept.totalCoordinators = coordinatorCount;
+        await dept.save();
+      }
+
+      return {
+        ...dept.toObject(),
+        studentCount,
+        coordinatorCount
+      };
+    }));
+
+    return departmentsWithCounts;
   }
 
   // Get Department by ID
@@ -60,7 +86,7 @@ export class DepartmentService {
   // Get Department Details with Stats
   async getDepartmentDetails(departmentId: string) {
     const department = await DepartmentModel.findById(departmentId);
-    
+
     if (!department) {
       throw new Error("Department not found");
     }
@@ -98,7 +124,7 @@ export class DepartmentService {
     isActive?: boolean;
   }) {
     const department = await DepartmentModel.findById(departmentId);
-    
+
     if (!department) {
       throw new Error("Department not found");
     }
@@ -125,7 +151,7 @@ export class DepartmentService {
   // Delete Department (Soft Delete)
   async deleteDepartment(departmentId: string) {
     const department = await DepartmentModel.findById(departmentId);
-    
+
     if (!department) {
       throw new Error("Department not found");
     }
@@ -196,7 +222,7 @@ export class DepartmentService {
       isActive: true,
       isDeleted: false
     })
-    .select('_id departmentName departmentCode')
-    .sort({ departmentName: 1 });
+      .select('_id departmentName departmentCode')
+      .sort({ departmentName: 1 });
   }
 }
