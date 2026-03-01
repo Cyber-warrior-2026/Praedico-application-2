@@ -36,14 +36,14 @@ export const executePaperTrade = async (req: Request, res: Response) => {
       });
     }
 
-    const { 
-      symbol, 
-      type, 
-      quantity, 
+    const {
+      symbol,
+      type,
+      quantity,
       orderType = 'MARKET',
       limitPrice,
       stopLossPrice,
-      reason 
+      reason
     } = req.body;
 
     // Validation
@@ -126,14 +126,14 @@ export const getTradeHistory = async (req: Request, res: Response) => {
       });
     }
 
-    const { 
-      symbol, 
-      type, 
+    const {
+      symbol,
+      type,
       status,
       startDate,
       endDate,
       page = 1,
-      limit = 50 
+      limit = 50
     } = req.query;
 
     const filters: any = {};
@@ -351,3 +351,134 @@ export const resetVirtualBalance = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Get stock news + AI recommendation based on news
+export const getStockNewsAndAIRecommendation = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User authentication required' });
+    }
+
+    const rawSymbol = req.params.symbol;
+    if (!rawSymbol) {
+      return res.status(400).json({ success: false, message: 'Stock symbol is required' });
+    }
+
+    const symbol = (Array.isArray(rawSymbol) ? rawSymbol[0] : rawSymbol).toUpperCase();
+
+    // 1. Get the stock details to know its name/sector
+    const StockData = (await import('../models/stockData')).default;
+    const NewsData = (await import('../models/newsData')).default;
+
+    const stock = await StockData.findOne({ symbol }).sort({ timestamp: -1 }).lean() as any;
+    const stockName = stock?.name || symbol;
+
+    // 2. Fetch news specific to this symbol
+    let newsItems: any[] = await NewsData.find({ relatedSymbols: symbol })
+      .sort({ publishedAt: -1 })
+      .limit(8)
+      .lean();
+
+    // 3. If not enough specific news, fall back to sector-related keyword search
+    if (newsItems.length < 3) {
+      const sectorKeywords = getSectorKeywords(symbol, stockName);
+
+      const sectorQuery: any = {
+        $or: sectorKeywords.map(kw => ({
+          title: { $regex: kw, $options: 'i' }
+        }))
+      };
+
+      const sectorNews = await NewsData.find(sectorQuery)
+        .sort({ publishedAt: -1 })
+        .limit(8 - newsItems.length)
+        .lean();
+
+      newsItems = [...newsItems, ...sectorNews];
+    }
+
+    // 4. Final fallback: get latest general market/stocks news
+    if (newsItems.length < 2) {
+      const generalNews = await NewsData.find({ category: { $in: ['MARKET', 'STOCKS', 'ECONOMY'] } })
+        .sort({ publishedAt: -1 })
+        .limit(6)
+        .lean();
+      newsItems = [...newsItems, ...generalNews];
+    }
+
+    // 5. Get AI recommendation based on the gathered news
+    const authToken = getAuthToken(req);
+    const aiRecommendation = await aiTradingService.getNewsBasedRecommendation(
+      symbol,
+      stockName,
+      newsItems as any,
+      userId,
+      authToken
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        symbol,
+        stockName,
+        news: newsItems,
+        aiRecommendation,
+        newsFallbackUsed: newsItems.some((n: any) => !n.relatedSymbols?.includes(symbol))
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Stock News + AI Error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch news and recommendation' });
+  }
+};
+
+// Helper: Extract sector-related search keywords from a stock's symbol/name
+function getSectorKeywords(symbol: string, stockName: string): string[] {
+  const name = stockName.toLowerCase();
+  const sym = symbol.toLowerCase();
+  const keywords: string[] = [symbol];
+
+  // IT / Technology
+  if (['tcs', 'infy', 'wipro', 'hcltech', 'techm', 'ltim', 'mphasis', 'persistent', 'coforge'].some(s => sym.includes(s))) {
+    keywords.push('IT', 'technology', 'software', 'digital', 'outsourcing', 'tech sector');
+  }
+  // Banking / Financial
+  else if (['hdfcbank', 'icicibank', 'sbin', 'axisbank', 'kotak', 'indusind', 'bajfinance'].some(s => sym.includes(s))) {
+    keywords.push('bank', 'banking', 'RBI', 'interest rate', 'credit', 'financial');
+  }
+  // Energy / Oil
+  else if (['reliance', 'ongc', 'bpcl', 'iocl', 'hindpetro', 'powergrid', 'ntpc', 'adani'].some(s => sym.includes(s))) {
+    keywords.push('oil', 'energy', 'crude', 'petroleum', 'power', 'renewable');
+  }
+  // Pharma
+  else if (['sunpharma', 'drreddy', 'cipla', 'divislab', 'auropharma', 'lupin'].some(s => sym.includes(s))) {
+    keywords.push('pharma', 'pharmaceutical', 'drug', 'healthcare', 'FDA', 'USFDA');
+  }
+  // Auto
+  else if (['maruti', 'tatamotors', 'heromotoco', 'bajaj', 'eichermot', 'mahindra'].some(s => sym.includes(s))) {
+    keywords.push('automobile', 'auto', 'EV', 'electric vehicle', 'vehicle');
+  }
+  // Metals
+  else if (['tatasteel', 'jswsteel', 'hindalco', 'vedanta', 'nmdc', 'sail'].some(s => sym.includes(s))) {
+    keywords.push('steel', 'metal', 'aluminium', 'mining', 'commodity');
+  }
+  // FMCG
+  else if (['itc', 'hindunilvr', 'nestleind', 'britannia', 'dabur', 'marico'].some(s => sym.includes(s))) {
+    keywords.push('FMCG', 'consumer goods', 'retail', 'demand');
+  }
+  // ETF / Indices
+  else if (name.includes('nifty') || name.includes('etf') || name.includes('bees')) {
+    keywords.push('Nifty', 'market', 'index', 'sensex', 'NSE');
+  }
+  // Generic
+  else {
+    const words = stockName.split(' ').filter(w => w.length > 3);
+    keywords.push(...words.slice(0, 3), 'market', 'stock');
+  }
+
+  return [...new Set(keywords)];
+}
+
+

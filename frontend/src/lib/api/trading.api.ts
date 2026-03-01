@@ -69,4 +69,10 @@ export const tradingApi = {
     const response = await axiosInstance.post('/api/paper-trading/reset-balance', request || {});
     return response.data;
   },
+
+  // Get stock-specific news + AI recommendation based on news
+  getStockNewsAndRecommendation: async (symbol: string): Promise<any> => {
+    const response = await axiosInstance.get(`/api/paper-trading/stock-news/${symbol}`);
+    return response.data;
+  },
 };
