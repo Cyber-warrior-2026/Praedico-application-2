@@ -1,7 +1,9 @@
 import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import StockData from '../models/stockData';
 import PortfolioHolding from '../models/portfolio';
 import { PaperTradeModel } from '../models/paperTrade';
+import { ENV } from '../config/env';
 
 interface AIAnalysisResult {
   recommendation: 'BUY' | 'SELL' | 'HOLD';
@@ -208,7 +210,7 @@ Keep response under 200 words.
     }
   }
 
-  // ✅ NEWS-BASED AI RECOMMENDATION
+  // ✅ NEWS-BASED AI RECOMMENDATION (calls Gemini directly)
   async getNewsBasedRecommendation(
     symbol: string,
     stockName: string,
@@ -226,8 +228,7 @@ Keep response under 200 words.
         .map((n, i) => `${i + 1}. [${n.source}] ${n.title}: ${n.description || ''}`)
         .join('\n');
 
-      const prompt = `
-You are a professional stock market analyst reviewing recent news for trading decisions.
+      const prompt = `You are a professional Indian stock market analyst reviewing recent news for trading decisions.
 
 Stock: ${stockName} (${symbol})
 
@@ -236,18 +237,18 @@ ${newsSummary}
 
 Based solely on the above news, provide a trading recommendation. Be concise and actionable.
 
-Respond ONLY with a JSON object in this exact format:
-{
-  "action": "BUY" or "SELL" or "HOLD",
-  "confidence": <number 0-100>,
-  "reasoning": "<2-3 sentence explanation based on the news>"
-}
-`;
+Respond ONLY with a JSON object in this exact format (no markdown, no extra text):
+{"action": "BUY", "confidence": 72, "reasoning": "Your 2-3 sentence explanation here."}`;
 
-      const aiResponse = await this.callAI(prompt, userId, 'news_trading_analysis', token);
-      const rawText = aiResponse.data?.data?.message || aiResponse.data?.response || '';
+      // Use Gemini SDK directly (same pattern as aiChatbot.ts)
+      const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY || '');
+      const model = genAI.getGenerativeModel({ model: ENV.AI_MODEL || 'gemini-1.5-flash' });
+      const result = await model.generateContent(prompt);
+      const rawText = result.response.text().trim();
 
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      // Strip markdown code blocks if present
+      const cleaned = rawText.replace(/```json|```/g, '').trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         return {
