@@ -15,6 +15,7 @@ import EditStudentModal from '../../_components/EditStudentModal';
 import ArchiveStudentModal from '../../_components/ArchiveStudentModal';
 import UnarchiveStudentModal from '../../_components/UnarchiveStudentModal';
 import ViewPortfolioModal from '../../_components/ViewPortfolioModal';
+import StudentAnalysisModal from '../../coordinator/_components/StudentAnalysisModal';
 import BulkActionBar from '@/shared-components/BulkActionBar';
 import BulkConfirmModal from '@/shared-components/BulkConfirmModal';
 import { Brain, CheckCircle } from 'lucide-react';
@@ -67,6 +68,7 @@ export default function AllStudentsPage() {
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+    const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
     // Bulk Selection States
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -107,9 +109,8 @@ export default function AllStudentsPage() {
     };
 
     const handleRowClick = (student: Student) => {
-        if (student.portfolioReport?.analysis) {
-            router.push(`/organization/reconcile-review?studentId=${student._id}`);
-        }
+        setSelectedStudent(student);
+        setShowAnalysisModal(true);
     };
 
     const handleReconcile = async () => {
@@ -462,6 +463,12 @@ export default function AllStudentsPage() {
             <ViewPortfolioModal
                 isOpen={showPortfolioModal}
                 onClose={() => setShowPortfolioModal(false)}
+                student={selectedStudent}
+            />
+
+            <StudentAnalysisModal
+                isOpen={showAnalysisModal}
+                onClose={() => setShowAnalysisModal(false)}
                 student={selectedStudent}
             />
 
