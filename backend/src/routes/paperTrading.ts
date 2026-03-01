@@ -8,14 +8,15 @@ import {
   getAIStockAnalysis,
   getAIPortfolioAnalysis,
   getTradingInsights,
-  resetVirtualBalance
+  resetVirtualBalance,
+  getStockNewsAndAIRecommendation
 } from '../controllers/paperTrading';
 
 // ✅ Import Guards & Middleware
-import { authorize } from '../common/guards/role.guard'; 
-import { 
-  stockRecommendationLimiter, 
-  portfolioLimiter 
+import { authorize } from '../common/guards/role.guard';
+import {
+  stockRecommendationLimiter,
+  portfolioLimiter
 } from '../common/middlewares/rateLimiter.middleware';
 
 const router = express.Router();
@@ -76,6 +77,13 @@ router.post(
   '/reset-balance',
   authorize(['user', 'admin', 'super_admin']),
   resetVirtualBalance
+);
+
+// 5. Stock News + AI Recommendation
+router.get(
+  '/stock-news/:symbol',
+  authorize(['user', 'admin', 'super_admin']),
+  getStockNewsAndAIRecommendation
 );
 
 export default router;

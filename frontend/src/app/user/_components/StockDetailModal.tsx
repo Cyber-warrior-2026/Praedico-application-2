@@ -1,13 +1,13 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Activity, BarChart3, History, LayoutDashboard, LineChart, Briefcase, Lock, Clock, Loader2, Wallet, BrainCircuit, ArrowRightLeft } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, BarChart3, History, LayoutDashboard, LineChart, Briefcase, Lock, Clock, Loader2, Wallet, Newspaper, ArrowRightLeft } from "lucide-react";
 import { Stock } from "@/lib/types/stock.types";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { stockApi } from "@/lib/api";
 import { tradingApi } from "@/lib/api/trading.api";
 import { useTradingWebSocket } from "@/hooks/useTradingWebSocket";
-import { AIAnalysisCard } from "@/shared-components/trading/AIAnalysisCard";
+import { StockNewsCard } from "@/shared-components/trading/StockNewsCard";
 import { TradingPanel } from "@/shared-components/trading/TradingPanel";
 import { HoldingsCard } from "@/shared-components/trading/HoldingsCard";
 import {
@@ -33,8 +33,10 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Trading state
-  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [stockNews, setStockNews] = useState<any[]>([]);
+  const [aiRecommendation, setAiRecommendation] = useState<any>(null);
+  const [newsFallbackUsed, setNewsFallbackUsed] = useState(false);
+  const [newsLoading, setNewsLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [userHolding, setUserHolding] = useState<PortfolioHolding | null>(null);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
@@ -115,27 +117,30 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     },
   });
 
-  // Fetch AI Analysis
-  const fetchAIAnalysis = async () => {
+  // Fetch Stock News & AI Signal
+  const fetchStockNewsData = async () => {
     if (!stock || !isLoggedIn) return;
-    setAiLoading(true);
+    setNewsLoading(true);
     try {
-      const response = await tradingApi.getAIAnalysis(stock.symbol);
-      if (response.success) {
-        setAiAnalysis(response.data);
+      const response = await tradingApi.getStockNewsAndRecommendation(stock.symbol);
+      if (response.success && response.data) {
+        setStockNews(response.data.news || []);
+        setAiRecommendation(response.data.aiRecommendation || null);
+        setNewsFallbackUsed(response.data.newsFallbackUsed || false);
       }
     } catch (error) {
-      setAiAnalysis(null);
+      setStockNews([]);
+      setAiRecommendation(null);
     } finally {
-      setAiLoading(false);
+      setNewsLoading(false);
     }
   };
 
   // Initial Portfolio Fetch on Mount/Login
   useEffect(() => {
     if (isLoggedIn) {
-        setPortfolioLoading(true);
-        fetchPortfolio().then(() => setPortfolioLoading(false));
+      setPortfolioLoading(true);
+      fetchPortfolio().then(() => setPortfolioLoading(false));
     }
   }, [isLoggedIn, fetchPortfolio]);
 
@@ -184,7 +189,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
   useEffect(() => {
     if (activeTab === 'trading' && isLoggedIn && stock) {
       fetchPortfolio();
-      fetchAIAnalysis();
+      fetchStockNewsData();
 
       if (isConnected) {
         subscribeToStock(stock.symbol);
@@ -244,7 +249,7 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
     textMuted: isDark ? 'text-slate-500' : 'text-slate-500',
     cardBg: isDark ? 'bg-white/[0.02]' : 'bg-slate-50',
     // Removed hover effect that was causing the vanishing issue
-    cardHover: '', 
+    cardHover: '',
     inputBg: isDark ? 'bg-white/[0.03]' : 'bg-white',
     divider: isDark ? 'divide-white/[0.05]' : 'divide-slate-200',
     headerBorder: isDark ? 'border-white/[0.06]' : 'border-slate-100',
@@ -483,26 +488,33 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
                         {/* LEFT COLUMN: Analysis & Holdings (7/12) */}
                         <div className="lg:col-span-7 space-y-6 flex flex-col">
-                          {/* AI Analysis Card */}
+                          {/* Stock News & AI Signal Card */}
                           <div className={`flex-1 rounded-2xl border ${styles.border} ${styles.cardBg} overflow-hidden flex flex-col`}>
-                             <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-indigo-950/10' : 'bg-indigo-50'}`}>
-                                <BrainCircuit className="w-5 h-5 text-indigo-500" />
-                                <h3 className={`font-semibold ${styles.text}`}>AI Market Analysis</h3>
-                             </div>
-                             <div className="p-4 flex-1">
-                                <AIAnalysisCard analysis={aiAnalysis} loading={aiLoading} />
-                             </div>
+                            <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-indigo-950/10' : 'bg-indigo-50'}`}>
+                              <Newspaper className="w-5 h-5 text-indigo-500" />
+                              <h3 className={`font-semibold ${styles.text}`}>Market News & AI Signal</h3>
+                            </div>
+                            <div className="p-4 flex-1 overflow-hidden h-full min-h-[400px]">
+                              <StockNewsCard
+                                news={stockNews}
+                                aiRecommendation={aiRecommendation}
+                                loading={newsLoading}
+                                symbol={stock.symbol}
+                                newsFallbackUsed={newsFallbackUsed}
+                                onRefresh={fetchStockNewsData}
+                              />
+                            </div>
                           </div>
 
                           {/* Holdings Card */}
                           <div className={`rounded-2xl border ${styles.border} ${styles.cardBg} overflow-hidden`}>
-                             <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-emerald-950/10' : 'bg-emerald-50'}`}>
-                                <Wallet className="w-5 h-5 text-emerald-500" />
-                                <h3 className={`font-semibold ${styles.text}`}>Your Position</h3>
-                             </div>
-                             <div className="p-4">
-                                <HoldingsCard holding={userHolding} loading={portfolioLoading} />
-                             </div>
+                            <div className={`p-4 border-b ${styles.border} flex items-center gap-2 ${isDark ? 'bg-emerald-950/10' : 'bg-emerald-50'}`}>
+                              <Wallet className="w-5 h-5 text-emerald-500" />
+                              <h3 className={`font-semibold ${styles.text}`}>Your Position</h3>
+                            </div>
+                            <div className="p-4">
+                              <HoldingsCard holding={userHolding} loading={portfolioLoading} />
+                            </div>
                           </div>
                         </div>
 
@@ -510,15 +522,15 @@ export default function StockDetailModal({ isOpen, onClose, stock, theme = 'dark
                         <div className="lg:col-span-5 flex flex-col h-full">
                           <div className={`flex-1 ${styles.cardBg} border ${styles.border} rounded-2xl p-0 overflow-hidden flex flex-col shadow-xl`}>
                             <div className={`p-5 border-b ${styles.border} ${isDark ? 'bg-gradient-to-r from-indigo-600/10 to-transparent' : 'bg-slate-50'}`}>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
-                                    <h3 className={`font-bold text-lg ${styles.text}`}>Execute Trade</h3>
-                                </div>
-                                <p className={`text-xs ${styles.textMuted}`}>
-                                    Place instant market orders at realtime price.
-                                </p>
+                              <div className="flex items-center gap-2 mb-1">
+                                <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
+                                <h3 className={`font-bold text-lg ${styles.text}`}>Execute Trade</h3>
+                              </div>
+                              <p className={`text-xs ${styles.textMuted}`}>
+                                Place instant market orders at realtime price.
+                              </p>
                             </div>
-                            
+
                             <div className="p-6 flex-1 flex flex-col justify-center">
                               <TradingPanel
                                 symbol={stock.symbol}

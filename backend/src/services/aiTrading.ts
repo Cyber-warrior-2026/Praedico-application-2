@@ -46,7 +46,7 @@ class AITradingService {
       }
 
       const latestStock = stockHistory[0];
-      
+
       const prices = stockHistory.map(s => s.price);
       const sma5 = this.calculateSMA(prices, 5);
       const sma10 = this.calculateSMA(prices, 10);
@@ -116,7 +116,7 @@ Format your response as JSON.
   async getPortfolioAnalysis(userId: string, token: string): Promise<string> {
     try {
       const portfolio = await PortfolioHolding.find({ userId }).lean();
-      
+
       if (portfolio.length === 0) {
         return "Your portfolio is empty. Start by making your first paper trade!";
       }
@@ -208,6 +208,62 @@ Keep response under 200 words.
     }
   }
 
+  // ✅ NEWS-BASED AI RECOMMENDATION
+  async getNewsBasedRecommendation(
+    symbol: string,
+    stockName: string,
+    newsItems: Array<{ title: string; description: string; source: string; publishedAt: Date }>,
+    userId: string,
+    token: string
+  ): Promise<{ action: 'BUY' | 'SELL' | 'HOLD'; confidence: number; reasoning: string }> {
+    try {
+      if (!newsItems || newsItems.length === 0) {
+        return { action: 'HOLD', confidence: 40, reasoning: 'Insufficient news data to generate a recommendation.' };
+      }
+
+      const newsSummary = newsItems
+        .slice(0, 8)
+        .map((n, i) => `${i + 1}. [${n.source}] ${n.title}: ${n.description || ''}`)
+        .join('\n');
+
+      const prompt = `
+You are a professional stock market analyst reviewing recent news for trading decisions.
+
+Stock: ${stockName} (${symbol})
+
+Recent relevant news:
+${newsSummary}
+
+Based solely on the above news, provide a trading recommendation. Be concise and actionable.
+
+Respond ONLY with a JSON object in this exact format:
+{
+  "action": "BUY" or "SELL" or "HOLD",
+  "confidence": <number 0-100>,
+  "reasoning": "<2-3 sentence explanation based on the news>"
+}
+`;
+
+      const aiResponse = await this.callAI(prompt, userId, 'news_trading_analysis', token);
+      const rawText = aiResponse.data?.data?.message || aiResponse.data?.response || '';
+
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          action: ['BUY', 'SELL', 'HOLD'].includes(parsed.action) ? parsed.action : 'HOLD',
+          confidence: typeof parsed.confidence === 'number' ? Math.min(100, Math.max(0, parsed.confidence)) : 50,
+          reasoning: parsed.reasoning || 'Based on current news analysis.'
+        };
+      }
+
+      return { action: 'HOLD', confidence: 50, reasoning: 'Unable to parse AI recommendation from news.' };
+    } catch (error: any) {
+      console.error('News-based AI Recommendation Error:', error.message);
+      return { action: 'HOLD', confidence: 40, reasoning: 'AI recommendation unavailable at this time.' };
+    }
+  }
+
   // --- Helper Methods ---
 
   private calculateSMA(prices: number[], period: number): number {
@@ -238,7 +294,7 @@ Keep response under 200 words.
 
   private calculateVolatility(prices: number[]): number {
     if (prices.length < 2) return 0;
-    
+
     const returns = [];
     for (let i = 0; i < prices.length - 1; i++) {
       returns.push((prices[i] - prices[i + 1]) / prices[i + 1]);
