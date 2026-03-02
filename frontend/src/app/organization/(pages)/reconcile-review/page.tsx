@@ -328,7 +328,7 @@ export default function ReconcileReviewPage() {
 
                                                 {/* Column: Return (Combined Absolute & %) */}
                                                 <td className="p-4 border-r border-white/5 align-middle">
-                                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border flex-col items-start shadow-sm
+                                                    <div className={`inline-flex gap-1.5 px-3 py-1.5 rounded-xl border flex-col items-start shadow-sm min-w-[120px]
                                                         ${isProfitable
                                                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.05)]'
                                                             : summary.totalPL < 0
