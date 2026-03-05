@@ -18,6 +18,7 @@ router.post("/logout", organizationController.logout);
 // PROTECTED ORGANIZATION ADMIN ROUTES
 // ============================================
 router.get("/me", authorize(["organization_admin"]), organizationController.getMe);
+router.put("/me", authorize(["organization_admin"]), organizationController.updateProfile);
 router.get("/stats", authorize(["organization_admin"]), organizationController.getStats);
 router.post("/admins", authorize(["organization_admin"]), organizationController.createAdmin);
 router.get("/students/pending", authorize(["organization_admin"]), organizationController.getPendingStudents);
@@ -47,5 +48,9 @@ router.post("/students/:studentId/review", authorize(["organization_admin"]), or
 // ============================================
 router.get("/all", authorize(["admin", "super_admin"]), organizationController.getAllOrganizations);
 router.patch("/:id/toggle-active", authorize(["admin", "super_admin"]), organizationController.toggleOrganizationActive);
+
+// Organization Subscription Management (manual, by platform admin)
+router.patch("/:id/subscription/activate", authorize(["admin", "super_admin"]), organizationController.activateOrgSubscription);
+router.patch("/:id/subscription/deactivate", authorize(["admin", "super_admin"]), organizationController.deactivateOrgSubscription);
 
 export default router;

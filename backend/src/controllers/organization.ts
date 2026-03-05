@@ -7,6 +7,14 @@ import { z } from "zod";
 
 const organizationService = new OrganizationService();
 
+const updateProfileSchema = z.object({
+  organizationName: z.string().optional(),
+  logoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
+  website: z.string().url().optional().or(z.literal("")),
+});
+
 const registerSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
   organizationType: z.enum(['university', 'college', 'institute', 'school', 'other']),
@@ -77,6 +85,12 @@ const bulkActionSchema = z.object({
   action: z.enum(['archive', 'unarchive'])
 });
 
+const activateOrgSubscriptionSchema = z.object({
+  subscriptionPlan: z.string().min(1, "Plan name is required"),
+  subscriptionExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Valid expiry date is required" }),
+  maxStudents: z.number().min(0).optional()
+});
+
 
 export class OrganizationController {
 
@@ -122,6 +136,18 @@ export class OrganizationController {
 
     const result = await organizationService.createAdmin(organizationId, data);
     res.status(201).json({ success: true, ...result });
+  });
+
+  updateProfile = asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = (req as any).user.organization;
+    const updateData = updateProfileSchema.parse(req.body);
+
+    const result = await organizationService.updateProfile(organizationId, updateData);
+    res.status(200).json({
+      success: true,
+      message: "Organization profile updated successfully",
+      ...result
+    });
   });
 
   // Get Organization Statistics
@@ -329,5 +355,26 @@ export class OrganizationController {
   getPublicList = asyncHandler(async (req: Request, res: Response) => {
     const organizations = await organizationService.getPublicList();
     res.status(200).json({ success: true, organizations });
+  });
+  // ── Platform Admin: Activate Organization Subscription ──────────────────
+  activateOrgSubscription = asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = req.params.id as string;
+    const data = activateOrgSubscriptionSchema.parse(req.body);
+
+    const result = await organizationService.activateOrgSubscription(organizationId, {
+      subscriptionPlan: data.subscriptionPlan,
+      subscriptionExpiry: new Date(data.subscriptionExpiry),
+      maxStudents: data.maxStudents
+    });
+
+    res.status(200).json({ success: true, ...result });
+  });
+
+  // ── Platform Admin: Deactivate Organization Subscription ─────────────────
+  deactivateOrgSubscription = asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = req.params.id as string;
+
+    const result = await organizationService.deactivateOrgSubscription(organizationId);
+    res.status(200).json({ success: true, ...result });
   });
 }

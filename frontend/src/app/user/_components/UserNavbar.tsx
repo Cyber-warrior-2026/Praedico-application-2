@@ -20,6 +20,10 @@ export function UserNavbar() {
   const [userName, setUserName] = useState("User");
   const [userEmail, setUserEmail] = useState("Loading...");
   const [currentPlan, setCurrentPlan] = useState("Free"); // Added state
+  const [isOrgStudent, setIsOrgStudent] = useState(false); // Track if user is an org student
+  const [orgName, setOrgName] = useState("");
+  const [orgLogoUrl, setOrgLogoUrl] = useState("");
+  const [orgLogoError, setOrgLogoError] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
@@ -31,12 +35,16 @@ export function UserNavbar() {
         const data = await authApi.getMe();
 
         if (data.success && data.user) {
-          // 👇 CHANGE THIS PART
-          // If data.user.name is empty, fallback to the part of the email before '@'
           const nameFromEmail = data.user.email?.split('@')[0];
           setUserName(data.user.name || nameFromEmail);
           setUserEmail(data.user.email);
           setCurrentPlan(data.user.currentPlan || "Free"); // Set plan
+          const orgStudent = !!data.user.isOrgStudent;
+          setIsOrgStudent(orgStudent); // Set org student status
+          if (orgStudent) {
+            setOrgName(data.user.orgName || "");
+            setOrgLogoUrl(data.user.orgLogoUrl || "");
+          }
         }
       } catch (e) { console.error("Guest mode"); }
     };
@@ -53,9 +61,11 @@ export function UserNavbar() {
     { label: "Portfolio", href: "/user/portfolio", icon: Briefcase },
     { label: "Trading", href: "/user/dashboard/trading", icon: BarChart2 },
     { label: "News", href: "/user/news", icon: Newspaper }, // ✨ Added News Tab
-    { label: "Premium", href: "/user/premium", icon: Wallet },
+    { label: "Premium", href: "/user/premium", icon: Wallet, hideForOrg: true },
     { label: "Reports", href: "/user/reports", icon: ArrowRightLeft },
   ];
+
+  const visibleNavItems = navItems.filter(item => !(item.hideForOrg && isOrgStudent));
 
   // 3. Mobile Menu State
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -89,7 +99,7 @@ export function UserNavbar() {
       >
         <div className="max-w-[1920px] mx-auto px-6 md:px-8 h-20 flex items-center justify-between relative z-50">
 
-          {/* LEFT: LOGO */}
+          {/* LEFT: Praedico + Org Logo (for org students) */}
           <div className="flex items-center gap-12">
             <Link href="/user/dashboard" className="flex items-center gap-3 group">
               <div className="relative h-10 w-10">
@@ -103,9 +113,30 @@ export function UserNavbar() {
               </span>
             </Link>
 
+            {/* Org Logo Badge — shown only for org students */}
+            {isOrgStudent && (orgLogoUrl || orgName) && (
+              <div className="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/5 dark:bg-slate-800/50 border border-white/10 dark:border-slate-700/40 backdrop-blur-md shadow-sm">
+                <div className="h-px w-4 bg-gradient-to-r from-transparent via-slate-400/40 to-transparent" />
+                {orgLogoUrl && !orgLogoError ? (
+                  <img
+                    src={orgLogoUrl}
+                    alt={orgName || "Institute"}
+                    title={orgName}
+                    onError={() => setOrgLogoError(true)}
+                    className="h-6 w-auto max-w-[80px] object-contain rounded opacity-90"
+                  />
+                ) : (
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-300 tracking-wide max-w-[120px] truncate">{orgName}</span>
+                )}
+                {orgLogoUrl && !orgLogoError && orgName && (
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hidden lg:block truncate max-w-[100px]">{orgName}</span>
+                )}
+              </div>
+            )}
+
             {/* DESKTOP NAV - Premium Pills */}
             <nav className="hidden xl:flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/40 dark:border-slate-700/40 shadow-sm">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
@@ -245,7 +276,7 @@ export function UserNavbar() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (

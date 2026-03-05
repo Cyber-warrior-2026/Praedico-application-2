@@ -270,7 +270,7 @@ export const sendOrganizationVerificationEmail = async (
   adminName: string
 ) => {
   const verificationLink = `${ENV.FRONTEND_URL}/organization/verify/${token}`;
-  
+
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
@@ -329,7 +329,7 @@ export const sendOrganizationAdminInviteEmail = async (
   organizationName: string
 ) => {
   const verificationLink = `${ENV.FRONTEND_URL}/organization/verify/${token}`;
-  
+
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
@@ -370,7 +370,7 @@ export const sendCoordinatorInviteEmail = async (
   departmentName: string
 ) => {
   const verificationLink = `${ENV.FRONTEND_URL}/coordinator/verify/${token}`;
-  
+
   await transporter.sendMail({
     from: `"Team Praedico" <${ENV.EMAIL_USER}>`,
     to: email,
@@ -418,7 +418,7 @@ export const sendStudentApprovalNotificationToOrganization = async (
 ) => {
   const organization = await OrganizationModel.findById(organizationId);
   const department = await DepartmentModel.findById(departmentId);
-  
+
   if (!organization || !department) return;
 
   // Get all organization admins

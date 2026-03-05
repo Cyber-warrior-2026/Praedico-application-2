@@ -12,14 +12,15 @@ export interface IOrganization extends Document {
   contactEmail: string;
   contactPhone: string;
   website?: string;
-  
+  logoUrl?: string; // Appears on student dashboard along with Praedico brand
+
   // Registration details (for first admin who registers org)
   registeredBy: {
     name: string;
     email: string;
     designation: string;
   };
-  
+
   // Auth Fields (only for initial registration, later use organizationAdmin model)
   passwordHash?: string;
   isVerified: boolean;
@@ -27,15 +28,21 @@ export interface IOrganization extends Document {
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-  
+
   // Activity
   lastLogin?: Date;
   lastActive?: Date;
-  
+
   // Status
   isDeleted: boolean;
   deletedAt?: Date;
-  
+
+  // Organization Subscription (managed manually by platform team)
+  subscriptionStatus?: 'active' | 'inactive' | 'expired';
+  subscriptionPlan?: string;       // e.g. "Institute Pro", "University Plus"
+  subscriptionExpiry?: Date;       // When the org subscription ends
+  maxStudents?: number;            // Optional seat cap (0 = unlimited)
+
   // Organization Stats
   totalDepartments: number;
   totalAdmins: number;
@@ -43,7 +50,7 @@ export interface IOrganization extends Document {
   totalStudents: number;
   activeStudents: number;
   pendingApprovals: number;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -101,13 +108,17 @@ const OrganizationSchema: Schema = new Schema({
     type: String,
     trim: true
   },
-  
+  logoUrl: {
+    type: String,
+    trim: true
+  },
+
   registeredBy: {
     name: { type: String, required: true },
     email: { type: String, required: true },
     designation: { type: String, required: true }
   },
-  
+
   passwordHash: {
     type: String,
     select: false
@@ -127,7 +138,17 @@ const OrganizationSchema: Schema = new Schema({
   lastActive: { type: Date, default: Date.now },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
-  
+
+  // Organization Subscription (set manually by platform admin)
+  subscriptionStatus: {
+    type: String,
+    enum: ['active', 'inactive', 'expired'],
+    default: 'inactive'
+  },
+  subscriptionPlan: { type: String },
+  subscriptionExpiry: { type: Date },
+  maxStudents: { type: Number, default: 0 },
+
   // Stats
   totalDepartments: { type: Number, default: 0 },
   totalAdmins: { type: Number, default: 0 },

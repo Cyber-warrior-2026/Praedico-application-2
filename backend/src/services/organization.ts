@@ -147,6 +147,29 @@ export class OrganizationService {
     };
   }
 
+  // Update Organization Profile (e.g. logoUrl, name)
+  async updateProfile(organizationId: string, updateData: {
+    organizationName?: string;
+    logoUrl?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+  }) {
+    const org = await OrganizationModel.findById(organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    if (updateData.organizationName !== undefined) org.organizationName = updateData.organizationName;
+    if (updateData.logoUrl !== undefined) org.logoUrl = updateData.logoUrl;
+    if (updateData.contactEmail !== undefined) org.contactEmail = updateData.contactEmail;
+    if (updateData.contactPhone !== undefined) org.contactPhone = updateData.contactPhone;
+    if (updateData.website !== undefined) org.website = updateData.website;
+
+    await org.save();
+    return { organization: org };
+  }
+
   // Get Organization Admin Profile
   async getAdminById(adminId: string) {
     const admin = await OrganizationAdminModel.findById(adminId)
@@ -1230,7 +1253,7 @@ export class OrganizationService {
     const limit = filters?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const query: any = { isDeleted: false };
+    const query: any = { isDeleted: { $ne: true } };
 
     if (filters?.search) {
       query.$or = [
@@ -1255,6 +1278,54 @@ export class OrganizationService {
         page,
         limit,
         totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  // Activate Organization Subscription (for platform admin — manual activation)
+  async activateOrgSubscription(organizationId: string, data: {
+    subscriptionPlan: string;
+    subscriptionExpiry: Date;
+    maxStudents?: number;
+  }) {
+    const organization = await OrganizationModel.findById(organizationId);
+    if (!organization) throw new Error('Organization not found');
+
+    organization.subscriptionStatus = 'active';
+    organization.subscriptionPlan = data.subscriptionPlan;
+    organization.subscriptionExpiry = data.subscriptionExpiry;
+    if (data.maxStudents !== undefined) {
+      organization.maxStudents = data.maxStudents;
+    }
+    await organization.save();
+
+    return {
+      message: `Subscription activated for ${organization.organizationName}`,
+      organization: {
+        id: organization._id,
+        organizationName: organization.organizationName,
+        subscriptionStatus: organization.subscriptionStatus,
+        subscriptionPlan: organization.subscriptionPlan,
+        subscriptionExpiry: organization.subscriptionExpiry,
+        maxStudents: organization.maxStudents
+      }
+    };
+  }
+
+  // Deactivate Organization Subscription (for platform admin)
+  async deactivateOrgSubscription(organizationId: string) {
+    const organization = await OrganizationModel.findById(organizationId);
+    if (!organization) throw new Error('Organization not found');
+
+    organization.subscriptionStatus = 'inactive';
+    await organization.save();
+
+    return {
+      message: `Subscription deactivated for ${organization.organizationName}`,
+      organization: {
+        id: organization._id,
+        organizationName: organization.organizationName,
+        subscriptionStatus: organization.subscriptionStatus
       }
     };
   }
