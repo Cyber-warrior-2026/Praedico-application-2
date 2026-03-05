@@ -13,6 +13,7 @@ export default function AIChatButton() {
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [isOrgStudent, setIsOrgStudent] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -25,6 +26,7 @@ export default function AIChatButton() {
         const isPremium = data.user.currentPlan !== 'Free';
         const isTrial = data.user.isOnTrial;
         setHasAccess(isPremium || isTrial);
+        setIsOrgStudent(!!data.user.isOrgStudent);
       }
     } catch (error) {
       console.error('Failed to check user plan:', error);
@@ -39,7 +41,11 @@ export default function AIChatButton() {
     if (hasAccess) {
       setIsOpen(true);
     } else {
-      setShowPremiumModal(true);
+      if (isOrgStudent) {
+        alert("Your organization's premium subscription has expired or is inactive. Please contact your administrator.");
+      } else {
+        setShowPremiumModal(true);
+      }
     }
   };
 
@@ -55,7 +61,7 @@ export default function AIChatButton() {
   return (
     <>
       <div className="fixed bottom-8 right-8 z-40 flex items-center justify-end">
-        
+
         {/* HOVER LABEL (Slides out) */}
         <AnimatePresence>
           {isHovered && (
@@ -84,10 +90,10 @@ export default function AIChatButton() {
         >
           {/* 1. Animated Glow Background */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 animate-gradient-xy opacity-90 group-hover:opacity-100 transition-opacity" />
-          
+
           {/* 2. Glass Shine Effect */}
           <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
-          
+
           {/* 3. Inner Ring */}
           <div className="absolute inset-0 rounded-full border border-white/10" />
 
@@ -96,7 +102,7 @@ export default function AIChatButton() {
             {hasAccess ? (
               <div className="relative">
                 <MessageSquare className="w-7 h-7" />
-                <motion.div 
+                <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   className="absolute -top-1 -right-1"

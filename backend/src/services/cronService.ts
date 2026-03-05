@@ -1,9 +1,9 @@
 import * as cron from 'node-cron';
 import stockScraperService from './stockScraper';
-import newsScraperService from './newsScraper'; 
+import newsScraperService from './newsScraper';
 class CronService {
   private scraperJob: cron.ScheduledTask | null = null;
-    private newsScraperJob: cron.ScheduledTask | null = null; 
+  private newsScraperJob: cron.ScheduledTask | null = null;
   // Check if current day is weekday (Monday-Friday)
   private isWeekday(): boolean {
     const day = new Date().getDay();
@@ -16,10 +16,10 @@ class CronService {
     const hour = now.getHours();
     const minute = now.getMinutes();
     const currentTime = hour * 60 + minute;
-    
+
     const marketOpen = 9 * 60;  // 9:00 AM
     const marketClose = 15 * 60 + 30; // 3:30 PM
-    
+
     return currentTime >= marketOpen && currentTime <= marketClose;
   }
 
@@ -28,20 +28,20 @@ class CronService {
     // Run every 1 minutes on weekdays during market hours
     // Cron format: */1 * * * 1-5 means every 1 minutes, Monday-Friday
     this.scraperJob = cron.schedule('*/1 * * * 1-5', async () => {
-      
+
       if (!this.isWeekday()) {
         console.log('Skipping: Weekend detected');
         return;
       }
-      
+
       if (!this.isMarketHours()) {
         console.log('Skipping: Outside market hours');
         return;
       }
-      
+
       // Run the scraper
       await stockScraperService.scrapeAllStocks();
-      
+
     }, {
       timezone: 'Asia/Kolkata'
     });
@@ -52,7 +52,7 @@ class CronService {
     console.log('Stock scraper cron job started (every 1 minutes on weekdays)');
   }
 
-   // ✅ START NEWS SCRAPER JOB (ADD THIS METHOD)
+  // ✅ START NEWS SCRAPER JOB (ADD THIS METHOD)
   startNewsScraperJob(): void {
     // Run every 30 minutes, 24/7 (news is published anytime)
     // Cron format: */30 * * * * means every 30 minutes

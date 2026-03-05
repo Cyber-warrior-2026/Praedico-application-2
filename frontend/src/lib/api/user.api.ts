@@ -17,6 +17,9 @@ export interface User {
   lastLogin?: string;
   lastActive?: string;
   currentPlan?: string; // Added based on your dashboard
+  isOrgStudent?: boolean; // True if the user belongs to an approved organization
+  orgName?: string;       // Organization name (for org students)
+  orgLogoUrl?: string;    // Organization logo URL (for org students)
   avatar?: string;      // Added based on sidebar
   createdAt: string;
   updatedAt: string;
@@ -54,13 +57,13 @@ export interface StatsResponse {
 // ============================================
 
 export const userApi = {
-  
+
   // --- 1. USER SELF PROFILE (Existing) ---
-  
+
   // Get Own Profile
   getProfile: async () => {
     // Falls back to '/api/users/profile' defined in constants or direct string
-    const endpoint = API_ENDPOINTS.USER?.PROFILE || '/api/users/me'; 
+    const endpoint = API_ENDPOINTS.USER?.PROFILE || '/api/users/me';
     const response = await axiosInstance.get(endpoint);
     return response.data;
   },

@@ -3,6 +3,7 @@ import { UserService } from "../services/user";
 import { asyncHandler } from "../common/errors/errorHandler";
 import { z } from "zod";
 import { ENV } from "../config/env";
+import { OrganizationModel } from "../models/organization";
 
 const userService = new UserService();
 
@@ -10,8 +11,8 @@ const userService = new UserService();
 const registerSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
-   organizationId: z.string().optional(),
-     departmentId: z.string().optional()  
+  organizationId: z.string().optional(),
+  departmentId: z.string().optional()
 });
 
 const verifySchema = z.object({
@@ -29,11 +30,11 @@ const resetPasswordSchema = z.object({
 });
 
 export class UserController {
-register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, name, organizationId, departmentId } = registerSchema.parse(req.body);
-  const result = await userService.register(email, name, organizationId, departmentId);
-  res.status(200).json({ success: true, ...result });
-});
+  register = asyncHandler(async (req: Request, res: Response) => {
+    const { email, name, organizationId, departmentId } = registerSchema.parse(req.body);
+    const result = await userService.register(email, name, organizationId, departmentId);
+    res.status(200).json({ success: true, ...result });
+  });
 
 
   verify = asyncHandler(async (req: Request, res: Response) => {
@@ -74,6 +75,73 @@ register = asyncHandler(async (req: Request, res: Response) => {
     const displayName =
       user.name && user.name !== "User" ? user.name : user.email.split("@")[0];
 
+    // ─── Organization Student Logic ──────────────────────────────────────────
+    // If the user belongs to an approved organization, derive their subscription
+    // from the organization's subscription instead of their own payment record.
+    const isOrgStudent =
+      !!user.organization && user.organizationApprovalStatus === 'approved';
+
+    if (isOrgStudent) {
+      const org = await OrganizationModel.findById(user.organization)
+        .select('subscriptionStatus subscriptionPlan subscriptionExpiry organizationName isActive logoUrl');
+
+      // Org must be active and have an active, non-expired subscription
+      const now = new Date();
+      const orgSubActive =
+        org &&
+        org.isActive &&
+        org.subscriptionStatus === 'active' &&
+        org.subscriptionExpiry &&
+        org.subscriptionExpiry > now;
+
+      if (orgSubActive) {
+        // Student inherits the org's premium plan
+        return res.status(200).json({
+          success: true,
+          user: {
+            id: user.id || user._id,
+            email: user.email,
+            role: user.role,
+            name: displayName,
+            // Effective plan comes from organization
+            currentPlan: org!.subscriptionPlan || 'OrgPlan',
+            orgName: org!.organizationName,
+            orgLogoUrl: org!.logoUrl,
+            subscriptionStatus: 'active',
+            subscriptionExpiry: org!.subscriptionExpiry,
+            subscriptionId: undefined,
+            // Trial fields — not applicable for org students
+            hasUsedTrial: user.hasUsedTrial || false,
+            isOnTrial: false,
+            trialEndDate: undefined,
+            // ✅ Flag for frontend to hide Premium tab
+            isOrgStudent: true,
+          },
+        });
+      } else {
+        // Org subscription expired or inactive — student gets Free tier
+        return res.status(200).json({
+          success: true,
+          user: {
+            id: user.id || user._id,
+            email: user.email,
+            role: user.role,
+            name: displayName,
+            currentPlan: 'Free',
+            subscriptionStatus: undefined,
+            subscriptionExpiry: undefined,
+            subscriptionId: undefined,
+            hasUsedTrial: user.hasUsedTrial || false,
+            isOnTrial: false,
+            trialEndDate: undefined,
+            // ✅ Still mark as org student so frontend hides Premium tab
+            isOrgStudent: true,
+          },
+        });
+      }
+    }
+    // ─── End Organization Student Logic ─────────────────────────────────────
+
     // Check for Trial Expiry: If active trial date has passed, downgrade to Free immediately
     if (user.isOnTrial && user.trialEndDate && new Date(user.trialEndDate) < new Date()) {
       user.isOnTrial = false;
@@ -98,17 +166,20 @@ register = asyncHandler(async (req: Request, res: Response) => {
         hasUsedTrial: user.hasUsedTrial || false,
         isOnTrial: user.isOnTrial || false,
         trialEndDate: user.trialEndDate,
+        // ✅ Not an org student
+        isOrgStudent: false,
       },
     });
   });
+
 
   logout = asyncHandler(async (req: Request, res: Response) => {
     // Clear cookies with same settings to ensure they are actually removed
     const isProduction = process.env.NODE_ENV === "production";
     const cookieOptions = {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" as const : "lax" as const,
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" as const : "lax" as const,
     };
 
     res.clearCookie("accessToken", cookieOptions);
@@ -159,14 +230,14 @@ register = asyncHandler(async (req: Request, res: Response) => {
     const role = req.query.role as string || '';
     const status = req.query.status as string || '';
 
-    const result = await userService.getAllUsers({ 
-      page, 
-      limit, 
-      search, 
-      role, 
-      status 
+    const result = await userService.getAllUsers({
+      page,
+      limit,
+      search,
+      role,
+      status
     });
-    
+
     res.status(200).json({ success: true, ...result });
   });
 
@@ -215,17 +286,17 @@ register = asyncHandler(async (req: Request, res: Response) => {
   toggleUserActive = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.params.id as string;
     const user = await userService.toggleUserActive(userId);
-    res.status(200).json({ 
-      success: true, 
-      user, 
-      message: `User ${user.isActive ? 'activated' : 'blocked'} successfully` 
+    res.status(200).json({
+      success: true,
+      user,
+      message: `User ${user.isActive ? 'activated' : 'blocked'} successfully`
     });
   });
 
   // Bulk actions for grouping related requests
   bulkAction = asyncHandler(async (req: Request, res: Response) => {
     const { userIds, action } = req.body;
-    
+
     if (!Array.isArray(userIds) || userIds.length === 0) {
       res.status(400).json({ success: false, message: "Invalid userIds" });
       return;

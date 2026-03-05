@@ -97,6 +97,17 @@ export const organizationApi = {
     return response.data;
   },
 
+  updateProfile: async (data: {
+    organizationName?: string;
+    logoUrl?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+  }) => {
+    const response = await axiosInstance.put(API_ENDPOINTS.ORGANIZATION.ME, data);
+    return response.data;
+  },
+
   getStats: async () => {
     const response = await axiosInstance.get(API_ENDPOINTS.ORGANIZATION.STATS);
     return response.data;
