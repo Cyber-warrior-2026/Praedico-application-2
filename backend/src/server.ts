@@ -26,6 +26,7 @@ const startServer = async () => {
   cronService.startScraperJob();
   cronService.startNewsScraperJob();
   cronService.startSubscriptionExpiryJob(); // NEW: Daily subscription check (9 AM IST)
+  cronService.startTradingLevelJob();
   console.log('📊 Stock scraper cron job started');
   console.log('📰 News scraper cron job started');
 
@@ -54,6 +55,7 @@ const startServer = async () => {
       // Stop cron jobs
       cronService.stopScraperJob();
       cronService.stopNewsScraperJob();
+      cronService.stopTradingLevelJob();
       console.log("✅ Cron jobs stopped.");
 
       // Close Database Connection

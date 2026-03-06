@@ -4,12 +4,13 @@ import newsScraperService from './newsScraper';
 import { OrganizationModel } from '../models/organization';
 import { OrganizationAdminModel } from '../models/organizationAdmin';
 import { sendSubscriptionExpiryEmail } from './email';
+import tradingLevelService from './tradingLevel';
 
 class CronService {
   private scraperJob: cron.ScheduledTask | null = null;
   private newsScraperJob: cron.ScheduledTask | null = null;
   private subscriptionJob: cron.ScheduledTask | null = null;
-
+  private tradingLevelJob: cron.ScheduledTask | null = null;
   // Check if current day is weekday (Monday-Friday)
   private isWeekday(): boolean {
     const day = new Date().getDay();
@@ -181,6 +182,40 @@ class CronService {
   // Get job status
   getJobStatus(): string {
     return this.scraperJob ? 'Running' : 'Stopped';
+  }
+
+  // ─── Trading Level Evaluation Job ────────────────────────────────────
+
+  // Start the trading level cron job (daily at 4:00 PM IST, weekdays)
+  startTradingLevelJob(): void {
+    // Cron: minute 0, hour 16, every day, Mon-Fri
+    this.tradingLevelJob = cron.schedule('0 16 * * 1-5', async () => {
+      if (!this.isWeekday()) {
+        console.log('[TradingLevel] Skipping: Weekend detected');
+        return;
+      }
+      console.log('[TradingLevel] Daily evaluation triggered (4:00 PM IST)');
+      await tradingLevelService.evaluateAllActiveUsers();
+    }, {
+      timezone: 'Asia/Kolkata'
+    });
+
+    this.tradingLevelJob.start();
+    console.log('🏆 Trading Level cron job started (daily at 4:00 PM IST, weekdays)');
+  }
+
+  // Manual trigger for testing
+  async runTradingLevelNow(): Promise<void> {
+    console.log('[TradingLevel] Manual evaluation triggered');
+    await tradingLevelService.evaluateAllActiveUsers();
+  }
+
+  // Stop the trading level job
+  stopTradingLevelJob(): void {
+    if (this.tradingLevelJob) {
+      this.tradingLevelJob.stop();
+      console.log('🏆 Trading Level cron job stopped');
+    }
   }
 }
 
