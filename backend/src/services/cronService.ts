@@ -1,9 +1,15 @@
 import * as cron from 'node-cron';
 import stockScraperService from './stockScraper';
 import newsScraperService from './newsScraper';
+import { OrganizationModel } from '../models/organization';
+import { OrganizationAdminModel } from '../models/organizationAdmin';
+import { sendSubscriptionExpiryEmail } from './email';
+
 class CronService {
   private scraperJob: cron.ScheduledTask | null = null;
   private newsScraperJob: cron.ScheduledTask | null = null;
+  private subscriptionJob: cron.ScheduledTask | null = null;
+
   // Check if current day is weekday (Monday-Friday)
   private isWeekday(): boolean {
     const day = new Date().getDay();
@@ -78,6 +84,83 @@ class CronService {
     if (this.newsScraperJob) {
       this.newsScraperJob.stop();
       console.log('News scraper cron job stopped');
+    }
+  }
+
+  // ✅ START SUBSCRIPTION EXPIRY CHECKER
+  startSubscriptionExpiryJob(): void {
+    // Run once a day at 9:00 AM IST
+    this.subscriptionJob = cron.schedule('0 9 * * *', async () => {
+      console.log('Running daily subscription expiry check...');
+      await this.checkSubscriptions();
+    }, {
+      timezone: 'Asia/Kolkata'
+    });
+
+    this.subscriptionJob.start();
+    console.log('Subscription cron job started (runs daily at 9:00 AM IST)');
+  }
+
+  // ✅ MANUAL TRIGGER FOR SUBSCRIPTION CHECK 
+  async checkSubscriptionsNow(): Promise<void> {
+    console.log('Manual subscription check triggered');
+    await this.checkSubscriptions();
+  }
+
+  // The actual check logic
+  private async checkSubscriptions() {
+    try {
+      // Find active organizations that have a physical expiry date
+      const activeOrgs = await OrganizationModel.find({
+        isActive: true,
+        isDeleted: { $ne: true },
+        subscriptionExpiry: { $exists: true, $ne: null }
+      });
+
+      const today = new Date();
+      // Normalize today to start of day for exact day comparison
+      today.setHours(0, 0, 0, 0);
+
+      for (const org of activeOrgs) {
+        if (!org.subscriptionExpiry || !org.subscriptionPlan) continue;
+
+        const expiry = new Date(org.subscriptionExpiry);
+        // Normalize expiry to start of day
+        expiry.setHours(0, 0, 0, 0);
+
+        // Calculate differences in days
+        const diffTime = expiry.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // We want to send emails exactly at 7 days, 1 day, and 0 days
+        if (diffDays === 7 || diffDays === 1 || diffDays === 0) {
+          // Find admins to email
+          const admins = await OrganizationAdminModel.find({
+            organization: org._id,
+            isActive: true,
+            isDeleted: false
+          });
+
+          if (admins.length === 0) continue;
+
+          // Format date like 'Oct 24, 2026'
+          const dateStr = expiry.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+
+          // Send to all admins
+          for (const admin of admins) {
+            await sendSubscriptionExpiryEmail(
+              admin.email,
+              org.organizationName,
+              diffDays,
+              org.subscriptionPlan,
+              dateStr
+            );
+          }
+          console.log(`Sent ${diffDays}-day reminder to admins of ${org.organizationName}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subscriptions:', error);
     }
   }
 

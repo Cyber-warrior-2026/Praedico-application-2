@@ -321,6 +321,65 @@ export const sendOrganizationVerificationEmail = async (
   });
 };
 
+// Organization Subscription Expiry Notification
+export const sendSubscriptionExpiryEmail = async (
+  email: string,
+  organizationName: string,
+  daysRemaining: number,
+  planName: string,
+  expiryDateStr: string
+) => {
+  const isExpired = daysRemaining < 0;
+  const isExpiringToday = daysRemaining === 0;
+
+  let title = '';
+  let color = '';
+  let message = '';
+
+  if (isExpired) {
+    title = '⚠️ Subscription Expired';
+    color = '#f44336'; // Red
+    message = `Your <strong>${planName}</strong> subscription for <strong>${organizationName}</strong> has expired on ${expiryDateStr}.`;
+  } else if (isExpiringToday) {
+    title = '⚠️ Subscription Expires Today';
+    color = '#ff9800'; // Orange
+    message = `Your <strong>${planName}</strong> subscription for <strong>${organizationName}</strong> expires <strong>today</strong> (${expiryDateStr}).`;
+  } else {
+    title = '⏳ Subscription Expiry Reminder';
+    color = '#ff9800'; // Orange
+    message = `Your <strong>${planName}</strong> subscription for <strong>${organizationName}</strong> will expire in <strong>${daysRemaining} days</strong> (on ${expiryDateStr}).`;
+  }
+
+  await transporter.sendMail({
+    from: `"Praedico Billing" <${ENV.EMAIL_USER}>`,
+    to: email,
+    subject: title,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .content { background: #fff8e1; padding: 30px; border-radius: 10px; border-left: 5px solid ${color}; }
+          .button { display: inline-block; padding: 15px 40px; background: ${color}; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="content">
+            <h2 style="color: ${color};">${title}</h2>
+            <p>${message}</p>
+            <p>To ensure uninterrupted access for your students and coordinators, please contact the Praedico administration team to renew your subscription.</p>
+            <p>If you have already renewed, please ignore this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  });
+};
+
 // Organization Admin Invite Email
 export const sendOrganizationAdminInviteEmail = async (
   email: string,

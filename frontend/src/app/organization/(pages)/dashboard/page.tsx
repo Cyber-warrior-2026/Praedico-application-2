@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Building2, Users, UserCheck, GraduationCap, TrendingUp, ArrowRight, Activity, ShieldCheck } from 'lucide-react';
+import { Building2, Users, UserCheck, GraduationCap, TrendingUp, ArrowRight, Activity, ShieldCheck, Crown, Clock } from 'lucide-react';
 import { organizationApi } from '@/lib/api';
 import Link from 'next/link';
+import SubscriptionWarning from '../../_components/SubscriptionWarning';
 
 interface Stats {
     totalStudents: number;
@@ -47,6 +48,7 @@ export default function OrganizationDashboard() {
         activeCoordinators: 0,
     });
     const [orgName, setOrgName] = useState('');
+    const [planData, setPlanData] = useState<{ plan: string, expiry: string | null }>({ plan: 'Free', expiry: null });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -60,6 +62,10 @@ export default function OrganizationDashboard() {
 
                 if (orgData.success && orgData.organization) {
                     setOrgName(orgData.organization.organizationName || 'Organization');
+                    setPlanData({
+                        plan: orgData.organization.subscriptionPlan || 'Free Plan',
+                        expiry: orgData.organization.subscriptionExpiry || null
+                    });
                 }
 
                 if (statsData.success) {
@@ -148,10 +154,27 @@ export default function OrganizationDashboard() {
 
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-4 backdrop-blur-md border border-white/10">
-                                <Activity className="w-3.5 h-3.5" />
-                                Organization Portal
+                            <div className="flex flex-wrap items-center gap-3 mb-4">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-white/10">
+                                    <Activity className="w-3.5 h-3.5" />
+                                    Organization Portal
+                                </div>
+
+                                {planData.plan && (
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-amber-500/20 shadow-lg shadow-amber-500/10">
+                                        <Crown className="w-3.5 h-3.5" />
+                                        {planData.plan}
+                                    </div>
+                                )}
+
+                                {planData.expiry && (
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-rose-500/20">
+                                        <Clock className="w-3.5 h-3.5" />
+                                        Expires: {new Date(planData.expiry).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </div>
+                                )}
                             </div>
+
                             <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-2">
                                 Welcome back!
                             </h1>
@@ -161,6 +184,11 @@ export default function OrganizationDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Expiry Warning Popup Component */}
+                {planData.expiry && (
+                    <SubscriptionWarning expiryDate={planData.expiry} planName={planData.plan} />
+                )}
 
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
