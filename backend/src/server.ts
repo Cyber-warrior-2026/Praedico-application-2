@@ -16,15 +16,16 @@ const startServer = async () => {
 
   // 3. Initialize WebSocket Server (NEW)
   const tradingSocket = new TradingSocketServer(server);
-  
+
   // Make WebSocket instance globally available for controllers
   (global as any).tradingSocket = tradingSocket;
-  
+
   console.log('🌐 WebSocket server initialized');
 
   // 4. Start Cron Jobs
   cronService.startScraperJob();
   cronService.startNewsScraperJob();
+  cronService.startSubscriptionExpiryJob(); // NEW: Daily subscription check (9 AM IST)
   console.log('📊 Stock scraper cron job started');
   console.log('📰 News scraper cron job started');
 
@@ -42,23 +43,23 @@ const startServer = async () => {
   // --- GRACEFUL SHUTDOWN LOGIC (The Legendary Part) ---
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received. Closing HTTP server...`);
-    
+
     server.close(async () => {
       console.log("✅ HTTP server closed.");
-      
+
       // Stop WebSocket server (NEW)
       tradingSocket.shutdown();
       console.log("✅ WebSocket server closed.");
-      
+
       // Stop cron jobs
       cronService.stopScraperJob();
       cronService.stopNewsScraperJob();
       console.log("✅ Cron jobs stopped.");
-      
+
       // Close Database Connection
       await mongoose.connection.close(false);
       console.log("✅ MongoDB connection closed.");
-      
+
       process.exit(0);
     });
   };
