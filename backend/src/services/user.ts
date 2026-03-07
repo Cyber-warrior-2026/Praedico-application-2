@@ -222,6 +222,22 @@ async login(email: string, plainPass: string) {
     return { accessToken, refreshToken };
   }
 
+  async refreshToken(token: string) {
+    try {
+      const decoded = jwt.verify(token, ENV.JWT_REFRESH_SECRET) as any;
+      const user = await UserModel.findById(decoded.id);
+
+      if (!user) {
+        throw new Error("User associated with token no longer exists");
+      }
+
+      const { accessToken, refreshToken } = this.generateTokens(user);
+      return { accessToken, refreshToken };
+    } catch (error) {
+      throw new Error("Invalid or expired refresh token");
+    }
+  }
+
   // =================================================================
   // ADMIN / DASHBOARD FEATURES
   // =================================================================

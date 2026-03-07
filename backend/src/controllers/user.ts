@@ -187,6 +187,23 @@ export class UserController {
     res.status(200).json({ success: true, message: "Logged out" });
   });
 
+  refreshToken = asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
+    
+    if (!refreshToken) {
+      res.status(401).json({ success: false, message: "No refresh token provided" });
+      return;
+    }
+
+    try {
+      const result = await userService.refreshToken(refreshToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+      res.status(200).json({ success: true, accessToken: result.accessToken });
+    } catch (error: any) {
+      res.status(401).json({ success: false, message: error.message || "Invalid refresh token" });
+    }
+  });
+
   forgotPassword = asyncHandler(async (req: Request, res: Response) => {
     const { email } = forgotPasswordSchema.parse(req.body);
     const result = await userService.forgotPassword(email);

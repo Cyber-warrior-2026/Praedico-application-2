@@ -12,6 +12,7 @@ router.post("/login", userController.login);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password", userController.resetPassword);
 router.post("/logout", userController.logout);
+router.post("/refresh-token", userController.refreshToken);
 
 // Protected User Routes
 router.get("/me", authorize(["user", "admin", "super_admin"]), userController.getMe);

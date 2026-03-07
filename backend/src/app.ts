@@ -17,6 +17,7 @@ import paperTradingRoutes from './routes/paperTrading';
 import organizationRoutes from "./routes/organization";
 import departmentRoutes from "./routes/department";
 import coordinatorRoutes from "./routes/coordinator";
+import certificateRoutes from "./routes/certificate";
 
 import userRoutes from "./routes/user";
 import { ENV } from "./config/env";
@@ -54,6 +55,9 @@ app.use(
   app.use(cookieParser());
   app.use(requestLogger);
 
+  // Serve static files from the public directory (for certificates, etc.)
+  app.use('/public', express.static('public'));
+
   // --- 3. Health Check (Keep this fast) ---
   app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({
@@ -73,6 +77,7 @@ app.use(
 app.use("/api/organization", organizationRoutes);
 app.use("/api/department", departmentRoutes);
 app.use("/api/coordinator", coordinatorRoutes);
+app.use("/api/certificates", certificateRoutes);
 
   // --- 5. Error Handling Layer ---
   // 404 Handler for undefined routes

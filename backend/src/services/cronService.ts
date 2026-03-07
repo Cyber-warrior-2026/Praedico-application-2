@@ -5,12 +5,16 @@ import { OrganizationModel } from '../models/organization';
 import { OrganizationAdminModel } from '../models/organizationAdmin';
 import { sendSubscriptionExpiryEmail } from './email';
 import tradingLevelService from './tradingLevel';
+import certificateService from './certificateService';
+import { UserModel } from '../models/user';
+import { CertificateModel } from '../models/certificate';
 
 class CronService {
   private scraperJob: cron.ScheduledTask | null = null;
   private newsScraperJob: cron.ScheduledTask | null = null;
   private subscriptionJob: cron.ScheduledTask | null = null;
   private tradingLevelJob: cron.ScheduledTask | null = null;
+  private certificateJob: cron.ScheduledTask | null = null;
   // Check if current day is weekday (Monday-Friday)
   private isWeekday(): boolean {
     const day = new Date().getDay();
@@ -162,6 +166,142 @@ class CronService {
       }
     } catch (error) {
       console.error('Error checking subscriptions:', error);
+    }
+  }
+
+  // ─── Certificate Generation Job ────────────────────────────────────
+
+  // Start certificate job (runs daily at 1:00 AM IST)
+  startCertificateJob(): void {
+    // Cron: minute 0, hour 1, every day
+    this.certificateJob = cron.schedule('0 1 * * *', async () => {
+      console.log('Running daily certificate generation check (1:00 AM IST)...');
+      await this.generateCertificatesForExpiredPlans();
+    }, {
+      timezone: 'Asia/Kolkata'
+    });
+
+    this.certificateJob.start();
+    console.log('🎓 Certificate cron job started (runs daily at 1:00 AM IST)');
+  }
+
+  // Manual trigger for testing
+  async runCertificateJobNow(): Promise<void> {
+    console.log('Manual certificate generation triggered');
+    await this.generateCertificatesForExpiredPlans();
+  }
+
+  // Stop the certificate job
+  stopCertificateJob(): void {
+    if (this.certificateJob) {
+      this.certificateJob.stop();
+      console.log('🎓 Certificate cron job stopped');
+    }
+  }
+
+  private async generateCertificatesForExpiredPlans() {
+    try {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      // We need everything that expired exactly 'yesterday'
+      // Meaning expiry > yesterday 00:00 and expiry < yesterday 23:59
+      const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
+      const endOfYesterday = new Date(yesterday.setHours(23, 59, 59, 999));
+
+      console.log(`Checking expirations between ${startOfYesterday.toISOString()} and ${endOfYesterday.toISOString()}`);
+
+      // --- 1. Independent Users ---
+      const individualUsers = await UserModel.find({
+        organization: null,
+        isActive: true,
+        isDeleted: false,
+        subscriptionExpiry: {
+          $gte: startOfYesterday,
+          $lte: endOfYesterday
+        }
+      });
+
+      for (const user of individualUsers) {
+        // Skip if they already have one generated for this expiry date (prevent duplicates)
+        const existingCert = await CertificateModel.findOne({
+          user: user._id,
+          endDate: {
+            $gte: startOfYesterday,
+            $lte: endOfYesterday
+          }
+        });
+
+        if (!existingCert && user.subscriptionExpiry && user.currentPlan) {
+          // Determine the start date (for now we assume 1 year or 1 month before expiry, here we assume it's created at `createdAt` if we don't have explicit plan start date, falling back to 30 days ago)
+          let startDate = (user as any).createdAt || new Date();
+          if (user.subscriptionExpiry) {
+               startDate = new Date(user.subscriptionExpiry.getTime() - 30 * 24 * 60 * 60 * 1000); // Approximate 1 month back if nothing else
+          }
+
+          await certificateService.generateCertificate({
+            userId: user._id.toString(),
+            userName: user.name,
+            planName: user.currentPlan,
+            startDate: startDate,
+            endDate: user.subscriptionExpiry
+          });
+        }
+      }
+
+      // --- 2. Organization Students ---
+      const expiredOrgs = await OrganizationModel.find({
+        isActive: true,
+        isDeleted: false,
+        subscriptionExpiry: {
+          $gte: startOfYesterday,
+          $lte: endOfYesterday
+        }
+      });
+
+      for (const org of expiredOrgs) {
+        // Find all active students in this org
+        const students = await UserModel.find({
+          organization: org._id,
+          role: 'user',
+          isActive: true,
+          isDeleted: false
+        });
+
+        for (const student of students) {
+          const existingCert = await CertificateModel.findOne({
+            user: student._id,
+            organization: org._id,
+            endDate: {
+              $gte: startOfYesterday,
+              $lte: endOfYesterday
+            }
+          });
+
+          if (!existingCert && org.subscriptionExpiry && org.subscriptionPlan) {
+            let startDate = (org as any).createdAt || new Date();
+            if (org.subscriptionExpiry) {
+                 // Assume org plan was 1 year or similar, approximate to 30 days or based on createdAt
+                 startDate = new Date(org.subscriptionExpiry.getTime() - 365 * 24 * 60 * 60 * 1000); // 1 year back
+                 if (startDate < ((org as any).createdAt || new Date(0))) startDate = (org as any).createdAt; 
+            }
+
+            await certificateService.generateCertificate({
+              userId: student._id.toString(),
+              organizationId: org._id.toString(),
+              userName: student.name,
+              planName: org.subscriptionPlan,
+              startDate: startDate,
+              endDate: org.subscriptionExpiry,
+              organizationLogoUrl: org.logoUrl
+            });
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error generating certificates for expired plans:', error);
     }
   }
 
